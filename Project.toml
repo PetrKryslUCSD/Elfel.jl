@@ -1,0 +1,26 @@
+name = "Elfel"
+uuid = "9ca883c9-bd92-40d2-857a-2c75d8956e5d"
+authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
+version = "0.1.0"
+
+[deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+MeshCore = "43a99bba-f459-4d0e-8139-f3df11d847d4"
+MeshFinder = "94afc05e-a560-4acd-8e11-a7bb2c092f45"
+MeshKeeper = "484b717a-98b9-4b0c-89dc-fb7d7e739263"
+MeshMaker = "eff96cbd-3442-458f-9fe2-6cad589fe5e1"
+MeshPorter = "ba998677-2e4b-4950-b481-8cc4322dc218"
+Profile = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+MeshCore = "0.8"
+MeshFinder = "0.2"
+MeshKeeper = "0.3"
+MeshMaker = "0.3"
+MeshPorter = "0.3"
+StaticArrays = "0.12"
+julia = "1.4"
