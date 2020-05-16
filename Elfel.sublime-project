@@ -1,0 +1,52 @@
+{
+	"folders":
+	[
+		{
+			"index_exclude_patterns":
+			[
+				"*.log"
+			],
+			"index_include_patterns":
+			[
+				"*.jl"
+			],
+			"path": "."
+		},
+		{
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshFinder.jl"
+		},
+		{
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshCore.jl"
+		},
+		{
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshKeeper.jl"
+		},
+		{
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshMaker.jl"
+		},
+		{
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshPorter.jl"
+		},
+		{
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshTutor.jl"
+		}
+	],
+	"settings":
+	{
+        "color_scheme": "Packages/Color Scheme - Creamy/Creamy.tmTheme",
+		"open_url":
+		{
+			"cwd": "project_root",
+			"file_suffixes":
+			[
+				".jl"
+			],
+			"search_paths":
+			[
+				"src",
+				"test",
+				"examples"
+			]
+		}
+	}
+}
