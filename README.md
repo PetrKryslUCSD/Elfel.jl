@@ -1,5 +1,8 @@
 # Elfel.jl: Extensible library for finite element methods
 
+**elfel**<br>
+G. *adjective*. different, like something else, unique, unparalled
+
 ## Introduction
 
 This package provides support for the development of Finite Element Method applications, especially in continuum mechanics.
