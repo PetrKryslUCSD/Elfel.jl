@@ -89,6 +89,18 @@ function assemble!(self::SysmatAssemblerSparse{T}, r, c, v::T) where {T<:Number}
 end
 
 """
+    assemble!(self::SysmatAssemblerSparse{T}, r, c, v::T) where {T<:Number}
+
+Assemble a single entry of a rectangular matrix.
+"""
+function assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
+    append!(self.row, rs)
+    append!(self.col, cs)
+    append!(self.val, vs)
+    return self
+end
+
+"""
     assemble!(self::SysmatAssemblerSparse{T}, gi, ke::AbstractMatrix{T}) where {T}
 
 Assemble a square symmetric matrix.

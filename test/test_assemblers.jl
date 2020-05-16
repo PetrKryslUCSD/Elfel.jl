@@ -107,3 +107,38 @@ end
 end
 using .massa1
 massa1.test()
+
+
+module massa2
+using Elfel.Assemblers: local_assembler, fill_dofs!
+using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
+using Test
+function test()
+    A = [0.6744582963441466 0.2853043149927861 0.27460710155821255; 
+    0.3781923479141225 0.2838873430062512 0.6316949656630075; 
+    0.19369805365903336 0.8926164783344779 0.07006905962860177]
+    rs, cs, vs = local_assembler(size(A, 1), size(A, 2), 0.0)
+    fill_dofs!(rs, cs, i -> i, [1, 2, 3])
+    # @show rs, cs
+    @test isapprox(rs, [1, 2, 3, 1, 2, 3, 1, 2, 3])
+    @test isapprox(cs, [1, 1, 1, 2, 2, 2, 3, 3, 3])
+    fill!(vs, 0.0)
+    k = 1
+    for j in 1:size(A, 2), i in 1:size(A, 1)
+        vs[k] += A[i, j]
+        k = k + 1
+    end
+    ass = SysmatAssemblerSparse(0.0)
+    start!(ass, 3, 3)
+    assemble!(ass, rs, cs, vs)
+    As =  finish!(ass)
+    matched = 0
+    for j in 1:size(A, 2), i in 1:size(A, 1)
+       isapprox(A[i, j], As[i, j]) && (matched = matched + 1)
+    end
+    @test matched == prod(size(A))
+    # @show A, vs
+end
+end
+using .massa2
+massa2.test()
