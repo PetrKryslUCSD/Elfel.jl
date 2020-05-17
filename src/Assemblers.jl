@@ -4,6 +4,66 @@ using SparseArrays: sparse
 using LinearAlgebra: diag
 
 """
+    LocalAssembler{IT<:Integer, T<:Number}
+
+Type of local assembler for a square matrix.
+"""
+mutable struct LocalAssembler{IT<:Integer, T<:Number}
+    row::Vector{IT}
+    col::Vector{IT}
+    val::Vector{T}
+    cursor::IT
+end
+
+function LocalAssembler(nrow::IT, ncol::IT, z::T) where {IT, T}
+    return LocalAssembler(fill(zero(IT), nrow*ncol), fill(zero(IT), nrow*ncol), fill(zero(T), nrow*ncol), zero(IT))
+end
+
+"""
+    initialize!(locass, nums, conn)
+
+Initialize a local assembler.
+
+This needs to be done once for each finite element.
+"""
+function initialize!(locass, nums, conn)
+    nbf = length(conn)
+    k = 1
+    for j in 1:nbf
+        gj = nums(conn[j])[1]
+        for i in 1:nbf
+            gi = nums(conn[i])[1]
+            locass.row[k] = gi
+            locass.col[k] = gj
+            k = k + 1
+        end
+    end
+    locass.cursor = 1
+    fill!(locass.val, zero(eltype(locass.val)))
+    return locass
+end
+
+"""
+    updatev!(locass, v)
+
+Update the current value in the local assembler.
+
+The cursor in the local assembler is moved forward.
+"""
+function updatev!(locass, v)
+    locass.val[locass.cursor] += v
+    locass.cursor = locass.cursor + 1
+    return locass
+end
+
+"""
+    nextqp!(locass)
+
+Reset the cursor to 1 for the next quadrature point.
+"""
+nextqp!(locass) = (locass.cursor = 1)
+
+"""
     AbstractSysmatAssembler
 
 Abstract type of system-matrix assembler.
@@ -89,9 +149,11 @@ function assemble!(self::SysmatAssemblerSparse{T}, r, c, v::T) where {T<:Number}
 end
 
 """
-    assemble!(self::SysmatAssemblerSparse{T}, r, c, v::T) where {T<:Number}
+    assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
 
-Assemble a single entry of a rectangular matrix.
+Assemble the triple of the row numbers, column numbers, and values.
+
+See the local assembler.
 """
 function assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
     append!(self.row, rs)
@@ -114,6 +176,13 @@ function assemble!(self::SysmatAssemblerSparse{T}, gi::AbstractVector{IT}, ke::A
             push!(self.col, gi[j])
         end
     end
+end
+
+function assemble!(self::SysmatAssemblerSparse{T}, la::LocalAssembler{IT, T}) where {IT<:Integer, T<:Number}
+    append!(self.row, la.row)
+    append!(self.col, la.col)
+    append!(self.val, la.val)
+    return self
 end
 
 """
@@ -222,6 +291,7 @@ Make the global vector.
 function finish!(self::SysvecAssembler)
   return deepcopy(self.val);
 end
+
 
 function local_assembler(nrow, ncol, z::T) where {T}
 	return fill(0, nrow*ncol), fill(0, nrow*ncol), fill(0.0, nrow*ncol)
