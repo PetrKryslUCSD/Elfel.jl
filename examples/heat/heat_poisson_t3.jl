@@ -6,7 +6,7 @@ using MeshKeeper: Mesh, insert!, baseincrel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
 using Elfel.FElements: FEH1_T3, refshape, Jacobian, nbasisfuns
 using Elfel.FESpaces: FESpace, fe
-using Elfel.FEExpansions: FEExpansion, numberdofs!, geomval, ndofs
+using Elfel.FEExpansions: FEExpansion, numberdofs!, geometry, ndofs
 using Elfel.IntegDomains: IntegDomain, quadrule, jac, bfundata
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!, local_assembler, fill_dofs!
 using LinearAlgebra
@@ -57,7 +57,7 @@ function assembleK(idom)
         end
         return ass
     end
-    geom = geomval(idom.fex)
+    geom = geometry(idom.fex)
     bd = bfundata(idom)
     ass = SysmatAssemblerSparse(0.0)
     ir = baseincrel(idom.fex.mesh)

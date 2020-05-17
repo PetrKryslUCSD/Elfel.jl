@@ -185,7 +185,7 @@ end
 # @btime $g / $J # 7.299 ns (0 allocations: 0 bytes)    
 
 function assembleK(idom)
-    geom = geomval(idom.fex)
+    geom = vlocs(idom.fex)
     bd = bfundata(idom)
     ass = SysmatAssemblerSparse(0.0)
     ir = baseincrel(idom.fex.mesh)
