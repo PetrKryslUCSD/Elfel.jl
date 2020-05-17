@@ -8,11 +8,19 @@ using Elfel.FESpaces: FESpace, multiplicity
 using Elfel.Fields: FEField, ndofsperentity, nentities, setebc!, gathersysvec
 import Elfel.Fields: numberdofs!, ndofs
 
+"""
+    FEExpansion{FET, GT}
+
+Finite element expansion type. 
+
+It links together the mesh, the finite element space, and a field.
+The field provides storage of the degree of freedom values and of the numbering.
+"""
 struct FEExpansion{FET, GT}
     mesh::Mesh
     fesp::FESpace{FET}
     field::FEField
-    _geomval::GT
+    _geom::GT
 end
 
 function FEExpansion(mesh::Mesh, fesp::FESpace{FET}) where {FET}
@@ -21,11 +29,11 @@ function FEExpansion(mesh::Mesh, fesp::FESpace{FET}) where {FET}
     nent = nshapes(ir.right)
     ndpe = multiplicity(fesp)
     f = FEField{ndpe, Float64}(nent)
-    _geomval = MeshCore.attribute(ir.right, "geom")
-    return FEExpansion(mesh, fesp, f, _geomval)
+    _geom = MeshCore.attribute(ir.right, "geom")
+    return FEExpansion(mesh, fesp, f, _geom)
 end
 
-geomval(fex::FEExpansion) = fex._geomval
+geometry(fex::FEExpansion) = fex._geom
 
 function numberdofs!(fex::FEExpansion)
     numberdofs!(fex.field)

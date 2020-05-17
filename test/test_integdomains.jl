@@ -5,7 +5,7 @@ using Elfel.FElements: FE, nodesperelem, refshape
 using Elfel.FElements: bfun, bfundpar, nbasisfuns
 using Elfel.Fields: FEField, ndofsperentity, nentities, numberdofs!, setebc!, gathersysvec
 using Elfel.FESpaces: FESpace
-using Elfel.FEExpansions: FEExpansion, geomval
+using Elfel.FEExpansions: FEExpansion, geometry
 using MeshKeeper: Mesh, load, baseincrel
 using MeshCore: retrieve
 using Elfel.IntegDomains: IntegDomain, bfundata, jac, quadrule
@@ -25,7 +25,7 @@ function test()
     Ns, gradNparams = bfundata(idom) 
     @test length(Ns[1]) == 3
 
-    geom = geomval(fex)
+    geom = geometry(fex)
     ir = baseincrel(fex.mesh)
     Ns, gradNparams = bfundata(idom) 
     J = jac(geom, retrieve(ir, 1), gradNparams[1])
