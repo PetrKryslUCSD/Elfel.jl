@@ -11,12 +11,11 @@ Type of local assembler for a square matrix.
 mutable struct LocalAssembler{IT<:Integer, T<:Number}
     row::Vector{IT}
     col::Vector{IT}
-    val::Vector{T}
-    cursor::IT
+    M::Matrix{T}
 end
 
 function LocalAssembler(nrow::IT, ncol::IT, z::T) where {IT, T}
-    return LocalAssembler(fill(zero(IT), nrow*ncol), fill(zero(IT), nrow*ncol), fill(zero(T), nrow*ncol), zero(IT))
+    return LocalAssembler(fill(zero(IT), nrow*ncol), fill(zero(IT), nrow*ncol), fill(zero(T), nrow, ncol))
 end
 
 """
@@ -38,30 +37,19 @@ function initialize!(locass, nums, conn)
             k = k + 1
         end
     end
-    locass.cursor = 1
-    fill!(locass.val, zero(eltype(locass.val)))
+    fill!(locass.M, zero(eltype(locass.M)))
     return locass
 end
 
 """
-    updatev!(locass, v)
+    assemble!(locass::L, i, j, v) where {L<:LocalAssembler}
 
-Update the current value in the local assembler.
-
-The cursor in the local assembler is moved forward.
+Update the `M[i, j]` value in the local assembler.
 """
-function updatev!(locass, v)
-    locass.val[locass.cursor] += v
-    locass.cursor = locass.cursor + 1
+function assemble!(locass::L, i, j, v) where {L<:LocalAssembler}
+    locass.M[i, j] += v
     return locass
 end
-
-"""
-    nextqp!(locass)
-
-Reset the cursor to 1 for the next quadrature point.
-"""
-nextqp!(locass) = (locass.cursor = 1)
 
 """
     AbstractSysmatAssembler
@@ -181,7 +169,7 @@ end
 function assemble!(self::SysmatAssemblerSparse{T}, la::LocalAssembler{IT, T}) where {IT<:Integer, T<:Number}
     append!(self.row, la.row)
     append!(self.col, la.col)
-    append!(self.val, la.val)
+    append!(self.val, la.M)
     return self
 end
 

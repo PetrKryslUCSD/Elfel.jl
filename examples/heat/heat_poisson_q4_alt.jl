@@ -9,7 +9,7 @@ using Elfel.FESpaces: FESpace, fe
 using Elfel.FEExpansions: FEExpansion, numberdofs!, geometry, ndofs
 using Elfel.IntegDomains: IntegDomain, quadrule, jac, bfundata
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
-using Elfel.Assemblers: LocalAssembler, initialize!, updatev!, nextqp!
+using Elfel.Assemblers: LocalAssembler, initialize!
 using LinearAlgebra
 using BenchmarkTools
 using InteractiveUtils
@@ -29,34 +29,32 @@ function genmesh()
     return mesh
 end
 
-function integrate!(ass, geom, ir, qrule, nums, bd, fe)
-    vmdim = Val(manifdim(refshape(fe)))
-    nbf = nbasisfuns(fe)
-    la = LocalAssembler(nbf, nbf, 0.0)
-    for el in 1:nrelations(ir)
-        conn = retrieve(ir, el)
-        initialize!(la, nums, conn)
-        for qp in 1:qrule.npts
-            gradNparams = bd[2][qp]
-            Jac = jac(geom, conn, gradNparams)
-            J = Jacobian(vmdim, Jac)
-            JxW = J * qrule.weights[qp]
-            invJac = inv(Jac)
-            nextqp!(la)
-            for i in 1:nbf
-                gradNi = gradNparams[i] * invJac
-                for j in 1:nbf
-                    gradNj = gradNparams[j] * invJac
-                    updatev!(la, dot(gradNi, gradNj) * JxW)
+function assembleK(idom)
+    function integrate!(ass, geom, ir, qrule, nums, bd, fe)
+        vmdim = Val(manifdim(refshape(fe)))
+        nbf = nbasisfuns(fe)
+        la = LocalAssembler(nbf, nbf, 0.0)
+        for el in 1:nrelations(ir)
+            conn = retrieve(ir, el)
+            initialize!(la, nums, conn)
+            for qp in 1:qrule.npts
+                gradNparams = bd[2][qp]
+                Jac = jac(geom, conn, gradNparams)
+                J = Jacobian(vmdim, Jac)
+                JxW = J * qrule.weights[qp]
+                invJac = inv(Jac)
+                for i in 1:nbf
+                    gradNi = gradNparams[i] * invJac
+                    for j in 1:nbf
+                        gradNj = gradNparams[j] * invJac
+                        assemble!(la, i, j, dot(gradNi, gradNj) * JxW)
+                    end
                 end
             end
+            assemble!(ass, la)
         end
-        assemble!(ass, la)
+        return ass
     end
-    return ass
-end
-
-function assembleK(idom)
     geom = geometry(idom.fex)
     bd = bfundata(idom)
     ass = SysmatAssemblerSparse(0.0)
@@ -64,7 +62,6 @@ function assembleK(idom)
     qrule = quadrule(idom)
     start!(ass, ndofs(idom.fex), ndofs(idom.fex))
     @time integrate!(ass, geom, ir, qrule, idom.fex.field.nums, bd, fe(idom.fex.fesp))
-    
     return finish!(ass)
 end
 
