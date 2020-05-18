@@ -4,28 +4,28 @@ using SparseArrays: sparse
 using LinearAlgebra: diag
 
 """
-    LocalAssembler{IT<:Integer, T<:Number}
+    LocalMatrixAssembler{IT<:Integer, T<:Number}
 
 Type of local assembler for a square matrix.
 """
-mutable struct LocalAssembler{IT<:Integer, T<:Number}
+struct LocalMatrixAssembler{IT<:Integer, T<:Number}
     row::Vector{IT}
     col::Vector{IT}
     M::Matrix{T}
 end
 
-function LocalAssembler(nrow::IT, ncol::IT, z::T) where {IT, T}
-    return LocalAssembler(fill(zero(IT), nrow*ncol), fill(zero(IT), nrow*ncol), fill(zero(T), nrow, ncol))
+function LocalMatrixAssembler(nrow::IT, ncol::IT, z::T) where {IT, T}
+    return LocalMatrixAssembler(fill(zero(IT), nrow*ncol), fill(zero(IT), nrow*ncol), fill(zero(T), nrow, ncol))
 end
 
 """
-    initialize!(locass, nums, conn)
+    initialize!(locass::L, nums, conn) where {L<:LocalMatrixAssembler}
 
 Initialize a local assembler.
 
 This needs to be done once for each finite element.
 """
-function initialize!(locass, nums, conn)
+function initialize!(locass::L, nums, conn) where {L<:LocalMatrixAssembler}
     nbf = length(conn)
     k = 1
     for j in 1:nbf
@@ -42,14 +42,56 @@ function initialize!(locass, nums, conn)
 end
 
 """
-    assemble!(locass::L, i, j, v) where {L<:LocalAssembler}
+    assemble!(locass::L, i, j, v) where {L<:LocalMatrixAssembler}
 
 Update the `M[i, j]` value in the local assembler.
 """
-function assemble!(locass::L, i, j, v) where {L<:LocalAssembler}
+function assemble!(locass::L, i, j, v) where {L<:LocalMatrixAssembler}
     locass.M[i, j] += v
     return locass
 end
+
+"""
+    LocalVectorAssembler{IT<:Integer, T<:Number}
+
+Type of local assembler for a vector.
+"""
+struct LocalVectorAssembler{IT<:Integer, T<:Number}
+    row::Vector{IT}
+    V::Vector{T}
+end
+
+function LocalVectorAssembler(nrow::IT, z::T) where {IT, T}
+    return LocalVectorAssembler(fill(zero(IT), nrow), fill(zero(T), nrow))
+end
+
+"""
+    initialize!(locass::L, nums, conn) where {L<:LocalMatrixAssembler}
+
+Initialize a local assembler.
+
+This needs to be done once for each finite element.
+"""
+function initialize!(locass::L, nums, conn) where {L<:LocalVectorAssembler}
+    nbf = length(conn)
+    for i in 1:nbf
+        gi = nums(conn[i])[1]
+        locass.row[i] = gi
+    end
+    fill!(locass.V, zero(eltype(locass.V)))
+    return locass
+end
+
+"""
+    assemble!(locass::L, i, j, v) where {L<:LocalMatrixAssembler}
+
+Update the `M[i, j]` value in the local assembler.
+"""
+function assemble!(locass::L, i, v) where {L<:LocalVectorAssembler}
+    locass.V[i] += v
+    return locass
+end
+
 
 """
     AbstractSysmatAssembler
@@ -166,7 +208,7 @@ function assemble!(self::SysmatAssemblerSparse{T}, gi::AbstractVector{IT}, ke::A
     end
 end
 
-function assemble!(self::SysmatAssemblerSparse{T}, la::LocalAssembler{IT, T}) where {IT<:Integer, T<:Number}
+function assemble!(self::SysmatAssemblerSparse{T}, la::LocalMatrixAssembler{IT, T}) where {IT<:Integer, T<:Number}
     append!(self.row, la.row)
     append!(self.col, la.col)
     append!(self.val, la.M)
@@ -269,6 +311,15 @@ freedom numbers for the rows.
 """
 function assemble!(self::SysvecAssembler{T}, i, val::T) where {T<:Number}
     self.val[i] = self.val[i] + val;
+    return self
+end
+
+function assemble!(self::SysvecAssembler{T}, la::LocalVectorAssembler{IT, T}) where {IT<:Integer, T<:Number}
+    for i in 1:length(la.row)
+        gi = la.row[i]
+        self.val[gi] += la.V[i];
+    end
+    return self
 end
 
 """
@@ -279,26 +330,5 @@ Make the global vector.
 function finish!(self::SysvecAssembler)
   return deepcopy(self.val);
 end
-
-
-function local_assembler(nrow, ncol, z::T) where {T}
-	return fill(0, nrow*ncol), fill(0, nrow*ncol), fill(0.0, nrow*ncol)
-end
-
-function fill_dofs!(rs, cs, nums, conn)
-	nbf = length(conn)
-	k = 1
-	for j in 1:nbf
-		gj = nums(conn[j])[1]
-		for i in 1:nbf
-			gi = nums(conn[i])[1]
-			rs[k] = gi
-			cs[k] = gj
-			k = k + 1
-		end
-	end
-	return rs, cs
-end
-
 
 end

@@ -8,8 +8,8 @@ using Elfel.FElements: FEH1_Q4, refshape, Jacobian, nbasisfuns
 using Elfel.FESpaces: FESpace, fe
 using Elfel.FEExpansions: FEExpansion, numberdofs!, geometry, ndofs
 using Elfel.IntegDomains: IntegDomain, quadrule, jac, bfundata
-using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
-using Elfel.Assemblers: LocalAssembler, initialize!
+using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!, SysvecAssembler
+using Elfel.Assemblers: LocalMatrixAssembler, LocalVectorAssembler, initialize!
 using LinearAlgebra
 using BenchmarkTools
 using InteractiveUtils
@@ -29,11 +29,11 @@ function genmesh()
     return mesh
 end
 
-function assembleK(idom)
-    function integrate!(ass, geom, ir, qrule, nums, bd, fe)
+function assembleK(idom, kappa)
+    function integrate!(ass, geom, ir, qrule, nums, bd, fe, kappa)
         vmdim = Val(manifdim(refshape(fe)))
         nbf = nbasisfuns(fe)
-        la = LocalAssembler(nbf, nbf, 0.0)
+        la = LocalMatrixAssembler(nbf, nbf, 0.0)
         for el in 1:nrelations(ir)
             conn = retrieve(ir, el)
             initialize!(la, nums, conn)
@@ -47,7 +47,7 @@ function assembleK(idom)
                     gradNi = gradNparams[i] * invJac
                     for j in 1:nbf
                         gradNj = gradNparams[j] * invJac
-                        assemble!(la, i, j, dot(gradNi, gradNj) * JxW)
+                        assemble!(la, i, j, kappa * dot(gradNi, gradNj) * JxW)
                     end
                 end
             end
@@ -61,7 +61,39 @@ function assembleK(idom)
     ir = baseincrel(idom.fex.mesh)
     qrule = quadrule(idom)
     start!(ass, ndofs(idom.fex), ndofs(idom.fex))
-    @time integrate!(ass, geom, ir, qrule, idom.fex.field.nums, bd, fe(idom.fex.fesp))
+    @time integrate!(ass, geom, ir, qrule, idom.fex.field.nums, bd, fe(idom.fex.fesp), kappa)
+    return finish!(ass)
+end
+
+function assembleF(idom, Q)
+    function integrate!(ass, geom, ir, qrule, nums, bd, fe, Q)
+        vmdim = Val(manifdim(refshape(fe)))
+        nbf = nbasisfuns(fe)
+        la = LocalVectorAssembler(nbf, 0.0)
+        for el in 1:nrelations(ir)
+            conn = retrieve(ir, el)
+            initialize!(la, nums, conn)
+            for qp in 1:qrule.npts
+                Ns = bd[1][qp]
+                gradNparams = bd[2][qp]
+                Jac = jac(geom, conn, gradNparams)
+                J = Jacobian(vmdim, Jac)
+                JxW = J * qrule.weights[qp]
+                for i in 1:nbf
+                    assemble!(la, i, Q * JxW)
+                end
+            end
+            assemble!(ass, la)
+        end
+        return ass
+    end
+    geom = geometry(idom.fex)
+    bd = bfundata(idom)
+    ass = SysvecAssembler(0.0)
+    ir = baseincrel(idom.fex.mesh)
+    qrule = quadrule(idom)
+    start!(ass, ndofs(idom.fex))
+    @time integrate!(ass, geom, ir, qrule, idom.fex.field.nums, bd, fe(idom.fex.fesp), Q)
     return finish!(ass)
 end
 
@@ -71,7 +103,8 @@ function run()
     fex = FEExpansion(mesh, fesp)
     numberdofs!(fex)
     idom = IntegDomain(fex, (kind = :Gauss, order = 2))
-    K = assembleK(idom)
+    K = assembleK(idom, thermal_conductivity)
+    F = assembleF(idom, Q)
 end
 
 end
