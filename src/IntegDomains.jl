@@ -7,6 +7,11 @@ using Elfel.FESpaces: FESpace, multiplicity, fe
 using Elfel.Fields: FEField, ndofsperentity, nentities, numberdofs!, setebc!, gathersysvec
 using Elfel.FEExpansions: FEExpansion
 
+"""
+    IntegDomain{FET, GT}
+
+Integration domain.
+"""
 struct IntegDomain{FET, GT}
     fex::FEExpansion{FET, GT}
     _quadr::IntegRule
@@ -33,17 +38,37 @@ function __bfundata(fex, qr)
     return (Ns, gradNparams, gradNs)
 end
 
+"""
+    IntegDomain(fex::FEExpansion{FET, GT}, quadraturesettings) where {FET, GT}
+
+Create integration domain from  a finite element expansion and numerical
+quadrature settings.
+"""
 function IntegDomain(fex::FEExpansion{FET, GT}, quadraturesettings) where {FET, GT}
 	_quadr = quadrature(refshape(fe(fex.fesp)), quadraturesettings)
     _bfundata = __bfundata(fex, _quadr)
     return IntegDomain(fex, _quadr, _bfundata)
 end
 
+"""
+    quadrule(idom::IntegDomain)
+
+Return the quadrature rule.
+"""
 quadrule(idom::IntegDomain) = idom._quadr
 
+"""
+    bfundata(idom::IntegDomain)
+
+Return the basis function data.
+"""
 bfundata(idom::IntegDomain) = idom._bfundata
 
+"""
+    jac(locs, conn, gradNpar)
 
+Compute the Jacobian matrix.
+"""
 function jac(locs, conn, gradNpar)
     NBFPE = length(gradNpar)
     j = 1
