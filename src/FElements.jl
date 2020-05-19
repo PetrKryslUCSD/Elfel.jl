@@ -5,25 +5,40 @@ using LinearAlgebra
 using ..RefShapes: RefShapePoint, RefShapeInterval, RefShapeTriangle, RefShapeTetrahedron, RefShapeSquare, RefShapeCube
 
 """
-    AbstractFE{NODESPERELEM}
+    AbstractFE{RS, NPE, NDN}
 
-Abstract type of a finite element set. Parameterized with the number of of the nodes per element.
+Abstract type of a finite element set. 
+
+`RS`, `NPE`, `NDN` = reference shape, number of nodes per element, number of
+degrees of freedom per node
 """
-abstract type AbstractFE{REFSHAPE, NODESPERELEM} end
+abstract type AbstractFE{RS, NPE, NDN} end
 
-refshape(fe::AbstractFE{REFSHAPE, NODESPERELEM}) where {REFSHAPE, NODESPERELEM} = REFSHAPE
+refshape(fe::AbstractFE{RS, NPE, NDN}) where {RS, NPE, NDN} = RS
 
 """
-    nodesperelem(fes::AbstractFE{NODESPERELEM}) where {NODESPERELEM}
+    nodesperelem(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN}
 
 Provide the number of nodes per element.
 """
-nodesperelem(fe::T) where {T<:AbstractFE{REFSHAPE, NODESPERELEM}} where {REFSHAPE, NODESPERELEM} = NODESPERELEM
+nodesperelem(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN} = NPE
 
-struct FE{REFSHAPE, NODESPERELEM, NDOFPERELEM} <: AbstractFE{REFSHAPE, NODESPERELEM}
+"""
+    ndofpernode(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN}
+
+Provide the number of degrees of freedom per node.
+"""
+ndofpernode(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN} = NDN
+
+struct FE{RS, NPE, NDN} <: AbstractFE{RS, NPE, NDN}
 end
 
-nbasisfuns(fe::T) where {T<:AbstractFE{REFSHAPE, NODESPERELEM}} where {REFSHAPE, NODESPERELEM} = nodesperelem(fe)
+"""
+    nbasisfuns(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN}
+
+Provide the number of basis functions per element.
+"""
+nbasisfuns(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN} = nodesperelem(fe)
 
 
 """
@@ -161,33 +176,33 @@ function gradN!(::Val{3}, gradN::T1, gradNparams::T2, redJ::T3) where {T1, T2, T
 end
 
 # L2 ==================================================================
-FEH1_L2() = FE{RefShapeInterval, 2, 2}()
+FEH1_L2(NDN) = FE{RefShapeInterval, 2, NDN}()
 
-function bfun(self::FE{RefShapeInterval, 2, 2},  param_coords::T) where {T}
+function bfun(self::FE{RefShapeInterval, 2, NDN},  param_coords::T) where {NDN, T}
     return SVector{2}([(1. - param_coords[1]); (1. + param_coords[1])] / 2.0)
 end
 
-function bfundpar(self::FE{RefShapeInterval, 2, 2},  param_coords::T) where {T}
+function bfundpar(self::FE{RefShapeInterval, 2, NDN},  param_coords::T) where {NDN, T}
     g = reshape([-1.0; +1.0]/2.0, 2, 1)
     return [SVector{1}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
 # T3 ==================================================================
-FEH1_T3() = FE{RefShapeTriangle, 3, 3}()
+FEH1_T3(NDN) = FE{RefShapeTriangle, 3, NDN}()
 
-function bfun(self::FE{RefShapeTriangle, 3, 3},  param_coords::T) where {T}
+function bfun(self::FE{RefShapeTriangle, 3, NDN},  param_coords::T) where {NDN, T}
     return SVector{3}([(1 - param_coords[1] - param_coords[2]); param_coords[1]; param_coords[2]])
 end
 
-function bfundpar(self::FE{RefShapeTriangle, 3, 3},  param_coords::T) where {T}
+function bfundpar(self::FE{RefShapeTriangle, 3, NDN},  param_coords::T) where {NDN, T}
     g = [-1. -1.;  +1.  0.;  0. +1.]
     return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
 # Q4 ==================================================================
-FEH1_Q4() = FE{RefShapeSquare, 4, 4}()
+FEH1_Q4(NDN) = FE{RefShapeSquare, 4, NDN}()
 
-function bfun(self::FE{RefShapeSquare, 4, 4},  param_coords::T) where {T}
+function bfun(self::FE{RefShapeSquare, 4, NDN},  param_coords::T) where {NDN, T}
 	val = [0.25 * (1. - param_coords[1]) * (1. - param_coords[2]);
 	       0.25 * (1. + param_coords[1]) * (1. - param_coords[2]);
 	       0.25 * (1. + param_coords[1]) * (1. + param_coords[2]);
@@ -195,7 +210,7 @@ function bfun(self::FE{RefShapeSquare, 4, 4},  param_coords::T) where {T}
     return SVector{4}(val)
 end
 
-function bfundpar(self::FE{RefShapeSquare, 4, 4},  param_coords::T) where {T}
+function bfundpar(self::FE{RefShapeSquare, 4, NDN},  param_coords::T) where {NDN, T}
     g =   [-(1. - param_coords[2])*0.25 -(1. - param_coords[1])*0.25;
             (1. - param_coords[2])*0.25 -(1. + param_coords[1])*0.25;
             (1. + param_coords[2])*0.25 (1. + param_coords[1])*0.25;
