@@ -1,25 +1,26 @@
 module FEFields
 
 using StaticArrays
-using MeshKeeper: Mesh, increl, basecode
-using MeshCore: nshapes, indextype, VecAttrib, AbsAttrib
 
-struct FEField{S}
+struct FEField{N, T, S, IT}
     shapecollection::S
+    dofnums::Vector{SVector{N, IT}}
+    isdatum::Vector{SVector{N, Bool}}
+    dofvals::Vector{SVector{N, T}}
+    v::Vector{T}
+    function FEField(::Val{N}, ::Type{T}, ::Type{IT}, sc::S) where {N, T, S, IT}
+        nv = nshapes(sc)
+        z = fill(zero(IT), N)
+        @show dofnums = [SVector{N}(z) for i in 1:nv]
+        z = fill(false, N)
+        isdatum = [z for i in 1:nv]
+        z = fill(zero(T), N)
+        dofvals = [SVector{N}(z) for i in 1:nv]
+        return new{N, T, S, IT}(sc, dofnums, isdatum, dofvals)
+    end
 end
 
-function FEField(::Type{T}, sc::S) where {T, S}
-    nv = nshapes(sc)
-    @show dofnums =  VecAttrib([zero(typeof(nshapes(sc))) for i in 1:nv])
-    @show typeof(dofnums) <: AbsAttrib
-    @show typeof(sc.attributes)
-    sc.attributes["dofnums"] = dofnums
-    isdatum =  VecAttrib([false for i in 1:nv])
-    sc.attributes["isdatum"] = isdatum
-    dofvals =  VecAttrib([zero(T) for i in 1:nv])
-    sc.attributes["dofvals"] = dofvals
-    return FEField(sc)
-end
+
 
 nterms(fef::FEField) = nshapes(fef.shapecollection)
 
