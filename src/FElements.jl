@@ -20,7 +20,7 @@ Provide the number of nodes per element.
 """
 nodesperelem(fe::T) where {T<:AbstractFE{REFSHAPE, NODESPERELEM}} where {REFSHAPE, NODESPERELEM} = NODESPERELEM
 
-struct FE{REFSHAPE, NODESPERELEM, NDOFPERNODE} <: AbstractFE{REFSHAPE, NODESPERELEM}
+struct FE{REFSHAPE, NODESPERELEM, NDOFPERELEM} <: AbstractFE{REFSHAPE, NODESPERELEM}
 end
 
 nbasisfuns(fe::T) where {T<:AbstractFE{REFSHAPE, NODESPERELEM}} where {REFSHAPE, NODESPERELEM} = nodesperelem(fe)
@@ -161,33 +161,33 @@ function gradN!(::Val{3}, gradN::T1, gradNparams::T2, redJ::T3) where {T1, T2, T
 end
 
 # L2 ==================================================================
-FEH1_L2(NDOFPERNODE) = FE{RefShapeInterval, 2, NDOFPERNODE}()
+FEH1_L2() = FE{RefShapeInterval, 2, 2}()
 
-function bfun(self::FE{RefShapeInterval, 2, NDOFPERNODE},  param_coords::T) where {NDOFPERNODE, T}
+function bfun(self::FE{RefShapeInterval, 2, 2},  param_coords::T) where {T}
     return SVector{2}([(1. - param_coords[1]); (1. + param_coords[1])] / 2.0)
 end
 
-function bfundpar(self::FE{RefShapeInterval, 2, NDOFPERNODE},  param_coords::T) where {NDOFPERNODE, T}
+function bfundpar(self::FE{RefShapeInterval, 2, 2},  param_coords::T) where {T}
     g = reshape([-1.0; +1.0]/2.0, 2, 1)
     return [SVector{1}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
 # T3 ==================================================================
-FEH1_T3(NDOFPERNODE) = FE{RefShapeTriangle, 3, NDOFPERNODE}()
+FEH1_T3() = FE{RefShapeTriangle, 3, 3}()
 
-function bfun(self::FE{RefShapeTriangle, 3, NDOFPERNODE},  param_coords::T) where {NDOFPERNODE, T}
+function bfun(self::FE{RefShapeTriangle, 3, 3},  param_coords::T) where {T}
     return SVector{3}([(1 - param_coords[1] - param_coords[2]); param_coords[1]; param_coords[2]])
 end
 
-function bfundpar(self::FE{RefShapeTriangle, 3, NDOFPERNODE},  param_coords::T) where {NDOFPERNODE, T}
+function bfundpar(self::FE{RefShapeTriangle, 3, 3},  param_coords::T) where {T}
     g = [-1. -1.;  +1.  0.;  0. +1.]
     return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
 # Q4 ==================================================================
-FEH1_Q4(NDOFPERNODE) = FE{RefShapeSquare, 4, NDOFPERNODE}()
+FEH1_Q4() = FE{RefShapeSquare, 4, 4}()
 
-function bfun(self::FE{RefShapeSquare, 4, NDOFPERNODE},  param_coords::T) where {NDOFPERNODE, T}
+function bfun(self::FE{RefShapeSquare, 4, 4},  param_coords::T) where {T}
 	val = [0.25 * (1. - param_coords[1]) * (1. - param_coords[2]);
 	       0.25 * (1. + param_coords[1]) * (1. - param_coords[2]);
 	       0.25 * (1. + param_coords[1]) * (1. + param_coords[2]);
@@ -195,7 +195,7 @@ function bfun(self::FE{RefShapeSquare, 4, NDOFPERNODE},  param_coords::T) where 
     return SVector{4}(val)
 end
 
-function bfundpar(self::FE{RefShapeSquare, 4, NDOFPERNODE},  param_coords::T) where {NDOFPERNODE, T}
+function bfundpar(self::FE{RefShapeSquare, 4, 4},  param_coords::T) where {T}
     g =   [-(1. - param_coords[2])*0.25 -(1. - param_coords[1])*0.25;
             (1. - param_coords[2])*0.25 -(1. + param_coords[1])*0.25;
             (1. + param_coords[2])*0.25 (1. + param_coords[1])*0.25;
