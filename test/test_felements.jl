@@ -5,8 +5,8 @@ using Elfel.FElements: FE, nodesperelem, refshape, FEH1_L2, FEH1_T3
 using Elfel.FElements: bfun, bfundpar
 using Test
 function test()
-    e = FE{RefShapeTriangle, 3, 3}()
-    e2 = FEH1_T3()
+    e = FE{RefShapeTriangle, 3, 1}()
+    e2 = FEH1_T3(1)
     @test e == e2
 
     @test nodesperelem(e) == 3
@@ -18,8 +18,8 @@ function test()
     @test isapprox(g[2], [+1.;  0.]')
     @test isapprox(g[3], [0.; +1.]')
 
-    e = FE{RefShapeInterval, 2, 2}()
-    e2 = FEH1_L2()
+    e = FE{RefShapeInterval, 2, 1}()
+    e2 = FEH1_L2(1)
     @test e == e2
     @test nodesperelem(e) == 2
     @test refshape(e) == RefShapeInterval

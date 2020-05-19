@@ -9,7 +9,7 @@ using Test
 function test()
 
     mesh = load(Mesh(), "mt3gen3.mesh")
-    fe = FEH1_T3()
+    fe = FEH1_T3(1)
 
     fef = FEField(Float64, baseincrel(mesh).right)
     @test nterms(f) == nshapes(baseincrel(mesh).right)
