@@ -2,7 +2,7 @@ module mfes1
 using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, nodesperelem, refshape, FEH1_L2, FEH1_T3
-using Elfel.FElements: bfun, bfundpar
+using Elfel.FElements: bfun, bfundpar, ndofpernode
 using Test
 function test()
     e = FE{RefShapeTriangle, 3, 1}()
@@ -22,6 +22,7 @@ function test()
     e2 = FEH1_L2(1)
     @test e == e2
     @test nodesperelem(e) == 2
+    @test ndofpernode(e) == 1
     @test refshape(e) == RefShapeInterval
     @test manifdim(refshape(e)) == 1
     @test isapprox(bfun(e, [1/3]), [0.3333333333333334, 2*0.3333333333333333])
