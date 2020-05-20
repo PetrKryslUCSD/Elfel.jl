@@ -1,20 +1,31 @@
 module FEFields
 
 using StaticArrays
-using MeshCore: nshapes
+using MeshCore: nshapes, indextype
+using MeshKeeper: baseincrel
+using ..FEMeshes: FEMesh
+using ..FElements: ndofpernode
 
 """
-    FEField{N, T, S, IT}
+    FEField{N, T, IT, S}
 
 Type of FE field.
+
+There is one term per shape in the shape collection. Each term may have several
+values, as determined by the parameter `N`.
+- `N` = number of values per term, 
+- `T` = type of the degree of freedom values, 
+- `IT` = type of the  degree of freedom numbers, 
+- `S` = type of the shape collection with whose shapes the terms are connected
+
 """
-mutable struct FEField{N, T, S, IT}
+mutable struct FEField{N, T, IT, S}
     shapecollection::S
     dofnums::Vector{SVector{N, IT}}
     isdatum::Vector{SVector{N, Bool}}
     dofvals::Vector{SVector{N, T}}
     nunknowns::Int64
-    function FEField(::Val{N}, ::Type{T}, ::Type{IT}, sc::S) where {N, T, S, IT}
+    function FEField(::Val{N}, ::Type{T}, ::Type{IT}, sc::S) where {N, T, IT, S}
         nv = nshapes(sc)
         z = fill(zero(IT), N)
         dofnums = [SVector{N}(z) for i in 1:nv]
@@ -22,8 +33,14 @@ mutable struct FEField{N, T, S, IT}
         isdatum = [z for i in 1:nv]
         z = fill(zero(T), N)
         dofvals = [SVector{N}(z) for i in 1:nv]
-        return new{N, T, S, IT}(sc, dofnums, isdatum, dofvals)
+        return new{N, T, IT, S}(sc, dofnums, isdatum, dofvals)
     end
+end
+
+function FEField(::Type{T}, femesh::FEMesh)  where {T}
+    N = ndofpernode(femesh.fe)
+    ir = baseincrel(femesh.mesh)
+    return FEField(Val(N), T, indextype(ir), ir.right)
 end
 
 nterms(fef::FEField) = nshapes(fef.shapecollection)

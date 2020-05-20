@@ -1,24 +1,19 @@
 module FESpaces
 
+using StaticArrays
 using ..RefShapes: RefShapeInterval, RefShapeTriangle
 using ..FElements: AbstractFE, refshape
-using StaticArrays
+using ..FEMeshes: FEMesh
+using ..FEFields: FEField
 
 """
     FESpace
 
-Type to represent the finite element space  for an (in general) vector degree of
-freedom per entity. 
+Type to represent the finite element space.  
 """
 struct FESpace{T<:AbstractFE}
-    feinfo::Tuple{T, Int64}
+    femesh::FEMesh
+    fefield::FEField
 end
-
-function FESpace(feinfo::Tuple{T, Int64}) where {T}
-    return FESpace(feinfo)
-end
-
-fe(self::FESpace{T}) where {T<:AbstractFE} = self.feinfo[1]
-multiplicity(self::FESpace{T}) where {T<:AbstractFE} = self.feinfo[2]
 
 end # module
