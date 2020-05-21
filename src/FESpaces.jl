@@ -11,7 +11,7 @@ using ..FEFields: FEField
 
 Type to represent the finite element space.  
 """
-struct FESpace{T<:AbstractFE}
+struct FESpace
     femesh::FEMesh
     fefield::FEField
 end
