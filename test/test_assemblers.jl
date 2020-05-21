@@ -33,7 +33,6 @@ using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, nodesperelem, refshape
 using Elfel.FElements: bfun, bfundpar, nbasisfuns
-using Elfel.FESpaces: FESpace
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Test
 function test()

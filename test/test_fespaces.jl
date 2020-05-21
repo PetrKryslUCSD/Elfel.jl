@@ -53,7 +53,7 @@ function test()
         end
     end
 
-    @show c = iterate(conn, 1)[1]
+    c = iterate(conn, 1)[1]
     J = SMatrix{sdim, mdim}(zeros(sdim, mdim))
     for j in 1:length(c)
         J += geom[c[j]] * gradNpar[j]
