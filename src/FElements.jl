@@ -23,12 +23,10 @@ Provide the number of nodes per element.
 """
 nodesperelem(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN} = NPE
 
-"""
-    ndofpernode(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN}
-
-Provide the number of degrees of freedom per node.
-"""
-ndofpernode(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN} = NDN
+nvdofs(::AbstractFE) = 0
+nedofs(::AbstractFE) = 0
+nfdofs(::AbstractFE) = 0
+ncdofs(::AbstractFE) = 0
 
 struct FE{RS, NPE, NDN} <: AbstractFE{RS, NPE, NDN}
 end
@@ -40,6 +38,12 @@ Provide the number of basis functions per element.
 """
 nbasisfuns(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN} = nodesperelem(fe)
 
+"""
+    ndofsperelem(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN}
+
+Provide the number of degrees of freedom per element.
+"""
+ndofsperelem(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN} = nvdofs(fe) + nedofs(fe) + nfdofs(fe) + ncdofs(fe)
 
 """
     Jacobian(::Val{0}, J::T) where {T}
@@ -178,6 +182,8 @@ end
 # L2 ==================================================================
 FEH1_L2(NDN) = FE{RefShapeInterval, 2, NDN}()
 
+nvdofs(::FE{RefShapeInterval, 2, NDN}) where {NDN} = 2 * NDN
+
 function bfun(self::FE{RefShapeInterval, 2, NDN},  param_coords::T) where {NDN, T}
     return SVector{2}([(1. - param_coords[1]); (1. + param_coords[1])] / 2.0)
 end
@@ -190,6 +196,8 @@ end
 # T3 ==================================================================
 FEH1_T3(NDN) = FE{RefShapeTriangle, 3, NDN}()
 
+nvdofs(::FE{RefShapeTriangle, 3, NDN}) where {NDN} = 3 * NDN
+
 function bfun(self::FE{RefShapeTriangle, 3, NDN},  param_coords::T) where {NDN, T}
     return SVector{3}([(1 - param_coords[1] - param_coords[2]); param_coords[1]; param_coords[2]])
 end
@@ -201,6 +209,8 @@ end
 
 # Q4 ==================================================================
 FEH1_Q4(NDN) = FE{RefShapeSquare, 4, NDN}()
+
+nvdofs(::FE{RefShapeSquare, 4, NDN}) where {NDN} = 4 * NDN
 
 function bfun(self::FE{RefShapeSquare, 4, NDN},  param_coords::T) where {NDN, T}
 	val = [0.25 * (1. - param_coords[1]) * (1. - param_coords[2]);

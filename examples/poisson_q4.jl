@@ -1,19 +1,19 @@
 module poisson_q4
 
+using LinearAlgebra
+using BenchmarkTools
+# using InteractiveUtils
+# using Profile
 using MeshCore: retrieve, nrelations, nentities
 using MeshMaker: Q4block
 using MeshKeeper: Mesh, insert!, baseincrel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
 using Elfel.FElements: FEH1_Q4, refshape, Jacobian, nbasisfuns
-using Elfel.FESpaces: FESpace
-using Elfel.FEMeshes: FEMesh
+using Elfel.FEMeshes: FEMesh, geomattr, iterate, connectivity
+using Elfel.FEFields: FEField, numberdofs!, ndofs
 using Elfel.IntegDomains: IntegDomain, quadrule, jac, bfundata
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!, SysvecAssembler
 using Elfel.Assemblers: LocalMatrixAssembler, LocalVectorAssembler, initialize!
-using LinearAlgebra
-using BenchmarkTools
-using InteractiveUtils
-using Profile
 
 A = 1.0 # length of the side of the square
 thermal_conductivity =  1.0; # conductivity matrix
@@ -28,17 +28,16 @@ function genmesh()
     return FEMesh(mesh, FEH1_Q4(1))
 end
 
-function assembleK(idom, kappa)
-    function integrate!(ass, geom, ir, qrule, nums, bd, fe, kappa)
+function assembleK(idom, T, kappa)
+    function integrate!(ass, geom, T, fe, conn, qrule, bd, kappa)
         vmdim = Val(manifdim(refshape(fe)))
         nbf = nbasisfuns(fe)
         la = LocalMatrixAssembler(nbf, nbf, 0.0)
-        for el in 1:nrelations(ir)
-            conn = retrieve(ir, el)
-            initialize!(la, nums, conn)
+        for c in conn
+            initialize!(la, T.dofnums, c)
             for qp in 1:qrule.npts
                 gradNparams = bd[2][qp]
-                Jac = jac(geom, conn, gradNparams)
+                Jac = jac(geom, c, gradNparams)
                 J = Jacobian(vmdim, Jac)
                 JxW = J * qrule.weights[qp]
                 invJac = inv(Jac)
@@ -54,13 +53,13 @@ function assembleK(idom, kappa)
         end
         return ass
     end
-    geom = geometry(idom.fex)
+    geom = geomattr(idom.femesh)
     bd = bfundata(idom)
     ass = SysmatAssemblerSparse(0.0)
-    ir = baseincrel(idom.fex.mesh)
+    conn = connectivity(idom.femesh)
     qrule = quadrule(idom)
-    start!(ass, ndofs(idom.fex), ndofs(idom.fex))
-    @time integrate!(ass, geom, ir, qrule, idom.fex.field.nums, bd, fe(idom.fex.fesp), kappa)
+    start!(ass, ndofs(T), ndofs(T))
+    @time integrate!(ass, geom, T, idom.femesh.fe, conn, qrule, bd, kappa)
     return finish!(ass)
 end
 
@@ -97,16 +96,15 @@ function assembleF(idom, Q)
 end
 
 function run()
-    mesh = genmesh()
-    fesp = FESpace((FEH1_Q4(1), 1))
-    fex = FEExpansion(mesh, fesp)
-    numberdofs!(fex)
-    idom = IntegDomain(fex, (kind = :Gauss, order = 2))
-    K = assembleK(idom, thermal_conductivity)
-    F = assembleF(idom, Q)
+   femesh = genmesh()
+   T = FEField(Float64, femesh) 
+   numberdofs!(T)
+   idom = IntegDomain(femesh, (kind = :Gauss, order = 2))
+   K = assembleK(idom, T, thermal_conductivity)
+   F = assembleF(idom, Q)
 end
 
 end
 
-heat_poisson_q4.run()
-heat_poisson_q4.run()
+poisson_q4.run()
+poisson_q4.run()

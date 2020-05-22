@@ -29,7 +29,7 @@ function initialize!(locass::L, nums, conn) where {L<:LocalMatrixAssembler}
     nbf = length(conn)
     k = 1
     for j in 1:nbf
-        gj = nums(conn[j])[1]
+        gj = nums[conn[j]]
         for i in 1:nbf
             gi = nums(conn[i])[1]
             locass.row[k] = gi

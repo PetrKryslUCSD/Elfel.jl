@@ -9,7 +9,7 @@ This package provides support for the development of Finite Element Method appli
 
 ## Dependencies
 
-The library relies on mesh support from the following suite of small packages:
+The library relies on mesh support from the following suite of small mesh-management packages:
 ```
 github.com/PetrKryslUCSD/MeshCore.jl
 github.com/PetrKryslUCSD/MeshPorter.jl
