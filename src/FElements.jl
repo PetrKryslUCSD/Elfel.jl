@@ -2,48 +2,39 @@ module FElements
 
 using StaticArrays
 using LinearAlgebra
+using MeshCore
 using ..RefShapes: RefShapePoint, RefShapeInterval, RefShapeTriangle, RefShapeTetrahedron, RefShapeSquare, RefShapeCube
 
-"""
-    AbstractFE{RS, NPE, NDN}
-
-Abstract type of a finite element set. 
-
-`RS`, `NPE`, `NDN` = reference shape, number of nodes per element, number of
-degrees of freedom per node
-"""
-abstract type AbstractFE{RS, NPE, NDN} end
-
-refshape(fe::AbstractFE{RS, NPE, NDN}) where {RS, NPE, NDN} = RS
 
 """
-    nodesperelem(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN}
+    FE{RS, SD} 
+
+Type of a finite element set. 
+
+- `RS` = reference shape,
+- `SD` = shape descriptor.
+"""
+struct FE{RS, SD} 
+    sd::SD
+    ndof::SVector{4, Int64}
+end
+
+shapedesc(fe::FE{RS, SD}) where {RS, SD} = fe.sd
+refshape(fe::FE{RS, SD}) where {RS, SD} = RS
+
+"""
+    ndofsperelem(fe::FE{RS, SD}) where {RS, SD}
 
 Provide the number of nodes per element.
 """
-nodesperelem(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN} = NPE
-
-nvdofs(::AbstractFE) = 0
-nedofs(::AbstractFE) = 0
-nfdofs(::AbstractFE) = 0
-ncdofs(::AbstractFE) = 0
-
-struct FE{RS, NPE, NDN} <: AbstractFE{RS, NPE, NDN}
+function ndofsperelem(fe::FE{RS, SD}) where {RS, SD}
+    md = manifdim(fe.sd)
+    n = 0
+    for m in 0:1:md
+        n = n + nfeatofdim(fe.sd, m) * fe.ndof[m+1]
+    end
+    return n
 end
-
-"""
-    nbasisfuns(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN}
-
-Provide the number of basis functions per element.
-"""
-nbasisfuns(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN} = nodesperelem(fe)
-
-"""
-    ndofsperelem(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN}
-
-Provide the number of degrees of freedom per element.
-"""
-ndofsperelem(fe::T) where {T<:AbstractFE{RS, NPE, NDN}} where {RS, NPE, NDN} = nvdofs(fe) + nedofs(fe) + nfdofs(fe) + ncdofs(fe)
 
 """
     Jacobian(::Val{0}, J::T) where {T}
@@ -180,39 +171,36 @@ function gradN!(::Val{3}, gradN::T1, gradNparams::T2, redJ::T3) where {T1, T2, T
 end
 
 # L2 ==================================================================
-FEH1_L2(NDN) = FE{RefShapeInterval, 2, NDN}()
+FEH1_L2_TYPE = FE{RefShapeInterval, typeof(MeshCore.L2)}
+FEH1_L2(NDN) = FEH1_L2_TYPE(MeshCore.L2, SVector([NDN, 0, 0, 0]))
 
-nvdofs(::FE{RefShapeInterval, 2, NDN}) where {NDN} = 2 * NDN
-
-function bfun(self::FE{RefShapeInterval, 2, NDN},  param_coords::T) where {NDN, T}
+function bfun(self::FEH1_L2_TYPE,  param_coords) 
     return SVector{2}([(1. - param_coords[1]); (1. + param_coords[1])] / 2.0)
 end
 
-function bfundpar(self::FE{RefShapeInterval, 2, NDN},  param_coords::T) where {NDN, T}
+function bfundpar(self::FEH1_L2_TYPE,  param_coords) 
     g = reshape([-1.0; +1.0]/2.0, 2, 1)
     return [SVector{1}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
 # T3 ==================================================================
-FEH1_T3(NDN) = FE{RefShapeTriangle, 3, NDN}()
+FEH1_T3_TYPE = FE{RefShapeTriangle, typeof(MeshCore.T3)}
+FEH1_T3(NDN) = FEH1_T3_TYPE(MeshCore.T3, SVector([NDN, 0, 0, 0]))
 
-nvdofs(::FE{RefShapeTriangle, 3, NDN}) where {NDN} = 3 * NDN
-
-function bfun(self::FE{RefShapeTriangle, 3, NDN},  param_coords::T) where {NDN, T}
+function bfun(self::FEH1_T3_TYPE,  param_coords) 
     return SVector{3}([(1 - param_coords[1] - param_coords[2]); param_coords[1]; param_coords[2]])
 end
 
-function bfundpar(self::FE{RefShapeTriangle, 3, NDN},  param_coords::T) where {NDN, T}
+function bfundpar(self::FEH1_T3_TYPE,  param_coords)
     g = [-1. -1.;  +1.  0.;  0. +1.]
     return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
 # Q4 ==================================================================
-FEH1_Q4(NDN) = FE{RefShapeSquare, 4, NDN}()
+FEH1_Q4_TYPE = FE{RefShapeTriangle, typeof(MeshCore.Q4)}
+FEH1_Q4(NDN) = FEH1_Q4_TYPE(MeshCore.Q4, SVector([NDN, 0, 0, 0]))
 
-nvdofs(::FE{RefShapeSquare, 4, NDN}) where {NDN} = 4 * NDN
-
-function bfun(self::FE{RefShapeSquare, 4, NDN},  param_coords::T) where {NDN, T}
+function bfun(self::FEH1_Q4_TYPE,  param_coords) 
 	val = [0.25 * (1. - param_coords[1]) * (1. - param_coords[2]);
 	       0.25 * (1. + param_coords[1]) * (1. - param_coords[2]);
 	       0.25 * (1. + param_coords[1]) * (1. + param_coords[2]);
@@ -220,7 +208,7 @@ function bfun(self::FE{RefShapeSquare, 4, NDN},  param_coords::T) where {NDN, T}
     return SVector{4}(val)
 end
 
-function bfundpar(self::FE{RefShapeSquare, 4, NDN},  param_coords::T) where {NDN, T}
+function bfundpar(self::FEH1_Q4_TYPE,  param_coords) 
     g =   [-(1. - param_coords[2])*0.25 -(1. - param_coords[1])*0.25;
             (1. - param_coords[2])*0.25 -(1. + param_coords[1])*0.25;
             (1. + param_coords[2])*0.25 (1. + param_coords[1])*0.25;
