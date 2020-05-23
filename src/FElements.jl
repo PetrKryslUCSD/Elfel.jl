@@ -20,10 +20,35 @@ struct FE{RS, SD}
     ndof::SVector{4, Int64}
 end
 
+"""
+    shapedesc(fe::FE{RS, SD}) where {RS, SD}
+
+Topological shape description.
+
+Refer to the MeshCore library.
+"""
 shapedesc(fe::FE{RS, SD}) where {RS, SD} = fe.sd
+
+"""
+    refshape(fe::FE{RS, SD}) where {RS, SD}
+
+Reference shape.
+"""
 refshape(fe::FE{RS, SD}) where {RS, SD} = RS
+
+"""
+    nfeatofdim(fe::FE{RS, SD}, m) where {RS, SD}
+
+Number of features of manifold dimension `m`.
+"""
 nfeatofdim(fe::FE{RS, SD}, m) where {RS, SD} = MeshCore.nfeatofdim(fe.sd, m)
-ndofsperfeat(fe::FE{RS, SD}, m) where {RS, SD} = nfeatofdim(fe, m) * fe.ndof[m+1]
+
+"""
+    ndofsperfeat(fe::FE{RS, SD}, m) where {RS, SD}
+
+Number of degrees of freedom per feature of manifold dimension `m`. 
+"""
+ndofsperfeat(fe::FE{RS, SD}, m) where {RS, SD} = fe.ndof[m+1]
 
 """
     ndofsperelem(fe::FE{RS, SD}) where {RS, SD}
@@ -34,7 +59,7 @@ function ndofsperelem(fe::FE{RS, SD}) where {RS, SD}
     md = manifdim(fe.sd)
     n = 0
     for m in 0:1:md
-        n = n + ndofsperfeat(fe, m)
+        n = n + nfeatofdim(fe, m) * ndofsperfeat(fe, m)
     end
     return n
 end
