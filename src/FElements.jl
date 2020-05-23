@@ -21,6 +21,8 @@ end
 
 shapedesc(fe::FE{RS, SD}) where {RS, SD} = fe.sd
 refshape(fe::FE{RS, SD}) where {RS, SD} = RS
+nfeatofdim(fe::FE{RS, SD}, m) where {RS, SD} = MeshCore.nfeatofdim(fe.sd, m)
+ndofsperfeat(fe::FE{RS, SD}, m) where {RS, SD} = nfeatofdim(fe, m) * fe.ndof[m+1]
 
 """
     ndofsperelem(fe::FE{RS, SD}) where {RS, SD}
@@ -31,7 +33,7 @@ function ndofsperelem(fe::FE{RS, SD}) where {RS, SD}
     md = manifdim(fe.sd)
     n = 0
     for m in 0:1:md
-        n = n + nfeatofdim(fe.sd, m) * fe.ndof[m+1]
+        n = n + ndofsperfeat(fe, m)
     end
     return n
 end
@@ -172,7 +174,7 @@ end
 
 # L2 ==================================================================
 FEH1_L2_TYPE = FE{RefShapeInterval, typeof(MeshCore.L2)}
-FEH1_L2(NDN) = FEH1_L2_TYPE(MeshCore.L2, SVector([NDN, 0, 0, 0]))
+FEH1_L2(NDN) = FEH1_L2_TYPE(MeshCore.L2, SVector{4}([NDN, 0, 0, 0]))
 
 function bfun(self::FEH1_L2_TYPE,  param_coords) 
     return SVector{2}([(1. - param_coords[1]); (1. + param_coords[1])] / 2.0)
@@ -185,7 +187,7 @@ end
 
 # T3 ==================================================================
 FEH1_T3_TYPE = FE{RefShapeTriangle, typeof(MeshCore.T3)}
-FEH1_T3(NDN) = FEH1_T3_TYPE(MeshCore.T3, SVector([NDN, 0, 0, 0]))
+FEH1_T3(NDN) = FEH1_T3_TYPE(MeshCore.T3, SVector{4}([NDN, 0, 0, 0]))
 
 function bfun(self::FEH1_T3_TYPE,  param_coords) 
     return SVector{3}([(1 - param_coords[1] - param_coords[2]); param_coords[1]; param_coords[2]])
@@ -198,7 +200,7 @@ end
 
 # Q4 ==================================================================
 FEH1_Q4_TYPE = FE{RefShapeTriangle, typeof(MeshCore.Q4)}
-FEH1_Q4(NDN) = FEH1_Q4_TYPE(MeshCore.Q4, SVector([NDN, 0, 0, 0]))
+FEH1_Q4(NDN) = FEH1_Q4_TYPE(MeshCore.Q4, SVector{4}([NDN, 0, 0, 0]))
 
 function bfun(self::FEH1_Q4_TYPE,  param_coords) 
 	val = [0.25 * (1. - param_coords[1]) * (1. - param_coords[2]);
