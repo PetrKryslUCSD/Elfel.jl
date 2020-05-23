@@ -6,7 +6,7 @@ import MeshKeeper: nspacedims
 using MeshCore
 using MeshCore: nshapes, indextype, VecAttrib, AbsAttrib, attribute, nrelations, retrieve
 import ..RefShapes: manifdim
-using ..FElements: nodesperelem, ndofpernode, refshape
+using ..FElements: refshape
 
 struct FEMesh
     mesh

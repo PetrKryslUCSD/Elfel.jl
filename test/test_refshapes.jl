@@ -1,5 +1,4 @@
 module mrs1
-using Elfel
 using Elfel.RefShapes: RefShapeInterval, manifdim
 using Elfel.RefShapes: quadrature, npts, param_coords, weights
 using Test
@@ -17,7 +16,6 @@ using .mrs1
 mrs1.test()
 
 module mrs2
-using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim
 using Elfel.RefShapes: quadrature, npts, param_coords, weights
 using Test

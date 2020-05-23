@@ -3,6 +3,7 @@ module FElements
 using StaticArrays
 using LinearAlgebra
 using MeshCore
+using MeshCore: manifdim
 using ..RefShapes: RefShapePoint, RefShapeInterval, RefShapeTriangle, RefShapeTetrahedron, RefShapeSquare, RefShapeCube
 
 
