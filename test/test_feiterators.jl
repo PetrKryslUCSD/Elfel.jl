@@ -49,9 +49,14 @@ function test()
     @test ndofs(fesp) == 12
     @test nunknowns(fesp) == 8
 
+    # @show fesp._irsfields
+
+    refd =  [[9], [1], [2], [10], [3], [4], [11], [5], [6], [12], [7], [8]]
     it = FEIterator(fesp)
     @time for el in it
-         el._dofs
+         # @show el._dofs
+         # @show refd[el._nodes]
+         @test isapprox(el._dofs, [refd[n][1] for n in el._nodes] )
     end
     # sdim = nspacedims(femesh)
     # mdim = manifdim(femesh)
@@ -80,29 +85,55 @@ end
 using .mfeit1
 mfeit1.test()
 
+module mfeit2
+using StaticArrays
+using LinearAlgebra
+using MeshCore
+using MeshKeeper: Mesh, load, nspacedims, baseincrel
+using Elfel
+using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
+using Elfel.FElements: FE, refshape, FEH1_T3
+using Elfel.FElements: bfun, bfundpar
+using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FEIterators: FEIterator, asstolma!, lma
+using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
+using Test
+A = [0.6744582963441466 0.2853043149927861 0.27460710155821255; 
+0.3781923479141225 0.2838873430062512 0.6316949656630075; 
+0.19369805365903336 0.8926164783344779 0.07006905962860177]
+function test()
+    fe = FEH1_T3(1)
+    mesh = load(Mesh(), "qmesh.mesh")
+    fesp = FESpace(Float64, fe, mesh)
 
+    for i in [1, 4, 7, 10]
+        setebc!(fesp, 0, i, 1, 0.0)
+    end
+    numberdofs!(fesp)
 
-# module massa1
-# using Elfel.Assemblers: LocalMatrixAssembler, initialize!, assemble!
-# using Test
-# function test()
-#     A = [0.6744582963441466 0.2853043149927861 0.27460710155821255; 
-#     0.3781923479141225 0.2838873430062512 0.6316949656630075; 
-#     0.19369805365903336 0.8926164783344779 0.07006905962860177]
-#     la = LocalMatrixAssembler(size(A, 1), size(A, 2), 0.0)
-#     initialize!(la, i -> i, [1, 2, 3])
-#     # @show rs, cs
-#     @test isapprox(la.row, [1, 2, 3, 1, 2, 3, 1, 2, 3])
-#     @test isapprox(la.col, [1, 1, 1, 2, 2, 2, 3, 3, 3])
-#     for j in 1:size(A, 2), i in 1:size(A, 1)
-#         assemble!(la, i, j, A[i, j])
-#     end
-#     @test isapprox(la.M, A)
-#     # @show A, vs
-# end
-# end
-# using .massa1
-# massa1.test()
+    ass = SysmatAssemblerSparse(0.0)
+    start!(ass, 12, 12)
+    it = FEIterator(fesp)
+    for el in it
+        for j in 1:size(A, 2), i in 1:size(A, 1)
+            asstolma!(el, i, j, A[i, j])
+        end
+        assemble!(ass, lma(el)...)
+    end
+    S = finish!(ass)
+
+    D = fill(0.0, 12, 12)
+    it = FEIterator(fesp)
+    for el in it
+        for j in 1:size(A, 2), i in 1:size(A, 1)
+            D[el._dofs[i], el._dofs[j]] += A[i, j]
+        end
+    end
+    @test isapprox(D - S, 0 * I)
+end
+end
+using .mfeit2
+mfeit2.test()
 
 
 # module massa2

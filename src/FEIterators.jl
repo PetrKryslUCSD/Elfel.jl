@@ -117,6 +117,8 @@ function _initlma!(it)
     return it
 end
 
+lma(it::FEIterator) = (it._lma.row, it._lma.col, vec(it._lma.M))
+
 """
     asstolma!(it::FEIterator, i, j, v) 
 
