@@ -3,95 +3,6 @@ module Assemblers
 using SparseArrays: sparse
 using LinearAlgebra: diag
 
-"""
-    LocalMatrixAssembler{IT<:Integer, T<:Number}
-
-Type of local assembler for a square matrix.
-"""
-struct LocalMatrixAssembler{IT<:Integer, T<:Number}
-    row::Vector{IT}
-    col::Vector{IT}
-    M::Matrix{T}
-end
-
-function LocalMatrixAssembler(nrow::IT, ncol::IT, z::T) where {IT, T}
-    return LocalMatrixAssembler(fill(zero(IT), nrow*ncol), fill(zero(IT), nrow*ncol), fill(zero(T), nrow, ncol))
-end
-
-"""
-    initialize!(locass::L, nums, conn) where {L<:LocalMatrixAssembler}
-
-Initialize a local assembler.
-
-This needs to be done once for each finite element.
-"""
-function initialize!(locass::L, nums, conn) where {L<:LocalMatrixAssembler}
-    nbf = length(conn)
-    k = 1
-    for j in 1:nbf
-        gj = nums[conn[j]]
-        for i in 1:nbf
-            gi = nums(conn[i])[1]
-            locass.row[k] = gi
-            locass.col[k] = gj
-            k = k + 1
-        end
-    end
-    fill!(locass.M, zero(eltype(locass.M)))
-    return locass
-end
-
-"""
-    assemble!(locass::L, i, j, v) where {L<:LocalMatrixAssembler}
-
-Update the `M[i, j]` value in the local assembler.
-"""
-function assemble!(locass::L, i, j, v) where {L<:LocalMatrixAssembler}
-    locass.M[i, j] += v
-    return locass
-end
-
-"""
-    LocalVectorAssembler{IT<:Integer, T<:Number}
-
-Type of local assembler for a vector.
-"""
-struct LocalVectorAssembler{IT<:Integer, T<:Number}
-    row::Vector{IT}
-    V::Vector{T}
-end
-
-function LocalVectorAssembler(nrow::IT, z::T) where {IT, T}
-    return LocalVectorAssembler(fill(zero(IT), nrow), fill(zero(T), nrow))
-end
-
-"""
-    initialize!(locass::L, nums, conn) where {L<:LocalMatrixAssembler}
-
-Initialize a local assembler.
-
-This needs to be done once for each finite element.
-"""
-function initialize!(locass::L, nums, conn) where {L<:LocalVectorAssembler}
-    nbf = length(conn)
-    for i in 1:nbf
-        gi = nums(conn[i])[1]
-        locass.row[i] = gi
-    end
-    fill!(locass.V, zero(eltype(locass.V)))
-    return locass
-end
-
-"""
-    assemble!(locass::L, i, j, v) where {L<:LocalMatrixAssembler}
-
-Update the `M[i, j]` value in the local assembler.
-"""
-function assemble!(locass::L, i, v) where {L<:LocalVectorAssembler}
-    locass.V[i] += v
-    return locass
-end
-
 
 """
     AbstractSysmatAssembler
@@ -182,8 +93,6 @@ end
     assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
 
 Assemble the triple of the row numbers, column numbers, and values.
-
-See the local assembler.
 """
 function assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
     append!(self.row, rs)
@@ -206,13 +115,6 @@ function assemble!(self::SysmatAssemblerSparse{T}, gi::AbstractVector{IT}, ke::A
             push!(self.col, gi[j])
         end
     end
-end
-
-function assemble!(self::SysmatAssemblerSparse{T}, la::LocalMatrixAssembler{IT, T}) where {IT<:Integer, T<:Number}
-    append!(self.row, la.row)
-    append!(self.col, la.col)
-    append!(self.val, la.M)
-    return self
 end
 
 """
@@ -304,7 +206,7 @@ end
     assemble!(self::SysvecAssembler{T}, vec::MV,
       dofnums::D) where {T<:Number, MV<:AbstractArray{T}, D<:AbstractArray{FInt}}
 
-Assemble an elementwise vector.
+Assemble an entry of an elementwise vector.
 
 The method assembles a column element vector using the vector of degree of
 freedom numbers for the rows.
@@ -314,10 +216,15 @@ function assemble!(self::SysvecAssembler{T}, i, val::T) where {T<:Number}
     return self
 end
 
-function assemble!(self::SysvecAssembler{T}, la::LocalVectorAssembler{IT, T}) where {IT<:Integer, T<:Number}
-    for i in 1:length(la.row)
-        gi = la.row[i]
-        self.val[gi] += la.V[i];
+"""
+    assemble!(self::SysvecAssembler{T}, rs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
+
+Assemble entire vector.
+"""
+function assemble!(self::SysvecAssembler{T}, rs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
+    for i in 1:length(rs)
+        gi = rs[i]
+        self.val[gi] += vs[i];
     end
     return self
 end
