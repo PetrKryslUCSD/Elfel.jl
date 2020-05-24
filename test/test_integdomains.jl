@@ -3,7 +3,7 @@ using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval, npts, param_coords, weights
 using Elfel.FElements: FE, refshape
 using Elfel.FElements: bfun, bfundpar, FEH1_T3
-using Elfel.FESpaces: FESpace, FEIterator, ndofs, numberdofs!, setebc!, nunknowns
+using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns
 using MeshKeeper: Mesh, load, baseincrel
 using MeshCore: retrieve
 using Elfel.IntegDomains: IntegDomain, bfundata, jac, quadrule
