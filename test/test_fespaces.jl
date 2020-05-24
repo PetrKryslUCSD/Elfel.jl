@@ -4,7 +4,7 @@ using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, refshape, FEH1_T3
 using Elfel.FElements: bfun, bfundpar
-using Elfel.FESpaces: FESpace, FEIterator
+using Elfel.FESpaces: FESpace, FEIterator, ndofs, numberdofs!, setebc!, nunknowns
 using MeshCore
 using MeshKeeper: Mesh, load, nspacedims, baseincrel
 using Test
@@ -25,12 +25,25 @@ function test()
     [5, 9, 8],                                                                                                                                                             
     [8, 9, 12],                                                                                                                                                            
     [8, 12, 11], ]   
-    i = FEIterator(fesp)
+    it = FEIterator(fesp)
     k = 1
-    for c in i
+    for c in it
         @test isapprox(c._nodes,  refc[k])
         k = k + 1
     end
+
+    # @show summary(mesh)
+
+    numberdofs!(fesp)
+    @test ndofs(fesp) == 12
+
+    for i in [1, 4, 7, 10]
+        setebc!(fesp, 0, i, 1, 0.0)
+    end
+    numberdofs!(fesp)
+    @test ndofs(fesp) == 12
+    @test nunknowns(fesp) == 8
+
     # sdim = nspacedims(femesh)
     # mdim = manifdim(femesh)
 

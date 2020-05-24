@@ -22,6 +22,34 @@ mutable struct FEField{N, T, IT}
     end
 end
 
+nterms(fef::FEField) = length(fef.dofnums)
+ndofsperterm(fef::FEField{N}) where {N} = N
+ndofs(fef::FEField) = nterms(fef) * ndofsperterm(fef)
+nunknowns(fef::FEField) = fef.nunknowns
+
+function setebc!(self::FEField, tid, comp, val::T) where {T}
+    ik = MVector(self.isdatum[tid])
+    ik[comp] = true
+    self.isdatum[tid] = ik
+    d = MVector(self.dofvals[tid])
+    d[comp] = val
+    self.dofvals[tid] = d
+    return  self
+end
+
+function gathersysvec!(vec, self::FEField)
+    nt = nterms(self)
+    ndpt = ndofsperterm(self)
+    # vec = fill(zero(eltype(self.dofvals[1])), nt * ndpt)
+    for i in 1:nt
+        en = self.dofnums[i]
+        for j in 1:ndpt
+            vec[en[j]] = self.dofvals[i][j]
+        end
+    end
+    return vec
+end
+
 struct FESpace{FET}
     fe::FET
     mesh::Mesh
@@ -127,22 +155,50 @@ function numberdofs!(fesp::FES)  where {FES<:FESpace}
 end
 
 """
-    setebc!(self::FEField{N, T}, eid, comp, val::T) where {N, T}
+    ndofs(fesp::FES)  where {FES<:FESpace}
+
+Compute the total number of degrees of freedom.
+"""
+function ndofs(fesp::FES)  where {FES<:FESpace}
+    n = 0
+    for m in 0:1:manifdim(fesp.fe.sd)
+        if ndofsperfeat(fesp.fe, m) > 0
+            n = n + ndofs(fesp._fields[m+1]) 
+        end 
+    end
+    return n
+end
+
+"""
+    nunknowns(fesp::FES)  where {FES<:FESpace}
+
+Compute the total number of unknown degrees of freedom.
+"""
+function nunknowns(fesp::FES)  where {FES<:FESpace}
+    n = 0
+    for m in 0:1:manifdim(fesp.fe.sd)
+        if ndofsperfeat(fesp.fe, m) > 0
+            n = n + nunknowns(fesp._fields[m+1]) 
+        end 
+    end
+    return n
+end
+
+"""
+    setebc!(fesp::FESpace, mid, eid, comp, val::T) where {T}
 
 Set the EBCs (essential boundary conditions).
 
-- `tid`  = term identifier (serial number),
+- `mid`  = manifold dimension of the entity,
+- `eid`  = serial number of the entity (term identifier),
 - `comp` = which  degree of freedom in the term,
 - `val`  = value of type T
+
+For instance, `mid = 0` means set  the degree of freedom at the vertex `eid`.
 """
-function setebc!(self::FEField, tid, comp, val::T) where {T}
-    ik = MVector(self.isdatum[tid])
-    ik[comp] = true
-    self.isdatum[tid] = ik
-    d = MVector(self.dofvals[tid])
-    d[comp] = val
-    self.dofvals[tid] = d
-    return  self
+function setebc!(fesp::FESpace, mid, eid, comp, val::T) where {T}
+    setebc!(fesp._fields[mid+1], eid, comp, val)
+    return  fesp
 end
 
 """
@@ -150,18 +206,18 @@ end
 
 Gather values from the field for the whole system vector.
 """
-function gathersysvec(self::FEField{N, T}) where {N, T}
-    nt = nterms(self)
-    ndpt = ndofsperterm(self)
-    vec = fill(zero(T), nt * ndpt)
-    for i in 1:nt
-        en = self.dofnums[i]
-        for j in 1:ndpt
-            vec[en[j]] = self.dofvals[i][j]
-        end
-    end
-    return vec
-end
+# function gathersysvec(self::FESpace)
+#     nt = nterms(self)
+#     ndpt = ndofsperterm(self)
+#     vec = fill(zero(eltype(self.dofvals[1])), nt * ndpt)
+#     for i in 1:nt
+#         en = self.dofnums[i]
+#         for j in 1:ndpt
+#             vec[en[j]] = self.dofvals[i][j]
+#         end
+#     end
+#     return vec
+# end
 
 
 end
