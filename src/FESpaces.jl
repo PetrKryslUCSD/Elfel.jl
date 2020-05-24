@@ -2,15 +2,16 @@ module FESpaces
 
 using StaticArrays
 using MeshCore
-using MeshCore: nshapes, indextype, nrelations, retrieve, manifdim
+using MeshCore: nshapes, indextype, nrelations, retrieve, manifdim, IncRel
 using MeshKeeper: Mesh, baseincrel, increl
-using ..FElements: nfeatofdim, ndofsperfeat, ndofsperelem, ndofsperfeat
+using ..FElements: nfeatofdim, ndofsperfeat, ndofsperelem
 
 mutable struct FEField{N, T, IT}
     dofnums::Vector{SVector{N, IT}}
     isdatum::Vector{SVector{N, Bool}}
     dofvals::Vector{SVector{N, T}}
     nunknowns::Int64
+
     function FEField(::Val{N}, ::Type{T}, ::Type{IT}, ns) where {N, T, IT}
         z = fill(zero(IT), N)
         dofnums = [SVector{N}(z) for i in 1:ns]
@@ -53,24 +54,25 @@ end
 struct FESpace{FET}
     fe::FET
     mesh::Mesh
-    _fields::Vector{FEField}
+    _irsfields::Dict
 
     function FESpace(::Type{T}, fe::FET, mesh) where {T, FET}
         baseir = baseincrel(mesh)
-        _fields = _makefields(T, indextype(baseir), fe, mesh)
-        return new{FET}(fe, mesh, _fields)
+        _irsfields = _makefields(T, indextype(baseir), fe, mesh)
+        return new{FET}(fe, mesh, _irsfields)
     end
 end
 
 function _makefields(::Type{T}, ::Type{IT}, fe, mesh) where {T, IT} 
-    fv = [FEField(Val(ndofsperfeat(fe, m)), T, IT, 0) for m in 0:1:3]
+    _irsfields= Dict()
     for m in 0:1:manifdim(fe.sd)
         if ndofsperfeat(fe, m) > 0
-            ir = increl(mesh, (manifdim(fe.sd), m))
-            fv[m+1] = FEField(Val(ndofsperfeat(fe, m)), T, IT, nshapes(ir.right))
+            fir = increl(mesh, (manifdim(fe.sd), m))
+            fld = FEField(Val(ndofsperfeat(fe, m)), T, IT, nshapes(fir.right))
+            _irsfields[m] = (fir, fld)
         end 
     end
-    return fv
+    return _irsfields
 end
 
 #= TODO is it more natural to have access to the geometry from the font element space or from the iterator? =#
@@ -80,6 +82,9 @@ struct FEIterator{FES, IR, G}
     _geom::G
     _dofs::Vector{Int64}
     _nodes::Vector{Int64}
+    _m::Vector{Int64}
+    _irs::Vector{IncRel}
+    _flds::Vector{FEField}
     
     function FEIterator(fesp::FES) where {FES}
         _bir = baseincrel(fesp.mesh)
@@ -88,24 +93,50 @@ struct FEIterator{FES, IR, G}
         _dofs = zeros(Int64, nd)
         nn = nfeatofdim(fesp.fe, 0)
         _nodes = zeros(Int64, nn) 
-        return new{FES, typeof(_bir), typeof(_geom)}(fesp, _bir, _geom, _dofs, _nodes)
+        _m = Int64[]
+        _irs = IncRel[]
+        _flds = FEField[]
+        for m in keys(fesp._irsfields)
+            v = fesp._irsfields[m]
+            push!(_m, m)
+            push!(_irs, v[1])
+            push!(_flds, v[2])
+        end
+        return new{FES, typeof(_bir), typeof(_geom)}(fesp, _bir, _geom, _dofs, _nodes, _m, _irs, _flds)
     end
 end
 
-function update!(i::FEIterator, state)
-    #= TODO =#
-    copyto!(i._nodes, retrieve(i._bir, state))
-    return i
+function _storedofs!(d, p, e, ir, fl)
+    c = retrieve(ir, e)
+    for k in c
+        eq = fl.dofnums[k]
+        for n in eq
+            d[p] = n
+            p = p + 1
+        end
+    end
+    return p
 end
 
-function Base.iterate(i::FEIterator, state = 1)
-    if state > nrelations(i._bir)
+function update!(it::FEIterator, state)
+    #= TODO =#
+    copyto!(it._nodes, retrieve(it._bir, state))
+    p = 1
+    for i in 1:length(it._m)
+        m = it._m[i]
+        p = _storedofs!(it._dofs, p, state, it._irs[i], it._flds[i])
+    end
+    return it
+end
+
+function Base.iterate(it::FEIterator, state = 1)
+    if state > nrelations(it._bir)
         return nothing
     else
-        return (update!(i, state), state+1)
+        return (update!(it, state), state+1)
     end
 end
-Base.length(i::FEIterator)  = nrelations(i._bir)
+Base.length(it::FEIterator)  = nrelations(it._bir)
 
 """
     numberdofs!(self::FEField)
@@ -146,9 +177,10 @@ function numberdofs!(fesp::FES)  where {FES<:FESpace}
         return  f
     end
 
-    for m in 0:1:manifdim(fesp.fe.sd)
+    for m in keys(fesp._irsfields)
         if ndofsperfeat(fesp.fe, m) > 0
-            fieldnumberdofs!(fesp._fields[m+1]) 
+            v = fesp._irsfields[m]
+            fieldnumberdofs!(v[2]) 
         end 
     end
     return fesp
@@ -161,9 +193,10 @@ Compute the total number of degrees of freedom.
 """
 function ndofs(fesp::FES)  where {FES<:FESpace}
     n = 0
-    for m in 0:1:manifdim(fesp.fe.sd)
+    for m in keys(fesp._irsfields)
         if ndofsperfeat(fesp.fe, m) > 0
-            n = n + ndofs(fesp._fields[m+1]) 
+            v = fesp._irsfields[m]
+            n = n + ndofs(v[2]) 
         end 
     end
     return n
@@ -176,9 +209,10 @@ Compute the total number of unknown degrees of freedom.
 """
 function nunknowns(fesp::FES)  where {FES<:FESpace}
     n = 0
-    for m in 0:1:manifdim(fesp.fe.sd)
+    for m in keys(fesp._irsfields)
         if ndofsperfeat(fesp.fe, m) > 0
-            n = n + nunknowns(fesp._fields[m+1]) 
+            v = fesp._irsfields[m]
+            n = n + nunknowns(v[2]) 
         end 
     end
     return n
@@ -197,7 +231,8 @@ Set the EBCs (essential boundary conditions).
 For instance, `mid = 0` means set  the degree of freedom at the vertex `eid`.
 """
 function setebc!(fesp::FESpace, mid, eid, comp, val::T) where {T}
-    setebc!(fesp._fields[mid+1], eid, comp, val)
+    v = fesp._irsfields[mid]
+    setebc!(v[2], eid, comp, val)
     return  fesp
 end
 

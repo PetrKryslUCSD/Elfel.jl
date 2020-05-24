@@ -2,8 +2,8 @@ module IntegDomains
 
 using StaticArrays
 using Elfel.RefShapes: manifdim, IntegRule, quadrature
-using Elfel.FElements: refshape, bfun, bfundpar, nbasisfuns
-using Elfel.FEMeshes: FEMesh
+using Elfel.FElements: refshape, bfun, bfundpar, ndofsperelem
+using Elfel.FESpaces: FESpace
 
 """
     IntegDomain{FET, GT}
@@ -11,7 +11,7 @@ using Elfel.FEMeshes: FEMesh
 Integration domain.
 """
 struct IntegDomain
-    femesh::FEMesh
+    fesp::FESpace
     _quadr::IntegRule
     _bfundata
 end
@@ -22,7 +22,7 @@ function __bfundata(fe, qr)
     npts = qr.npts
     # Precompute basis f. values + basis f. gradients wrt parametric coor
     FET = fe
-    NBFPE = nbasisfuns(FET)
+    NBFPE = ndofsperelem(FET)
     MDIM = manifdim(refshape(FET))
     Ns = SVector{NBFPE}[];
     TMP = SVector{MDIM}(zeros(MDIM))'
@@ -42,10 +42,10 @@ end
 Create integration domain from  a finite element expansion and numerical
 quadrature settings.
 """
-function IntegDomain(femesh::FEMesh, quadraturesettings) 
-	_quadr = quadrature(refshape(femesh.fe), quadraturesettings)
-    _bfundata = __bfundata(femesh.fe, _quadr)
-    return IntegDomain(femesh, _quadr, _bfundata)
+function IntegDomain(fesp::FESpace, quadraturesettings) 
+	_quadr = quadrature(refshape(fesp.fe), quadraturesettings)
+    _bfundata = __bfundata(fesp.fe, _quadr)
+    return IntegDomain(fesp, _quadr, _bfundata)
 end
 
 """

@@ -31,6 +31,7 @@ function test()
         @test isapprox(c._nodes,  refc[k])
         k = k + 1
     end
+    @test length(it) == 12
 
     # @show summary(mesh)
 
@@ -44,6 +45,10 @@ function test()
     @test ndofs(fesp) == 12
     @test nunknowns(fesp) == 8
 
+    it = FEIterator(fesp)
+    for el in it
+        @show el._dofs
+    end
     # sdim = nspacedims(femesh)
     # mdim = manifdim(femesh)
 
