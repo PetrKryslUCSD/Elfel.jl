@@ -46,10 +46,12 @@ function test()
         k = k + 1
     end
 
-    refgNs = [[-1.0 -1.0], [1.0 0.0], [0.0 1.0]]
+    refgNs = [[-1.0, -1.0], [1.0, 0.0], [0.0, 1.0]]
     for qp in qpit
         gradNs = bfungradpar(qp) 
-        @test isapprox(gradNs, refgNs)
+        for i in 1:length(gradNs)
+            @test isapprox(gradNs[i], refgNs[i])
+        end
     end
 
     for qp in qpit

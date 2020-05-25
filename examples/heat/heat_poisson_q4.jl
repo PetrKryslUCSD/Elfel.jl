@@ -52,13 +52,27 @@ function integrateK!(ass, geom, elit, qpit)
     return ass
 end
 
+function f(qpit) 
+    # @show typeof(qpit)
+    # gradNparams = bfungradpar(qpit)
+    gradNparams = weight(qpit)
+end
+
+function f(d, j)
+    # gradNparams = bfungradpar(qpit)
+    gradNparams = d[j]
+end
+
 function assembleK(fesp)
     elit = FEIterator(fesp)
     qpit = QPIterator(fesp.fe, (kind = :Gauss, order = 2))
     geom = geometry(elit)
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, ndofs(fesp), ndofs(fesp))
-    @code_warntype integrateK!(ass, geom, elit, qpit)
+    @show typeof(qpit)
+    @code_warntype f(qpit)
+    # @code_warntype f(qpit._bfungraddata, qpit._pt[])
+    integrateK!(ass, geom, elit, qpit)
     return finish!(ass)
 end
 
