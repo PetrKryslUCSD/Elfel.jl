@@ -128,5 +128,21 @@ Gather values from the field for the whole system vector.
 #     return vec
 # end
 
+"""
+    scattersysvec!(self::FESpace, v)
+
+Scatter values from the system vector.
+"""
+function scattersysvec!(self::FESpace, v)
+    nt = nterms(self)
+    ndpt = ndofsperterm(self)
+    for i in 1:nt
+        en = self.dofnums[i]
+        for j in 1:ndpt
+            self.dofvals[i][j] = v[en[j]]
+        end
+    end
+    return self
+end
 
 end

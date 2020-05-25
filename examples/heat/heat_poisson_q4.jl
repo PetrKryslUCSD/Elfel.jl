@@ -10,7 +10,7 @@ using MeshKeeper: Mesh, insert!, baseincrel, boundary
 using MeshFinder: connectedv
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
 using Elfel.FElements: FEH1_Q4, refshape, Jacobian, jac
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype, scattersysvec!
 using Elfel.FEIterators: FEIterator, geometry, ndofsperelem, elemnodes, elemdofs
 using Elfel.FEIterators: asstolma!, lma, asstolva!, lva
 using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
@@ -107,6 +107,7 @@ function run()
     K = assembleK(fesp, kappa)
     F = assembleF(fesp, Q)
     T = K[1:nunknowns(fesp), 1:nunknowns(fesp)] \ F[1:nunknowns(fesp)]
+    scattersysvec!(fesp, T)
 end
 
 end
