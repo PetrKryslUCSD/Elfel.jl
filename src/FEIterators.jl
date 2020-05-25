@@ -100,6 +100,7 @@ function _update!(it::FEIterator, state)
         p = _storedofs!(it._dofs, p, state, it._irs[i], it._flds[i])
     end
     _initlma!(it)
+    _initlva!(it)
     return it
 end
 
@@ -137,12 +138,8 @@ function asstolma!(it::FEIterator, i, j, v)
 end
 
 
-function _initlva!(it)
-    nd = length(it._dofs)
-    for i in 1:nd
-        gi = it._dofs[i]
-        it._lva.row[i] = gi
-    end
+function _initlva!(it::FEIterator)
+    copyto!(it._lva.row, it._dofs)
     fill!(it._lva.V, zero(eltype(it._lva.V)))
     return it
 end
@@ -151,5 +148,12 @@ function asstolva!(it::FEIterator, i, v)
     it._lva.V[i] += v
     return it
 end
+
+"""
+    lva(it::FEIterator)
+
+Retrieve the local vector assembly data.
+"""
+lva(it::FEIterator) = (it._lva.row, it._lva.V)
 
 end

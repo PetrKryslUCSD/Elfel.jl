@@ -11,17 +11,12 @@ function __bfundata(fe, qr)
     pc = qr.param_coords
     w  =  qr.weights
     npts = qr.npts
-    # Precompute basis f. values + basis f. gradients wrt parametric coor
-    FET = fe
-    MDIM = manifdim(refshape(FET))
+    MDIM = manifdim(refshape(fe))
     Ns = Vector{Float64}[];
-    # TMP = SVector{MDIM}(zeros(MDIM))'
-    # gradNparams = Vector{typeof(TMP)}[];
     gradNparams = Vector{LinearAlgebra.Adjoint{Float64,SArray{Tuple{MDIM},Float64,1,MDIM}}}[];
     for j in 1:npts
-        push!(Ns, bfun(FET, pc[j,:]))
-        push!(gradNparams, bfungradpar(FET, pc[j,:]))
-        # push!(gradNs, bfungradpar(FET, pc[j,:]))
+        push!(Ns, bfun(fe, pc[j,:]))
+        push!(gradNparams, bfungradpar(fe, pc[j,:]))
     end
     return (Ns, gradNparams)
 end
