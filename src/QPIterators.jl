@@ -26,17 +26,32 @@ function __bfundata(fe, qr)
     return (Ns, gradNparams, gradNs)
 end
 
-struct QPIterator{FET, BFT}
+struct QPIterator{FET, BFT, BFGT}
     fe::FET
     _quadr::IntegRule
     _bfundata::BFT
+    _bfungraddata::BFGT
     _pt::Ref{Int64}
     
     function QPIterator(fe::FET, quadraturesettings) where {FET}
         _quadr = quadrature(refshape(fe), quadraturesettings)
         _bfundata = __bfundata(fe, _quadr)
+        pc = _quadr.param_coords
+        w  =  _quadr.weights
+        npts = _quadr.npts
+        NBFPE = ndofsperelem(fe)
+        MDIM = manifdim(refshape(fe))
+        Ns = SVector{NBFPE}[];
+        TMP = SVector{MDIM}(zeros(MDIM))'
+        gradNparams = Vector{typeof(TMP)}[];
+        # gradNs = Vector{typeof(TMP)}[];
+        for j in 1:npts
+            push!(Ns, bfun(fe, pc[j,:]))
+            push!(gradNparams, bfungradpar(fe, pc[j,:]))
+            # push!(gradNs, bfungradpar(FET, pc[j,:]))
+        end
         _pt = Ref(0)
-        return new{FET, typeof(_bfundata)}(fe, _quadr, _bfundata, _pt)
+        return new{FET, typeof(Ns), typeof(gradNparams)}(fe, _quadr, Ns, gradNparams, _pt)
     end
 end
 
@@ -54,8 +69,8 @@ function _update!(it::QPIterator, state)
     return it
 end
 
-bfun(it::QPIterator) = it._bfundata[1][it._pt[]]
-bfungradpar(it::QPIterator) = it._bfundata[2][it._pt[]]
+bfun(it::QPIterator) = it._bfundata[it._pt[]]
+bfungradpar(it::QPIterator) = it._bfungraddata[it._pt[]]
 weight(it::QPIterator) = it._quadr.weights[it._pt[]]
 
 end

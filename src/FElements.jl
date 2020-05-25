@@ -198,6 +198,21 @@ function gradN!(::Val{3}, gradN::T1, gradNparams::T2, redJ::T3) where {T1, T2, T
     end
 end
 
+"""
+    jac(locs, conn, gradNpar)
+
+Compute the Jacobian matrix.
+"""
+function jac(locs, conn, gradNpar)
+    NBFPE = length(gradNpar)
+    j = 1
+    J = locs[conn[j]] * gradNpar[j]
+    @inbounds for j in 2:NBFPE
+        J += locs[conn[j]] * gradNpar[j]
+    end
+    return J
+end
+
 # L2 ==================================================================
 FEH1_L2_TYPE = FE{RefShapeInterval, typeof(MeshCore.L2)}
 FEH1_L2(NDN) = FEH1_L2_TYPE(MeshCore.L2, SVector{4}([NDN, 0, 0, 0]))
@@ -225,7 +240,7 @@ function bfungradpar(self::FEH1_T3_TYPE,  param_coords)
 end
 
 # Q4 ==================================================================
-FEH1_Q4_TYPE = FE{RefShapeTriangle, typeof(MeshCore.Q4)}
+FEH1_Q4_TYPE = FE{RefShapeSquare, typeof(MeshCore.Q4)}
 FEH1_Q4(NDN) = FEH1_Q4_TYPE(MeshCore.Q4, SVector{4}([NDN, 0, 0, 0]))
 
 function bfun(self::FEH1_Q4_TYPE,  param_coords) 

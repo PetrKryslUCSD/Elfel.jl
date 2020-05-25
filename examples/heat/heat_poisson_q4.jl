@@ -1,25 +1,25 @@
 module heat_poisson_q4
 
+using LinearAlgebra
+using BenchmarkTools
+using InteractiveUtils
+# using Profile
 using MeshCore: retrieve, nrelations, nentities
 using MeshMaker: Q4block
 using MeshKeeper: Mesh, insert!, baseincrel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
-using Elfel.FElements: FEH1_Q4, refshape, Jacobian, nbasisfuns
-using Elfel.FESpaces: FESpace, fe
-using Elfel.FEExpansions: FEExpansion, numberdofs!, geometry, ndofs
-using Elfel.IntegDomains: IntegDomain, quadrule, jac, bfundata
-using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!, local_assembler, fill_dofs!
-using LinearAlgebra
-using BenchmarkTools
-using InteractiveUtils
-using Profile
+using Elfel.FElements: FEH1_Q4, refshape, Jacobian, jac
+using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FEIterators: FEIterator, asstolma!, lma, geometry, ndofsperelem, elemnodes
+using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
+using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 
 A = 1.0 # length of the side of the square
 thermal_conductivity =  1.0; # conductivity matrix
 Q = -6.0; # internal heat generation rate
 tempf(x, y) =(1.0 + x^2 + 2.0 * y^2);#the exact distribution of temperature
 tempf(x) = tempf.(view(x, :, 1), view(x, :, 2))
-N = 1000;# number of subdivisions along the sides of the square domain
+N = 2;# number of subdivisions along the sides of the square domain
 
 function genmesh()
     conn = Q4block(A, A, N, N)
@@ -28,57 +28,48 @@ function genmesh()
     return mesh
 end
 
-function integrate!(ass, geom, ir, qrule, nums, bd, fe)
-    vmdim = Val(manifdim(refshape(fe)))
-    nbf = nbasisfuns(fe)
-    rs, cs, vs = local_assembler(nbf, nbf, 0.0)
-    for el in 1:nrelations(ir)
-        conn = retrieve(ir, el)
-        fill!(vs, 0.0)
-        fill_dofs!(rs, cs, nums, conn)
-        for qp in 1:qrule.npts
-            gradNparams = bd[2][qp]
-            Jac = jac(geom, conn, gradNparams)
+function integrateK!(ass, geom, elit, qpit)
+    vmdim = Val(manifdim(refshape(elit.fesp.fe)))
+    nedof = ndofsperelem(elit)
+    for el in elit
+        for qp in qpit
+            gradNparams = bfungradpar(qp)
+            Jac = jac(geom, elemnodes(el), gradNparams)
             J = Jacobian(vmdim, Jac)
-            JxW = J * qrule.weights[qp]
+            JxW = J * weight(qp)
             invJac = inv(Jac)
-            k = 1
-            for i in 1:nbf
-                gradNi = gradNparams[i] * invJac
-                for j in 1:nbf
-                    gradNj = gradNparams[j] * invJac
-                    vs[k] += dot(gradNi, gradNj) * JxW 
-                    k = k + 1
+            for j in 1:nedof
+                gradNj = gradNparams[j] * invJac
+                for i in 1:nedof
+                    gradNi = gradNparams[i] * invJac
+                    v = dot(gradNi, gradNj) * JxW 
+                    asstolma!(el, i, j, v)
                 end
             end
         end
-        assemble!(ass, rs, cs, vs)
+        assemble!(ass, lma(el)...)
     end
     return ass
 end
 
-function assembleK(idom)
-    geom = geometry(idom.fex)
-    bd = bfundata(idom)
+function assembleK(fesp)
+    elit = FEIterator(fesp)
+    qpit = QPIterator(fesp.fe, (kind = :Gauss, order = 2))
+    geom = geometry(elit)
     ass = SysmatAssemblerSparse(0.0)
-    ir = baseincrel(idom.fex.mesh)
-    qrule = quadrule(idom)
-    start!(ass, ndofs(idom.fex), ndofs(idom.fex))
-    @time integrate!(ass, geom, ir, qrule, idom.fex.field.nums, bd, fe(idom.fex.fesp))
-    
+    start!(ass, ndofs(fesp), ndofs(fesp))
+    @code_warntype integrateK!(ass, geom, elit, qpit)
     return finish!(ass)
 end
 
 function run()
     mesh = genmesh()
-    fesp = FESpace((FEH1_Q4(1), 1))
-    fex = FEExpansion(mesh, fesp)
-    numberdofs!(fex)
-    idom = IntegDomain(fex, (kind = :Gauss, order = 2))
-    K = assembleK(idom)
+    fesp = FESpace(Float64, FEH1_Q4(1), mesh)
+    numberdofs!(fesp)
+    K = assembleK(fesp)
 end
 
 end
 
 heat_poisson_q4.run()
-heat_poisson_q4.run()
+# heat_poisson_q4.run()

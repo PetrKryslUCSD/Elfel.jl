@@ -77,6 +77,7 @@ Base.length(it::FEIterator)  = nrelations(it._bir)
 ndofsperelem(it::FEIterator) = ndofsperelem(it.fesp.fe)
 elemdofs(it::FEIterator) = it._dofs
 elemnodes(it::FEIterator) = it._nodes
+geometry(it::FEIterator) = it._geom
 
 function _storedofs!(d, p, e, ir, fl)
     c = retrieve(ir, e)
@@ -117,6 +118,11 @@ function _initlma!(it)
     return it
 end
 
+"""
+    lma(it::FEIterator)
+
+Retrieve the local matrix assembly data.
+"""
 lma(it::FEIterator) = (it._lma.row, it._lma.col, vec(it._lma.M))
 
 """
