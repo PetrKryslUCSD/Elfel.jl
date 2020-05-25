@@ -2,7 +2,7 @@ module mfld1
 using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, ndofsperfeat, refshape
-using Elfel.FElements: bfun, bfundpar, FEH1_T3
+using Elfel.FElements: bfun, bfungradpar, FEH1_T3
 using MeshKeeper: Mesh, load, increl, baseincrel
 using MeshCore: nshapes
 using Elfel.FEFields: FEField, nterms, numberdofs!, ndofsperterm, doftype, setebc!, gathersysvec!, ndofs

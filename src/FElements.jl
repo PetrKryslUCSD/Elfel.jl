@@ -206,7 +206,7 @@ function bfun(self::FEH1_L2_TYPE,  param_coords)
     return SVector{2}([(1. - param_coords[1]); (1. + param_coords[1])] / 2.0)
 end
 
-function bfundpar(self::FEH1_L2_TYPE,  param_coords) 
+function bfungradpar(self::FEH1_L2_TYPE,  param_coords) 
     g = reshape([-1.0; +1.0]/2.0, 2, 1)
     return [SVector{1}(g[idx, :])' for idx in 1:size(g, 1)]
 end
@@ -219,7 +219,7 @@ function bfun(self::FEH1_T3_TYPE,  param_coords)
     return SVector{3}([(1 - param_coords[1] - param_coords[2]); param_coords[1]; param_coords[2]])
 end
 
-function bfundpar(self::FEH1_T3_TYPE,  param_coords)
+function bfungradpar(self::FEH1_T3_TYPE,  param_coords)
     g = [-1. -1.;  +1.  0.;  0. +1.]
     return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
 end
@@ -236,7 +236,7 @@ function bfun(self::FEH1_Q4_TYPE,  param_coords)
     return SVector{4}(val)
 end
 
-function bfundpar(self::FEH1_Q4_TYPE,  param_coords) 
+function bfungradpar(self::FEH1_Q4_TYPE,  param_coords) 
     g =   [-(1. - param_coords[2])*0.25 -(1. - param_coords[1])*0.25;
             (1. - param_coords[2])*0.25 -(1. + param_coords[1])*0.25;
             (1. + param_coords[2])*0.25 (1. + param_coords[1])*0.25;

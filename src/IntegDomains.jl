@@ -2,7 +2,7 @@ module IntegDomains
 
 using StaticArrays
 using Elfel.RefShapes: manifdim, IntegRule, quadrature
-using Elfel.FElements: refshape, bfun, bfundpar, ndofsperelem
+using Elfel.FElements: refshape, bfun, bfungradpar, ndofsperelem
 using Elfel.FESpaces: FESpace
 
 """
@@ -30,8 +30,8 @@ function __bfundata(fe, qr)
     gradNs = Vector{typeof(TMP)}[];
     for j in 1:npts
         push!(Ns, bfun(FET, pc[j,:]))
-        push!(gradNparams, bfundpar(FET, pc[j,:]))
-        push!(gradNs, bfundpar(FET, pc[j,:]))
+        push!(gradNparams, bfungradpar(FET, pc[j,:]))
+        push!(gradNs, bfungradpar(FET, pc[j,:]))
     end
     return (Ns, gradNparams, gradNs)
 end

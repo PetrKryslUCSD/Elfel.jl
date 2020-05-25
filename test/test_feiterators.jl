@@ -3,7 +3,7 @@ using StaticArrays
 using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, refshape, FEH1_T3
-using Elfel.FElements: bfun, bfundpar
+using Elfel.FElements: bfun, bfungradpar
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FEIterators: FEIterator
 
@@ -64,7 +64,7 @@ function test()
     # geom = geomattr(femesh)  
 
     # el = 4
-    # gradNpar = bfundpar(fespace.fe, [1/3, 1/3])
+    # gradNpar = bfungradpar(fespace.fe, [1/3, 1/3])
     
     # conn = connectivity(femesh)
     # for c in conn
@@ -93,7 +93,7 @@ using MeshKeeper: Mesh, load, nspacedims, baseincrel
 using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, refshape, FEH1_T3
-using Elfel.FElements: bfun, bfundpar
+using Elfel.FElements: bfun, bfungradpar
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FEIterators: FEIterator, asstolma!, lma
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
