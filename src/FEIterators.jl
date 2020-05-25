@@ -31,7 +31,7 @@ function _LocalVectorAssembler(nrow::IT, z::T) where {IT, T}
 end
 
 #= TODO is it more natural to have access to the geometry from the font element space or from the iterator? =#
-struct FEIterator{FES, IR, G}
+struct FEIterator{FES, IR, G, IT, T}
     fesp::FES
     _bir::IR
     _geom::G
@@ -40,8 +40,8 @@ struct FEIterator{FES, IR, G}
     _m::Vector{Int64}
     _irs::Vector{IncRel}
     _flds::Vector{FEField}
-    _lma::_LocalMatrixAssembler
-    _lva::_LocalVectorAssembler
+    _lma::_LocalMatrixAssembler{IT, T}
+    _lva::_LocalVectorAssembler{IT, T}
     
     function FEIterator(fesp::FES) where {FES}
         _bir = baseincrel(fesp.mesh)
@@ -59,9 +59,10 @@ struct FEIterator{FES, IR, G}
             push!(_irs, v[1])
             push!(_flds, v[2])
         end
-        _lma = _LocalMatrixAssembler(nd, zero(doftype(fesp)))
+        # _lma = _LocalMatrixAssembler(nd, zero(doftype(fesp)))
+        _lma = _LocalMatrixAssembler(nd, zero(Float64))
         _lva = _LocalVectorAssembler(nd, zero(doftype(fesp)))
-        return new{FES, typeof(_bir), typeof(_geom)}(fesp, _bir, _geom, _dofs, _nodes, _m, _irs, _flds, _lma, _lva)
+        return new{FES, typeof(_bir), typeof(_geom), Int64, Float64}(fesp, _bir, _geom, _dofs, _nodes, _m, _irs, _flds, _lma, _lva)
     end
 end
 
@@ -132,7 +133,7 @@ Assemble scalar `v` into the row `i` and column `j` of the local matrix.
 """
 function asstolma!(it::FEIterator, i, j, v) 
     it._lma.M[i, j] += v
-    return it
+    return nothing
 end
 
 

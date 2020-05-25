@@ -46,7 +46,7 @@ function test()
         k = k + 1
     end
 
-    refgNs = [[-1.0, -1.0], [1.0, 0.0], [0.0, 1.0]]
+    refgNs = [[-1.0 -1.0], [1.0 0.0], [0.0 1.0]]
     for qp in qpit
         gradNs = bfungradpar(qp) 
         for i in 1:length(gradNs)
