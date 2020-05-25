@@ -6,7 +6,8 @@ using InteractiveUtils
 # using Profile
 using MeshCore: retrieve, nrelations, nentities
 using MeshMaker: Q4block
-using MeshKeeper: Mesh, insert!, baseincrel
+using MeshKeeper: Mesh, insert!, baseincrel, boundary
+using MeshFinder: connectedv
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
 using Elfel.FElements: FEH1_Q4, refshape, Jacobian, jac
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
@@ -96,9 +97,16 @@ end
 function run()
     mesh = genmesh()
     fesp = FESpace(Float64, FEH1_Q4(1), mesh)
+    bir = boundary(mesh);
+    vl = connectedv(bir);
+    for i in vl
+        setebc!(fesp, 0, i, 1, 0.0)
+    end
     numberdofs!(fesp)
+    @show nunknowns(fesp)
     K = assembleK(fesp, kappa)
     F = assembleF(fesp, Q)
+    T = K[1:nunknowns(fesp), 1:nunknowns(fesp)] \ F[1:nunknowns(fesp)]
 end
 
 end
