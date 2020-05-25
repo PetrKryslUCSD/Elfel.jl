@@ -60,9 +60,9 @@ struct FEIterator{FES, IR, G, IT, T}
             push!(_flds, v[2])
         end
         # _lma = _LocalMatrixAssembler(nd, zero(doftype(fesp)))
-        _lma = _LocalMatrixAssembler(nd, zero(Float64))
+        _lma = _LocalMatrixAssembler(nd, zero(doftype(fesp)))
         _lva = _LocalVectorAssembler(nd, zero(doftype(fesp)))
-        return new{FES, typeof(_bir), typeof(_geom), Int64, Float64}(fesp, _bir, _geom, _dofs, _nodes, _m, _irs, _flds, _lma, _lva)
+        return new{FES, typeof(_bir), typeof(_geom), eltype(_dofs), doftype(fesp)}(fesp, _bir, _geom, _dofs, _nodes, _m, _irs, _flds, _lma, _lva)
     end
 end
 
