@@ -79,12 +79,15 @@ function gathersysvec!(vec, self::FEField)
 end
 
 function scattersysvec!(self::FEField, v)
+    vl = length(v)
     nt = nterms(self)
     ndpt = ndofsperterm(self)
     for i in 1:nt
         en = self.dofnums[i]
         for j in 1:ndpt
-            self.dofvals[i][j] = v[en[j]]
+            if en[j] <= vl
+                self.dofvals[i][j] = v[en[j]]
+            end
         end
     end
     return self
