@@ -8,9 +8,10 @@ using MeshCore: retrieve, nrelations, nentities
 using MeshMaker: Q4block
 using MeshKeeper: Mesh, insert!, baseincrel, boundary
 using MeshFinder: connectedv
+using MeshPorter: vtkwrite
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
 using Elfel.FElements: FEH1_Q4, refshape, Jacobian
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype, scattersysvec!
+using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype, scattersysvec!, makeattribute
 using Elfel.FEIterators: FEIterator, geometry, ndofsperelem, elemnodes, elemdofs
 using Elfel.FEIterators: asstolma!, lma, asstolva!, lva, jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
@@ -104,6 +105,8 @@ function run()
     F = assembleF(fesp, Q)
     T = K[1:nunknowns(fesp), 1:nunknowns(fesp)] \ F[1:nunknowns(fesp)]
     scattersysvec!(fesp, T)
+    makeattribute(fesp, "T", 1)
+    vtkwrite("heat_poisson_q4-T", baseincrel(mesh), ["T"])
 end
 
 end

@@ -2,11 +2,11 @@ module FESpaces
 
 using StaticArrays
 using MeshCore
-using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, manifdim, IncRel
+using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, manifdim, IncRel, VecAttrib
 using MeshKeeper: Mesh, baseincrel, increl
 using ..FElements: nfeatofdim, ndofsperfeat
 import ..FElements: ndofsperelem
-using ..FEFields: FEField
+using ..FEFields: FEField, nterms
 import ..FEFields: numberdofs!, ndofs, setebc!, nunknowns, scattersysvec!
 
 struct FESpace{FET, T}
@@ -111,22 +111,18 @@ function setebc!(fesp::FESpace, mid, eid, comp, val::T) where {T}
 end
 
 """
-    gathersysvec(self::FEField{N, T}) where {N, T}
+    gathersysvec!(v, fesp::FESpace)
 
-Gather values from the field for the whole system vector.
+Gather values for the whole system vector.
 """
-# function gathersysvec(self::FESpace)
-#     nt = nterms(self)
-#     ndpt = ndofsperterm(self)
-#     vec = fill(zero(eltype(self.dofvals[1])), nt * ndpt)
-#     for i in 1:nt
-#         en = self.dofnums[i]
-#         for j in 1:ndpt
-#             vec[en[j]] = self.dofvals[i][j]
-#         end
-#     end
-#     return vec
-# end
+function gathersysvec!(v, fesp::FESpace)
+    for m in keys(fesp._irsfields)
+        if ndofsperfeat(fesp.fe, m) > 0
+            gathersysvec!(v, fesp._irsfields[m][2])
+        end 
+    end
+    return v
+end
 
 """
     scattersysvec!(fesp::FESpace, v)
@@ -140,6 +136,15 @@ function scattersysvec!(fesp::FESpace, v)
         end 
     end
     return fesp
+end
+
+function makeattribute(fesp::FESpace, name, comp)
+    for m in keys(fesp._irsfields)
+        if ndofsperfeat(fesp.fe, m) > 0
+            ir, fl = fesp._irsfields[m]
+            ir.right.attributes[name] = VecAttrib([fl.dofvals[i][comp] for i in 1:nterms(fl)])
+        end 
+    end
 end
 
 end
