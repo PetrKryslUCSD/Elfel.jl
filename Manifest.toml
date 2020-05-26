@@ -77,15 +77,15 @@ version = "0.8.0"
 
 [[MeshFinder]]
 deps = ["LinearAlgebra", "MeshCore", "StaticArrays", "Statistics", "Test"]
-git-tree-sha1 = "b8b9bfaad765b45d7a8b99b0264edb0ff3d89ecd"
+git-tree-sha1 = "8d99ee194129c00aa4a679c9148a60c55ff0a1bc"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/MeshFinder.jl.git"
 uuid = "94afc05e-a560-4acd-8e11-a7bb2c092f45"
-version = "0.2.0"
+version = "0.3.1"
 
 [[MeshKeeper]]
 deps = ["MeshCore", "MeshFinder", "MeshMaker", "MeshPorter", "StaticArrays", "Test"]
-git-tree-sha1 = "f8a8f09dd9ee4cb96a18d265ef5c7d897f706cfe"
+git-tree-sha1 = "2413c69bac69f380bd8c74dc7d9a616ca1d592a9"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/MeshKeeper.jl.git"
 uuid = "484b717a-98b9-4b0c-89dc-fb7d7e739263"
@@ -93,19 +93,19 @@ version = "0.3.0"
 
 [[MeshMaker]]
 deps = ["DelimitedFiles", "LinearAlgebra", "MeshCore", "MeshPorter", "StaticArrays", "Test", "WriteVTK"]
-git-tree-sha1 = "c00b96e172e0d7a9ac9d557a2d7915573fdf89cc"
+git-tree-sha1 = "16704afd8dee1fbd04da4a1dccb9c27783136d65"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/MeshMaker.jl.git"
 uuid = "eff96cbd-3442-458f-9fe2-6cad589fe5e1"
-version = "0.3.0"
+version = "0.3.1"
 
 [[MeshPorter]]
 deps = ["DelimitedFiles", "LinearAlgebra", "MeshCore", "StaticArrays", "Test", "WriteVTK"]
-git-tree-sha1 = "44ad09ee43bd438f91f28ddb2bce3698ea0da760"
+git-tree-sha1 = "2d25bc77a0aea44f6bfa0b67a2b2a0f3b0cad327"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/MeshPorter.jl.git"
 uuid = "ba998677-2e4b-4950-b481-8cc4322dc218"
-version = "0.3.0"
+version = "0.3.2"
 
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"

@@ -18,7 +18,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 MeshCore = "0.8"
-MeshFinder = "0.2"
+MeshFinder = "0.3"
 MeshKeeper = "0.3"
 MeshMaker = "0.3"
 MeshPorter = "0.3"
