@@ -86,7 +86,9 @@ function scattersysvec!(self::FEField, v)
         en = self.dofnums[i]
         for j in 1:ndpt
             if en[j] <= vl
-                self.dofvals[i][j] = v[en[j]]
+                d = MVector(self.dofvals[i])
+                d[j] = v[en[j]]
+                self.dofvals[i] = d
             end
         end
     end
