@@ -78,6 +78,16 @@ function gathersysvec!(vec, self::FEField)
     return vec
 end
 
-
+function scattersysvec!(self::FEField, v)
+    nt = nterms(self)
+    ndpt = ndofsperterm(self)
+    for i in 1:nt
+        en = self.dofnums[i]
+        for j in 1:ndpt
+            self.dofvals[i][j] = v[en[j]]
+        end
+    end
+    return self
+end
 
 end

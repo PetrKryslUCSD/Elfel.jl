@@ -7,7 +7,7 @@ using MeshKeeper: Mesh, baseincrel, increl
 using ..FElements: nfeatofdim, ndofsperfeat
 import ..FElements: ndofsperelem
 using ..FEFields: FEField
-import ..FEFields: numberdofs!, ndofs, setebc!, nunknowns
+import ..FEFields: numberdofs!, ndofs, setebc!, nunknowns, scattersysvec!
 
 struct FESpace{FET, T}
     fe::FET
@@ -129,20 +129,17 @@ Gather values from the field for the whole system vector.
 # end
 
 """
-    scattersysvec!(self::FESpace, v)
+    scattersysvec!(fesp::FESpace, v)
 
 Scatter values from the system vector.
 """
-function scattersysvec!(self::FESpace, v)
-    nt = nterms(self)
-    ndpt = ndofsperterm(self)
-    for i in 1:nt
-        en = self.dofnums[i]
-        for j in 1:ndpt
-            self.dofvals[i][j] = v[en[j]]
-        end
+function scattersysvec!(fesp::FESpace, v)
+    for m in keys(fesp._irsfields)
+        if ndofsperfeat(fesp.fe, m) > 0
+            scattersysvec!(fesp._irsfields[m][2], v)
+        end 
     end
-    return self
+    return fesp
 end
 
 end

@@ -16,4 +16,17 @@ github.com/PetrKryslUCSD/MeshPorter.jl
 github.com/PetrKryslUCSD/MeshMaker.jl
 github.com/PetrKryslUCSD/MeshKeeper.jl    
 github.com/PetrKryslUCSD/MeshFinder.jl    
-``` 
+```
+
+## News
+
+- 05/25/2020: Firmed up the concept of iterators for access to element and quadrature point data.
+
+
+## Usage
+
+Clone the repository, and execute
+```
+using Pkg; Pkg.activate("."); Pkg.instantiate()
+```
+in the `Elfel` folder.

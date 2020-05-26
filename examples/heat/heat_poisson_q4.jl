@@ -9,10 +9,10 @@ using MeshMaker: Q4block
 using MeshKeeper: Mesh, insert!, baseincrel, boundary
 using MeshFinder: connectedv
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
-using Elfel.FElements: FEH1_Q4, refshape, Jacobian, jac
+using Elfel.FElements: FEH1_Q4, refshape, Jacobian
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype, scattersysvec!
 using Elfel.FEIterators: FEIterator, geometry, ndofsperelem, elemnodes, elemdofs
-using Elfel.FEIterators: asstolma!, lma, asstolva!, lva
+using Elfel.FEIterators: asstolma!, lma, asstolva!, lva, jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
@@ -33,13 +33,11 @@ end
 
 function assembleK(fesp, kappa)
     function integrateK!(ass, geom, elit, qpit, kappa)
-        vmdim = Val(manifdim(refshape(elit.fesp.fe)))
         nedof = ndofsperelem(elit)
         for el in elit
             for qp in qpit
                 gradNparams = bfungradpar(qp)
-                Jac = jac(geom, elemnodes(el), gradNparams)
-                J = Jacobian(vmdim, Jac)
+                Jac, J = jacjac(el, gradNparams)
                 JxW = J * weight(qp)
                 invJac = inv(Jac)
                 for j in 1:nedof
@@ -67,13 +65,11 @@ end
 
 function assembleF(fesp, Q)
     function integrateF!(ass, geom, elit, qpit, kappa)
-        vmdim = Val(manifdim(refshape(elit.fesp.fe)))
         nedof = ndofsperelem(elit)
         for el in elit
             for qp in qpit
                 gradNparams = bfungradpar(qp)
-                Jac = jac(geom, elemnodes(el), gradNparams)
-                J = Jacobian(vmdim, Jac)
+                Jac, J = jacjac(el, gradNparams)
                 JxW = J * weight(qp)
                 N = bfun(qp)
                 for i in 1:nedof

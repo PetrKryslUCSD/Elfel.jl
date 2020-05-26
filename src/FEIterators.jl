@@ -2,11 +2,11 @@ module FEIterators
 
 using StaticArrays
 using MeshCore
-using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, manifdim, IncRel
+using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, IncRel
 using MeshKeeper: Mesh, baseincrel, increl
-using ..FElements: nfeatofdim, ndofsperfeat
-import ..FElements: ndofsperelem
-using ..FElements: nfeatofdim, ndofsperfeat
+using ..RefShapes: manifdim, manifdimv
+using ..FElements: refshape, nfeatofdim, ndofsperfeat
+import ..FElements: ndofsperelem, nfeatofdim, ndofsperfeat, Jacobian
 using ..FEFields: FEField
 using ..FESpaces: FESpace, doftype
 
@@ -31,7 +31,7 @@ function _LocalVectorAssembler(nrow::IT, z::T) where {IT, T}
 end
 
 #= TODO is it more natural to have access to the geometry from the font element space or from the iterator? =#
-struct FEIterator{FES, IR, G, IT, T}
+struct FEIterator{FES, IR, G, IT, T, V}
     fesp::FES
     _bir::IR
     _geom::G
@@ -42,6 +42,7 @@ struct FEIterator{FES, IR, G, IT, T}
     _flds::Vector{FEField}
     _lma::_LocalMatrixAssembler{IT, T}
     _lva::_LocalVectorAssembler{IT, T}
+    _manifdimv::V
     
     function FEIterator(fesp::FES) where {FES}
         _bir = baseincrel(fesp.mesh)
@@ -62,7 +63,8 @@ struct FEIterator{FES, IR, G, IT, T}
         # _lma = _LocalMatrixAssembler(nd, zero(doftype(fesp)))
         _lma = _LocalMatrixAssembler(nd, zero(doftype(fesp)))
         _lva = _LocalVectorAssembler(nd, zero(doftype(fesp)))
-        return new{FES, typeof(_bir), typeof(_geom), eltype(_dofs), doftype(fesp)}(fesp, _bir, _geom, _dofs, _nodes, _m, _irs, _flds, _lma, _lva)
+        _manifdimv = Val(manifdim(refshape(fesp.fe)))
+        return new{FES, typeof(_bir), typeof(_geom), eltype(_dofs), doftype(fesp), typeof(_manifdimv)}(fesp, _bir, _geom, _dofs, _nodes, _m, _irs, _flds, _lma, _lva, _manifdimv)
     end
 end
 
@@ -155,5 +157,34 @@ end
 Retrieve the local vector assembly data.
 """
 lva(it::FEIterator) = (it._lva.row, it._lva.V)
+
+function _jac(locs, conn, gradNpar)
+    NBFPE = length(gradNpar)
+    j = 1
+    J = locs[conn[j]] * gradNpar[j]
+    @inbounds for j in 2:NBFPE
+        J += locs[conn[j]] * gradNpar[j]
+    end
+    return J
+end
+
+"""
+    jac(it::FEIterator, gradNpar)
+
+Compute the Jacobian matrix.
+"""
+function jac(it::FEIterator, gradNpar)
+    return _jac(it._geom, it._nodes, gradNpar)
+end
+
+"""
+    jacjac(it::FEIterator, gradNpar)
+
+Compute the Jacobian matrix and the Jacobian determinant.
+"""
+function jacjac(it::FEIterator, gradNpar)
+    Jac = _jac(it._geom, it._nodes, gradNpar)
+    return (Jac, Jacobian(it._manifdimv, Jac))
+end
 
 end

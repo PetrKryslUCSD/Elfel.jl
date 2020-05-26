@@ -198,20 +198,6 @@ function gradN!(::Val{3}, gradN::T1, gradNparams::T2, redJ::T3) where {T1, T2, T
     end
 end
 
-"""
-    jac(locs, conn, gradNpar)
-
-Compute the Jacobian matrix.
-"""
-function jac(locs, conn, gradNpar)
-    NBFPE = length(gradNpar)
-    j = 1
-    J = locs[conn[j]] * gradNpar[j]
-    @inbounds for j in 2:NBFPE
-        J += locs[conn[j]] * gradNpar[j]
-    end
-    return J
-end
 
 # L2 ==================================================================
 FEH1_L2_TYPE = FE{RefShapeInterval, typeof(MeshCore.L2)}
