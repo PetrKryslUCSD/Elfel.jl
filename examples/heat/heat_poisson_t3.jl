@@ -1,24 +1,28 @@
 module heat_poisson_t3
 
-using MeshCore: retrieve, nrelations, nentities
-using MeshMaker: T3block
-using MeshSteward: Mesh, insert!, baseincrel
-using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
-using Elfel.FElements: FEH1_T3, refshape, Jacobian, nbasisfuns
-using Elfel.FESpaces: FESpace, fe
-using Elfel.FEExpansions: FEExpansion, numberdofs!, geometry, ndofs
-using Elfel.IntegDomains: IntegDomain, quadrule, jac, bfundata
-using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!, local_assembler, fill_dofs!
 using LinearAlgebra
 using BenchmarkTools
 using InteractiveUtils
-using Profile
+# using Profile
+using MeshCore: retrieve, nrelations, nentities
+using MeshSteward: T3block
+using MeshSteward: Mesh, insert!, baseincrel, boundary
+using MeshSteward: connectedv, geometry
+using MeshSteward: vtkwrite
+using Elfel.RefShapes: manifdim, manifdimv
+using Elfel.FElements: FEH1_T3, refshape, Jacobian
+using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!
+using Elfel.FEIterators: FEIterator, ndofsperelem, elemnodes, elemdofs
+using Elfel.FEIterators: asstolma!, lma, asstolva!, lva, jacjac
+using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
+using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
+using Elfel.Assemblers: SysvecAssembler
 
 A = 1.0 # length of the side of the square
-thermal_conductivity =  1.0; # conductivity matrix
+kappa =  1.0; # conductivity matrix
 Q = -6.0; # internal heat generation rate
 tempf(x, y) =(1.0 + x^2 + 2.0 * y^2);#the exact distribution of temperature
-tempf(x) = tempf.(view(x, :, 1), view(x, :, 2))
 N = 1000;# number of subdivisions along the sides of the square domain
 
 function genmesh()
@@ -28,56 +32,92 @@ function genmesh()
     return mesh
 end
 
-function assembleK(idom)
-    function integrate!(ass, geom, ir, qrule, nums, bd, fe)
-        vmdim = Val(manifdim(refshape(fe)))
-        nbf = nbasisfuns(fe)
-        rs, cs, vs = local_assembler(nbf, nbf, 0.0)
-        for el in 1:nrelations(ir)
-            conn = retrieve(ir, el)
-            fill!(vs, 0.0)
-            fill_dofs!(rs, cs, nums, conn)
-            for qp in 1:qrule.npts
-                gradNparams = bd[2][qp]
-                Jac = jac(geom, conn, gradNparams)
-                J = Jacobian(vmdim, Jac)
-                JxW = J * qrule.weights[qp]
+function assembleK(fesp, kappa)
+    function integrateK!(ass, geom, elit, qpit, kappa)
+        nedof = ndofsperelem(elit)
+        for el in elit
+            for qp in qpit
+                gradNparams = bfungradpar(qp)
+                Jac, J = jacjac(el, gradNparams)
+                JxW = J * weight(qp)
                 invJac = inv(Jac)
-                k = 1
-                for i in 1:nbf
-                    gradNi = gradNparams[i] * invJac
-                    for j in 1:nbf
-                        gradNj = gradNparams[j] * invJac
-                        vs[k] += dot(gradNi, gradNj) * JxW 
-                        k = k + 1
+                for j in 1:nedof
+                    gradNj = gradNparams[j] * invJac
+                    for i in 1:nedof
+                        gradNi = gradNparams[i] * invJac
+                        v = dot(gradNi, gradNj) * kappa * JxW 
+                        asstolma!(el, i, j, v)
                     end
                 end
             end
-            assemble!(ass, rs, cs, vs)
+            assemble!(ass, lma(el)...)
         end
         return ass
     end
-    geom = geometry(idom.fex)
-    bd = bfundata(idom)
+
+    elit = FEIterator(fesp)
+    qpit = QPIterator(fesp.fe, (kind = :default,))
+    geom = geometry(fesp.mesh)
     ass = SysmatAssemblerSparse(0.0)
-    ir = baseincrel(idom.fex.mesh)
-    qrule = quadrule(idom)
-    start!(ass, ndofs(idom.fex), ndofs(idom.fex))
-    @time integrate!(ass, geom, ir, qrule, idom.fex.field.nums, bd, fe(idom.fex.fesp))
-    
+    start!(ass, ndofs(fesp), ndofs(fesp))
+    @time integrateK!(ass, geom, elit, qpit, kappa)
     return finish!(ass)
+end
+
+function assembleF(fesp, Q)
+    function integrateF!(ass, geom, elit, qpit, kappa)
+        nedof = ndofsperelem(elit)
+        for el in elit
+            for qp in qpit
+                gradNparams = bfungradpar(qp)
+                Jac, J = jacjac(el, gradNparams)
+                JxW = J * weight(qp)
+                N = bfun(qp)
+                for i in 1:nedof
+                    asstolva!(el, i, N[i] * Q * JxW)
+                end
+            end
+            assemble!(ass, lva(el)...)
+        end
+        return ass
+    end
+
+    elit = FEIterator(fesp)
+    qpit = QPIterator(fesp.fe, (kind = :default,))
+    geom = geometry(fesp.mesh)
+    ass = SysvecAssembler(0.0)
+    start!(ass, ndofs(fesp))
+    @time integrateF!(ass, geom, elit, qpit, Q)
+    return finish!(ass)
+end
+
+function solve!(T, K, F, nu)
+    @time KT = K * T
+    @time T[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
 function run()
     mesh = genmesh()
-    fesp = FESpace((FEH1_T3(1), 1))
-    fex = FEExpansion(mesh, fesp)
-    numberdofs!(fex)
-    idom = IntegDomain(fex, (kind = :default, npts = 1))
-    K = assembleK(idom)
+    fesp = FESpace(Float64, FEH1_T3(1), mesh)
+    bir = boundary(mesh);
+    vl = connectedv(bir);
+    locs = geometry(mesh)
+    for i in vl
+        setebc!(fesp, 0, i, 1, tempf(locs[i]...))
+    end
+    numberdofs!(fesp)
+    @show nunknowns(fesp)
+    K = assembleK(fesp, kappa)
+    F = assembleF(fesp, Q)
+    T = fill(0.0, ndofs(fesp))
+    gathersysvec!(T, fesp)
+    solve!(T, K, F, nunknowns(fesp))
+    scattersysvec!(fesp, T)
+    makeattribute(fesp, "T", 1)
+    vtkwrite("heat_poisson_t3-T", baseincrel(mesh), ["T"])
 end
 
 end
 
 heat_poisson_t3.run()
-heat_poisson_t3.run()
+# heat_poisson_t3.run()
