@@ -3,11 +3,11 @@ module FESpaces
 using StaticArrays
 using MeshCore
 using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, manifdim, IncRel, VecAttrib
-using MeshKeeper: Mesh, baseincrel, increl
+using MeshSteward: Mesh, baseincrel, increl
 using ..FElements: nfeatofdim, ndofsperfeat
 import ..FElements: ndofsperelem
 using ..FEFields: FEField, nterms
-import ..FEFields: numberdofs!, ndofs, setebc!, nunknowns, scattersysvec!
+import ..FEFields: numberdofs!, ndofs, setebc!, nunknowns, scattersysvec!, gathersysvec!
 
 struct FESpace{FET, T}
     fe::FET

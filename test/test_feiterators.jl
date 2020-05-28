@@ -8,7 +8,7 @@ using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FEIterators: FEIterator
 
 using MeshCore
-using MeshKeeper: Mesh, load, nspacedims, baseincrel
+using MeshSteward: Mesh, load, nspacedims, baseincrel
 using Test
 function test()
     fe = FEH1_T3(1)
@@ -89,7 +89,7 @@ module mfeit2
 using StaticArrays
 using LinearAlgebra
 using MeshCore
-using MeshKeeper: Mesh, load, nspacedims, baseincrel
+using MeshSteward: Mesh, load, nspacedims, baseincrel
 using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, refshape, FEH1_T3

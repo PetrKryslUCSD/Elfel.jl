@@ -5,14 +5,15 @@ using BenchmarkTools
 using InteractiveUtils
 # using Profile
 using MeshCore: retrieve, nrelations, nentities
-using MeshMaker: Q4block
-using MeshKeeper: Mesh, insert!, baseincrel, boundary
-using MeshFinder: connectedv
-using MeshPorter: vtkwrite
+using MeshSteward: Q4block
+using MeshSteward: Mesh, insert!, baseincrel, boundary
+using MeshSteward: connectedv, geometry
+using MeshSteward: vtkwrite
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
 using Elfel.FElements: FEH1_Q4, refshape, Jacobian
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype, scattersysvec!, makeattribute
-using Elfel.FEIterators: FEIterator, geometry, ndofsperelem, elemnodes, elemdofs
+using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!
+using Elfel.FEIterators: FEIterator, ndofsperelem, elemnodes, elemdofs
 using Elfel.FEIterators: asstolma!, lma, asstolva!, lva, jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
@@ -22,7 +23,6 @@ A = 1.0 # length of the side of the square
 kappa =  1.0; # conductivity matrix
 Q = -6.0; # internal heat generation rate
 tempf(x, y) =(1.0 + x^2 + 2.0 * y^2);#the exact distribution of temperature
-tempf(x) = tempf.(view(x, :, 1), view(x, :, 2))
 N = 1000;# number of subdivisions along the sides of the square domain
 
 function genmesh()
@@ -57,7 +57,7 @@ function assembleK(fesp, kappa)
 
     elit = FEIterator(fesp)
     qpit = QPIterator(fesp.fe, (kind = :Gauss, order = 2))
-    geom = geometry(elit)
+    geom = geometry(fesp.mesh)
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, ndofs(fesp), ndofs(fesp))
     @time integrateK!(ass, geom, elit, qpit, kappa)
@@ -84,11 +84,16 @@ function assembleF(fesp, Q)
 
     elit = FEIterator(fesp)
     qpit = QPIterator(fesp.fe, (kind = :Gauss, order = 2))
-    geom = geometry(elit)
+    geom = geometry(fesp.mesh)
     ass = SysvecAssembler(0.0)
     start!(ass, ndofs(fesp))
     @time integrateF!(ass, geom, elit, qpit, Q)
     return finish!(ass)
+end
+
+function solve!(T, K, F, nu)
+    @time KT = K * T
+    @time T[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
 function run()
@@ -96,14 +101,17 @@ function run()
     fesp = FESpace(Float64, FEH1_Q4(1), mesh)
     bir = boundary(mesh);
     vl = connectedv(bir);
+    locs = geometry(mesh)
     for i in vl
-        setebc!(fesp, 0, i, 1, 0.0)
+        setebc!(fesp, 0, i, 1, tempf(locs[i]...))
     end
     numberdofs!(fesp)
     @show nunknowns(fesp)
     K = assembleK(fesp, kappa)
     F = assembleF(fesp, Q)
-    T = K[1:nunknowns(fesp), 1:nunknowns(fesp)] \ F[1:nunknowns(fesp)]
+    T = fill(0.0, ndofs(fesp))
+    gathersysvec!(T, fesp)
+    solve!(T, K, F, nunknowns(fesp))
     scattersysvec!(fesp, T)
     makeattribute(fesp, "T", 1)
     vtkwrite("heat_poisson_q4-T", baseincrel(mesh), ["T"])

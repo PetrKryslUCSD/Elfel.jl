@@ -3,7 +3,7 @@ module FEIterators
 using StaticArrays
 using MeshCore
 using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, IncRel
-using MeshKeeper: Mesh, baseincrel, increl
+using MeshSteward: Mesh, baseincrel, increl
 using ..RefShapes: manifdim, manifdimv
 using ..FElements: refshape, nfeatofdim, ndofsperfeat
 import ..FElements: ndofsperelem, nfeatofdim, ndofsperfeat, Jacobian
@@ -80,7 +80,7 @@ Base.length(it::FEIterator)  = nrelations(it._bir)
 ndofsperelem(it::FEIterator) = ndofsperelem(it.fesp.fe)
 elemdofs(it::FEIterator) = it._dofs
 elemnodes(it::FEIterator) = it._nodes
-geometry(it::FEIterator) = it._geom
+# geometry(it::FEIterator) = it._geom
 
 function _storedofs!(d, p, e, ir, fl)
     c = retrieve(ir, e)
