@@ -13,27 +13,15 @@
 			"path": "."
 		},
 		{
-			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshFinder.jl"
-		},
-		{
 			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshCore.jl"
 		},
 		{
-			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshKeeper.jl"
-		},
-		{
-			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshMaker.jl"
-		},
-		{
-			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshPorter.jl"
-		},
-		{
-			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshTutor.jl"
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshSteward.jl"
 		}
 	],
 	"settings":
 	{
-        "color_scheme": "Packages/Color Scheme - Creamy/Creamy.tmTheme",
+		"color_scheme": "Packages/Color Scheme - Creamy/Creamy.tmTheme",
 		"open_url":
 		{
 			"cwd": "project_root",
