@@ -132,7 +132,7 @@ end
 
 Retrieve the local matrix assembly data.
 """
-lma(it::FEIterator) = (it._lma.row, it._lma.col, vec(it._lma.M))
+lma(it::FEIterator) = (it._lma.row, it._lma.col, it._lma.M)
 
 """
     asstolma!(it::FEIterator, i, j, v) 

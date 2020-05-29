@@ -102,6 +102,18 @@ function assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::A
 end
 
 """
+    assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::AbstractVector{IT}, vs::AbstractMatrix{T}) where {IT<:Integer, T<:Number}
+
+Assemble the triple of the row numbers, column numbers, and values.
+"""
+function assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::AbstractVector{IT}, vs::AbstractMatrix{T}) where {IT<:Integer, T<:Number}
+    append!(self.row, rs)
+    append!(self.col, cs)
+    append!(self.val, vs)
+    return self
+end
+
+"""
     assemble!(self::SysmatAssemblerSparse{T}, gi, ke::AbstractMatrix{T}) where {T}
 
 Assemble a square symmetric matrix.
