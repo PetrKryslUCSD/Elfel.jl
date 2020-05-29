@@ -31,40 +31,45 @@ function _LocalVectorAssembler(nrow::IT, z::T) where {IT, T}
 end
 
 #= TODO is it more natural to have access to the geometry from the font element space or from the iterator? =#
-struct FEIterator{FES, IR, G, IT, T, V}
+struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
     fesp::FES
     _bir::IR
     _geom::G
     _dofs::Vector{Int64}
     _nodes::Vector{Int64}
-    _m::Vector{Int64}
-    _irs::Vector{IncRel}
-    _flds::Vector{FEField}
+    _irs0::Union{Nothing, IR0}
+    _irs1::Union{Nothing, IR1}
+    _irs2::Union{Nothing, IR2}
+    _irs3::Union{Nothing, IR3}
+    _fld0::Union{Nothing, F0}
+    _fld1::Union{Nothing, F1}
+    _fld2::Union{Nothing, F2}
+    _fld3::Union{Nothing, F3}
     _lma::_LocalMatrixAssembler{IT, T}
     _lva::_LocalVectorAssembler{IT, T}
     _manifdimv::V
     
     function FEIterator(fesp::FES) where {FES}
         _bir = baseincrel(fesp.mesh)
-        nd = ndofsperelem(fesp.fe)
         _geom = MeshCore.attribute(_bir.right, "geom")
-        _dofs = zeros(Int64, nd)
-        nn = nfeatofdim(fesp.fe, 0)
-        _nodes = zeros(Int64, nn) 
-        _m = Int64[]
-        _irs = IncRel[]
-        _flds = FEField[]
-        for m in keys(fesp._irsfields)
-            v = fesp._irsfields[m]
-            push!(_m, m)
-            push!(_irs, v[1])
-            push!(_flds, v[2])
-        end
-        # _lma = _LocalMatrixAssembler(nd, zero(doftype(fesp)))
-        _lma = _LocalMatrixAssembler(nd, zero(doftype(fesp)))
-        _lva = _LocalVectorAssembler(nd, zero(doftype(fesp)))
+        _dofs = zeros(Int64, ndofsperelem(fesp.fe))
+        _nodes = zeros(Int64, nfeatofdim(fesp.fe, 0)) 
+        _fld0 = nothing
+        _fld1 = nothing
+        _fld2 = nothing
+        _fld3 = nothing
+        _irs0 = nothing
+        _irs1 = nothing
+        _irs2 = nothing
+        _irs3 = nothing
+        0 in keys(fesp._irsfields) && (_irs0 = fesp._irsfields[0][1]; _fld0 = fesp._irsfields[0][2])
+        1 in keys(fesp._irsfields) && (_irs1 = fesp._irsfields[1][1]; _fld1 = fesp._irsfields[1][2])
+        2 in keys(fesp._irsfields) && (_irs2 = fesp._irsfields[2][1]; _fld2 = fesp._irsfields[2][2])
+        3 in keys(fesp._irsfields) && (_irs3 = fesp._irsfields[3][1]; _fld3 = fesp._irsfields[3][2])
+        _lma = _LocalMatrixAssembler(ndofsperelem(fesp.fe), zero(doftype(fesp)))
+        _lva = _LocalVectorAssembler(ndofsperelem(fesp.fe), zero(doftype(fesp)))
         _manifdimv = Val(manifdim(refshape(fesp.fe)))
-        return new{FES, typeof(_bir), typeof(_geom), eltype(_dofs), doftype(fesp), typeof(_manifdimv)}(fesp, _bir, _geom, _dofs, _nodes, _m, _irs, _flds, _lma, _lva, _manifdimv)
+        return new{FES, typeof(_bir), typeof(_geom), eltype(_dofs), doftype(fesp), typeof(_manifdimv), typeof(_irs0), typeof(_irs1), typeof(_irs2), typeof(_irs3), typeof(_fld0), typeof(_fld1), typeof(_fld2), typeof(_fld3)}(fesp, _bir, _geom, _dofs, _nodes, _irs0, _irs1, _irs2, _irs3, _fld0, _fld1, _fld2, _fld3, _lma, _lva, _manifdimv)
     end
 end
 
@@ -97,10 +102,10 @@ end
 function _update!(it::FEIterator, state)
     copyto!(it._nodes, retrieve(it._bir, state))
     p = 1
-    for i in 1:length(it._m)
-        m = it._m[i]
-        p = _storedofs!(it._dofs, p, state, it._irs[i], it._flds[i])
-    end
+    it._irs0 != nothing && (p = _storedofs!(it._dofs, p, state, it._irs0, it._fld0))
+    it._irs1 != nothing && (p = _storedofs!(it._dofs, p, state, it._irs1, it._fld1))
+    it._irs2 != nothing && (p = _storedofs!(it._dofs, p, state, it._irs2, it._fld2))
+    it._irs3 != nothing && (p = _storedofs!(it._dofs, p, state, it._irs3, it._fld3))
     _initlma!(it)
     _initlva!(it)
     return it
