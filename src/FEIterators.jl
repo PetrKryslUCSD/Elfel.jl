@@ -7,7 +7,7 @@ using MeshSteward: Mesh, baseincrel, increl
 using ..RefShapes: manifdim, manifdimv
 using ..FElements: refshape, nfeatofdim, ndofsperfeat
 import ..FElements: ndofsperelem, nfeatofdim, ndofsperfeat, Jacobian
-using ..FEFields: FEField
+using ..FEFields: FEField, ndofsperterm
 using ..FESpaces: FESpace, doftype
 
 struct _LocalMatrixAssembler{IT<:Integer, T<:Number}
@@ -83,10 +83,10 @@ elemnodes(it::FEIterator) = it._nodes
 # geometry(it::FEIterator) = it._geom
 
 function _storedofs!(d, p, e, ir, fl)
-    c = retrieve(ir, e)
+    ndpt = ndofsperterm(fl)
     for k in 1:nentities(ir, e)
         gk = retrieve(ir, e, k)
-        for i in 1:length(fl.dofnums[gk])
+        for i in 1:ndpt
             d[p] = fl.dofnums[gk][i]
             p = p + 1
         end
