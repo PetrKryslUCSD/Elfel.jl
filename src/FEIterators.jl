@@ -2,11 +2,11 @@ module FEIterators
 
 using StaticArrays
 using MeshCore
-using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, IncRel
+using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, IncRel, shapedesc
 using MeshSteward: Mesh, baseincrel, increl
 using ..RefShapes: manifdim, manifdimv
 using ..FElements: refshape, nfeatofdim, ndofsperfeat
-import ..FElements: ndofsperelem, nfeatofdim, ndofsperfeat, Jacobian
+import ..FElements: ndofsperel, nfeatofdim, ndofsperfeat, Jacobian
 using ..FEFields: FEField, ndofsperterm
 using ..FESpaces: FESpace, doftype
 
@@ -35,8 +35,10 @@ struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
     fesp::FES
     _bir::IR
     _geom::G
-    _dofs::Vector{Int64}
-    _nodes::Vector{Int64}
+    _dofs::Vector{IT}
+    _entmdim::Vector{IT}
+    _dofcomp::Vector{IT}
+    _nodes::Vector{IT}
     _irs0::Union{Nothing, IR0}
     _irs1::Union{Nothing, IR1}
     _irs2::Union{Nothing, IR2}
@@ -52,7 +54,9 @@ struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
     function FEIterator(fesp::FES) where {FES}
         _bir = baseincrel(fesp.mesh)
         _geom = MeshCore.attribute(_bir.right, "geom")
-        _dofs = zeros(Int64, ndofsperelem(fesp.fe))
+        _dofs = zeros(Int64, ndofsperel(fesp.fe))
+        _entmdim = zeros(Int64, ndofsperel(fesp.fe))
+        _dofcomp = zeros(Int64, ndofsperel(fesp.fe))
         _nodes = zeros(Int64, nfeatofdim(fesp.fe, 0)) 
         _fld0 = nothing
         _fld1 = nothing
@@ -66,10 +70,15 @@ struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
         1 in keys(fesp._irsfields) && (_irs1 = fesp._irsfields[1][1]; _fld1 = fesp._irsfields[1][2])
         2 in keys(fesp._irsfields) && (_irs2 = fesp._irsfields[2][1]; _fld2 = fesp._irsfields[2][2])
         3 in keys(fesp._irsfields) && (_irs3 = fesp._irsfields[3][1]; _fld3 = fesp._irsfields[3][2])
-        _lma = _LocalMatrixAssembler(ndofsperelem(fesp.fe), zero(doftype(fesp)))
-        _lva = _LocalVectorAssembler(ndofsperelem(fesp.fe), zero(doftype(fesp)))
+        _lma = _LocalMatrixAssembler(ndofsperel(fesp.fe), zero(doftype(fesp)))
+        _lva = _LocalVectorAssembler(ndofsperel(fesp.fe), zero(doftype(fesp)))
         _manifdimv = Val(manifdim(refshape(fesp.fe)))
-        return new{FES, typeof(_bir), typeof(_geom), eltype(_dofs), doftype(fesp), typeof(_manifdimv), typeof(_irs0), typeof(_irs1), typeof(_irs2), typeof(_irs3), typeof(_fld0), typeof(_fld1), typeof(_fld2), typeof(_fld3)}(fesp, _bir, _geom, _dofs, _nodes, _irs0, _irs1, _irs2, _irs3, _fld0, _fld1, _fld2, _fld3, _lma, _lva, _manifdimv)
+        p = 1
+        _irs0 != nothing && (p = _init_e_d!(_entmdim, _dofcomp, p, _irs0, _fld0))
+        _irs1 != nothing && (p = _init_e_d!(_entmdim, _dofcomp, p, _irs1, _fld1))
+        _irs2 != nothing && (p = _init_e_d!(_entmdim, _dofcomp, p, _irs2, _fld2))
+        _irs3 != nothing && (p = _init_e_d!(_entmdim, _dofcomp, p, _irs3, _fld3))
+        return new{FES, typeof(_bir), typeof(_geom), eltype(_dofs), doftype(fesp), typeof(_manifdimv), typeof(_irs0), typeof(_irs1), typeof(_irs2), typeof(_irs3), typeof(_fld0), typeof(_fld1), typeof(_fld2), typeof(_fld3)}(fesp, _bir, _geom, _dofs, _entmdim, _dofcomp, _nodes, _irs0, _irs1, _irs2, _irs3, _fld0, _fld1, _fld2, _fld3, _lma, _lva, _manifdimv)
     end
 end
 
@@ -82,10 +91,52 @@ function Base.iterate(it::FEIterator, state = 1)
 end
 Base.length(it::FEIterator)  = nrelations(it._bir)
 
-ndofsperelem(it::FEIterator) = ndofsperelem(it.fesp.fe)
-elemdofs(it::FEIterator) = it._dofs
-elemnodes(it::FEIterator) = it._nodes
-# geometry(it::FEIterator) = it._geom
+"""
+    ndofsperel(it::FEIterator)
+
+Retrieve the number of degrees of freedom per element.
+"""
+ndofsperel(it::FEIterator) = ndofsperel(it.fesp.fe)
+
+"""
+    eldofs(it::FEIterator)
+
+Retrieve the vector of the element degrees of freedom
+"""
+eldofs(it::FEIterator) = it._dofs
+
+"""
+    elnodes(it::FEIterator)
+
+Retrieve the vector of the nodes of the element.
+"""
+elnodes(it::FEIterator) = it._nodes
+
+"""
+    eldofentmdims(it::FEIterator)
+
+Retrieve the vector of the entity dimensions for each element degree of freedom.
+"""
+eldofentmdims(it::FEIterator) = it._entmdim
+
+"""
+    eldofcomps(it::FEIterator)
+
+Retrieve the vector of the component numbers for each element degree of freedom.
+"""
+eldofcomps(it::FEIterator) = it._dofcomp
+
+function _init_e_d!(mdim, dofcomp, p, ir, fl)
+    ndpt = ndofsperterm(fl)
+    for k in 1:nentities(ir, 1)
+        for i in 1:ndpt
+            mdim[p] = MeshCore.manifdim(shapedesc(ir.right))
+            dofcomp[p] = i
+            p = p + 1
+        end
+    end
+    return p
+end
 
 function _storedofs!(d, p, e, ir, fl)
     ndpt = ndofsperterm(fl)

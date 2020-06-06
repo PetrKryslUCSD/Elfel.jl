@@ -51,11 +51,11 @@ Number of degrees of freedom per feature of manifold dimension `m`.
 ndofsperfeat(fe::FE{RS, SD}, m) where {RS, SD} = fe.ndof[m+1]
 
 """
-    ndofsperelem(fe::FE{RS, SD}) where {RS, SD}
+    ndofsperel(fe::FE{RS, SD}) where {RS, SD}
 
 Provide the number of nodes per element.
 """
-function ndofsperelem(fe::FE{RS, SD}) where {RS, SD}
+function ndofsperel(fe::FE{RS, SD}) where {RS, SD}
     md = manifdim(fe.sd)
     n = 0
     for m in 0:1:md

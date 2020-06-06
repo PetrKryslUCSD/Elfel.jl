@@ -5,7 +5,7 @@ using MeshCore
 using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, manifdim, IncRel, VecAttrib
 using MeshSteward: Mesh, baseincrel, increl
 using ..FElements: nfeatofdim, ndofsperfeat
-import ..FElements: ndofsperelem
+import ..FElements: ndofsperel
 using ..FEFields: FEField, nterms
 import ..FEFields: numberdofs!, ndofs, setebc!, nunknowns, scattersysvec!, gathersysvec!
 

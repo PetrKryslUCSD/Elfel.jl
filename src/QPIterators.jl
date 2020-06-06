@@ -4,7 +4,7 @@ using StaticArrays
 using LinearAlgebra
 using ..RefShapes: manifdim, IntegRule, quadrature
 using ..RefShapes: npts, param_coords, weights
-using ..FElements: refshape, ndofsperelem
+using ..FElements: refshape, ndofsperel
 import ..FElements: bfun, bfungradpar
 
 function __bfundata(fe, qr)

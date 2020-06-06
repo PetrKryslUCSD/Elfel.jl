@@ -13,7 +13,7 @@ using Elfel.RefShapes: manifdim, manifdimv
 using Elfel.FElements: FEH1_T3, refshape, Jacobian
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!
-using Elfel.FEIterators: FEIterator, ndofsperelem, elemnodes, elemdofs
+using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
 using Elfel.FEIterators: asstolma!, lma, asstolva!, lva, jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
@@ -34,7 +34,7 @@ end
 
 function assembleK(fesp, kappa)
     function integrateK!(ass, geom, elit, qpit, kappa)
-        nedof = ndofsperelem(elit)
+        nedof = ndofsperel(elit)
         for el in elit
             for qp in qpit
                 gradNparams = bfungradpar(qp)
@@ -66,7 +66,7 @@ end
 
 function assembleF(fesp, Q)
     function integrateF!(ass, geom, elit, qpit, kappa)
-        nedof = ndofsperelem(elit)
+        nedof = ndofsperel(elit)
         for el in elit
             for qp in qpit
                 gradNparams = bfungradpar(qp)
