@@ -14,8 +14,8 @@ using Elfel.FElements: FEH1_T3, refshape, Jacobian
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
-using Elfel.FEIterators: asstolma!, lma, asstolva!, lva
-using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight, jacjac
+using Elfel.FEIterators: asstolma!, lma, asstolva!, lva, jacjac
+using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
 
@@ -38,14 +38,14 @@ function assembleK(fesp, kappa)
         for el in elit
             for qp in qpit
                 gradNparams = bfungradpar(qp)
-                Jac, J = jacjac(qp, geom, elnodes(el))
+                Jac, J = jacjac(el, gradNparams)
                 JxW = J * weight(qp)
                 invJac = inv(Jac)
                 for j in 1:nedof
                     gradNj = gradNparams[j] * invJac
                     for i in 1:nedof
                         gradNi = gradNparams[i] * invJac
-                        v = dot(gradNi, gradNj) * kappa * JxW 
+                        v = dot(gradNi, gradNj) * (kappa * JxW)
                         asstolma!(el, i, j, v)
                     end
                 end
@@ -69,7 +69,8 @@ function assembleF(fesp, Q)
         nedof = ndofsperel(elit)
         for el in elit
             for qp in qpit
-                Jac, J = jacjac(qp, geom, elnodes(el))
+                gradNparams = bfungradpar(qp)
+                Jac, J = jacjac(el, gradNparams)
                 JxW = J * weight(qp)
                 N = bfun(qp)
                 for i in 1:nedof

@@ -6,7 +6,7 @@ using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, IncRel, sha
 using MeshSteward: Mesh, baseincrel, increl
 using ..RefShapes: manifdim, manifdimv
 using ..FElements: refshape, nfeatofdim, ndofsperfeat
-import ..FElements: ndofsperel, nfeatofdim, ndofsperfeat, Jacobian
+import ..FElements: ndofsperel, jacjac
 using ..FEFields: FEField, ndofsperterm
 using ..FESpaces: FESpace, doftype
 
@@ -213,5 +213,17 @@ end
 Retrieve the local vector assembly data.
 """
 lva(it::FEIterator) = (it._lva.row, it._lva.V)
+
+
+"""
+    jacjac(it::QPIterator)
+
+Compute the Jacobian matrix and the Jacobian determinant.
+
+At the current integration point.
+"""
+function jacjac(it::FEIterator, gradNparams)
+    return jacjac(it.fesp.fe, it._geom, it._nodes, gradNparams)
+end
 
 end

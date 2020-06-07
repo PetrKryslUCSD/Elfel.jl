@@ -57,15 +57,4 @@ bfun(it::QPIterator) = it._bfundata[it._pt]
 bfungradpar(it::QPIterator) = it._bfungraddata[it._pt]
 weight(it::QPIterator) = it._quadr.weights[it._pt]
 
-"""
-    jacjac(it::QPIterator)
-
-Compute the Jacobian matrix and the Jacobian determinant.
-
-At the current integration point.
-"""
-function jacjac(it::QPIterator, locs, conn)
-    return jacjac(it.fe, locs, conn, it._bfungraddata[it._pt])
-end
-
 end
