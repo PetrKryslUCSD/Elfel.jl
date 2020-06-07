@@ -214,33 +214,4 @@ Retrieve the local vector assembly data.
 """
 lva(it::FEIterator) = (it._lva.row, it._lva.V)
 
-function _jac(locs, conn, gradNpar)
-    NBFPE = length(gradNpar)
-    j = 1
-    J = locs[conn[j]] * gradNpar[j]
-    @inbounds for j in 2:NBFPE
-        J += locs[conn[j]] * gradNpar[j]
-    end
-    return J
-end
-
-"""
-    jac(it::FEIterator, gradNpar)
-
-Compute the Jacobian matrix.
-"""
-function jac(it::FEIterator, gradNpar)
-    return _jac(it._geom, it._nodes, gradNpar)
-end
-
-"""
-    jacjac(it::FEIterator, gradNpar)
-
-Compute the Jacobian matrix and the Jacobian determinant.
-"""
-function jacjac(it::FEIterator, gradNpar)
-    Jac = _jac(it._geom, it._nodes, gradNpar)
-    return (Jac, Jacobian(it._manifdimv, Jac))
-end
-
 end

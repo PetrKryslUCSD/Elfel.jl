@@ -4,7 +4,7 @@ using StaticArrays
 using LinearAlgebra
 using MeshCore
 using MeshCore: manifdim
-using ..RefShapes: RefShapePoint, RefShapeInterval, RefShapeTriangle, RefShapeTetrahedron, RefShapeSquare, RefShapeCube
+using ..RefShapes: RefShapePoint, RefShapeInterval, RefShapeTriangle, RefShapeTetrahedron, RefShapeSquare, RefShapeCube, manifdimv
 
 
 """
@@ -53,7 +53,9 @@ ndofsperfeat(fe::FE{RS, SD}, m) where {RS, SD} = fe.ndof[m+1]
 """
     ndofsperel(fe::FE{RS, SD}) where {RS, SD}
 
-Provide the number of nodes per element.
+Provide the number of degrees of freedom per element.
+Enumerate all features of all manifold dimensions, and for each feature multiply
+by the number of degrees of freedom per feature.
 """
 function ndofsperel(fe::FE{RS, SD}) where {RS, SD}
     md = manifdim(fe.sd)
@@ -89,23 +91,6 @@ function Jacobian(::Val{1}, J::T) where {T}
 end
 
 """
-    gradN!(::Val{1}, gradN::T1, gradNparams::T2, redJ::T3) where {T1, T2, T3}
-
-Compute the gradient of the basis functions with the respect to
-the "reduced" spatial coordinates.
-
-- `gradN`= output,  matrix of gradients,  one per row
-- `gradNparams`= matrix of gradients with respect to parametric coordinates, one per row
-- `redJ`= reduced Jacobian matrix `redJ=transpose(Rm)*J`
-"""
-function gradN!(::Val{1}, gradN::T1, gradNparams::T2, redJ::T3) where {T1, T2, T3}
-    r = 1.0 / redJ[1, 1]
-    for r in 1:size(gradN, 1)
-        gradN[r, 1] =  gradNparams[r, 1] * r
-    end
-end
-
-"""
     Jacobian(::Val{2}, J::T) where {T}
 
 Evaluate the curve Jacobian.
@@ -120,31 +105,6 @@ function Jacobian(::Val{2}, J::T) where {T}
         return Jac;# is det(J);% Compute the Jacobian
     else
         return norm(cross(J[:, 1], J[:, 2]));
-    end
-end
-
-"""
-    gradN!(::Val{2}, gradN::T1, gradNparams::T2, redJ::T3) where {T1, T2, T3}
-
-Compute the gradient of the basis functions with the respect to
-the "reduced" spatial coordinates.
-
-- `gradN`= output,  matrix of gradients,  one per row
-- `gradNparams`= matrix of gradients with respect to parametric coordinates,
-  one per row
-- `redJ`= reduced Jacobian matrix `redJ=transpose(Rm)*J`
-"""
-function gradN!(::Val{2}, gradN::T1, gradNparams::T2, redJ::T3) where {T1, T2, T3}
-    # This is the unrolled version that avoids allocation of a 2 x 2 matrix
-    invdet = 1.0/(redJ[1, 1]*redJ[2, 2] - redJ[1, 2]*redJ[2, 1]);
-    invredJ11 =  (redJ[2, 2])*invdet;
-    invredJ12 = -(redJ[1, 2])*invdet;
-    invredJ21 = -(redJ[2, 1])*invdet;
-    invredJ22 =  (redJ[1, 1])*invdet;
-    @assert size(gradN, 1)==size(gradNparams, 1)
-    @inbounds for r in 1:size(gradN, 1)
-        gradN[r, 1] = gradNparams[r, 1]*invredJ11 + gradNparams[r, 2]*invredJ21;
-        gradN[r, 2] = gradNparams[r, 1]*invredJ12 + gradNparams[r, 2]*invredJ22;
     end
 end
 
@@ -165,39 +125,27 @@ function Jacobian(::Val{3}, J::T) where {T}
     +J[1, 3]*(J[2, 1]*J[3, 2]-J[2, 2]*J[3, 1]) )
 end
 
-"""
-    gradN!(::Val{3}, gradN::T1, gradNparams::T2, redJ::T3) where {T1, T2, T3}
-
-Compute the gradient of the basis functions with the respect to
-the "reduced" spatial coordinates.
-
-- `gradN`= output,  matrix of gradients,  one per row
-- `gradNparams`= matrix of gradients with respect to parametric coordinates,
-  one per row
-- `redJ`= reduced Jacobian matrix `redJ=transpose(Rm)*J`
-"""
-function gradN!(::Val{3}, gradN::T1, gradNparams::T2, redJ::T3) where {T1, T2, T3}
-    invdet = 1.0 / ( +redJ[1, 1]*(redJ[2, 2]*redJ[3, 3]-redJ[3, 2]*redJ[2, 3])
-                    -redJ[1, 2]*(redJ[2, 1]*redJ[3, 3]-redJ[2, 3]*redJ[3, 1])
-                    +redJ[1, 3]*(redJ[2, 1]*redJ[3, 2]-redJ[2, 2]*redJ[3, 1]) );
-    # This is the unrolled version that avoids allocation of a 3 x 3 matrix
-    invredJ11 =  (redJ[2, 2]*redJ[3, 3]-redJ[3, 2]*redJ[2, 3])*invdet;
-    invredJ12 = -(redJ[1, 2]*redJ[3, 3]-redJ[1, 3]*redJ[3, 2])*invdet;
-    invredJ13 =  (redJ[1, 2]*redJ[2, 3]-redJ[1, 3]*redJ[2, 2])*invdet;
-    invredJ21 = -(redJ[2, 1]*redJ[3, 3]-redJ[2, 3]*redJ[3, 1])*invdet;
-    invredJ22 =  (redJ[1, 1]*redJ[3, 3]-redJ[1, 3]*redJ[3, 1])*invdet;
-    invredJ23 = -(redJ[1, 1]*redJ[2, 3]-redJ[2, 1]*redJ[1, 3])*invdet;
-    invredJ31 =  (redJ[2, 1]*redJ[3, 2]-redJ[3, 1]*redJ[2, 2])*invdet;
-    invredJ32 = -(redJ[1, 1]*redJ[3, 2]-redJ[3, 1]*redJ[1, 2])*invdet;
-    invredJ33 =  (redJ[1, 1]*redJ[2, 2]-redJ[2, 1]*redJ[1, 2])*invdet;
-    @assert size(gradN, 1)==size(gradNparams, 1)
-    @inbounds for r in 1:size(gradN, 1)
-        gradN[r, 1] = gradNparams[r, 1]*invredJ11 + gradNparams[r, 2]*invredJ21 + gradNparams[r, 3]*invredJ31;
-        gradN[r, 2] = gradNparams[r, 1]*invredJ12 + gradNparams[r, 2]*invredJ22 + gradNparams[r, 3]*invredJ32;
-        gradN[r, 3] = gradNparams[r, 1]*invredJ13 + gradNparams[r, 2]*invredJ23 + gradNparams[r, 3]*invredJ33;
+function _jac(locs, conn, gradNpar)
+    NBFPE = length(gradNpar)
+    j = 1
+    J = locs[conn[j]] * gradNpar[j]
+    @inbounds for j in 2:NBFPE
+        J += locs[conn[j]] * gradNpar[j]
     end
+    return J
 end
 
+"""
+    jacjac(fe::FE{RS, SD}, locs, gradNpar) where {RS, SD}
+
+Compute the Jacobian matrix and the Jacobian determinant.
+
+This is the generic version suitable for isoparametric elements.
+"""
+function jacjac(fe::FE{RS, SD}, locs, nodes, gradNpar) where {RS, SD}
+    Jac = _jac(locs, nodes, gradNpar)
+    return (Jac, Jacobian(manifdimv(refshape(fe)), Jac))
+end
 
 # L2 ==================================================================
 FEH1_L2_TYPE = FE{RefShapeInterval, typeof(MeshCore.L2)}
@@ -212,7 +160,7 @@ function bfungradpar(self::FEH1_L2_TYPE,  param_coords)
     return [SVector{1}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
-# T3 ==================================================================
+# T3 
 FEH1_T3_TYPE = FE{RefShapeTriangle, typeof(MeshCore.T3)}
 FEH1_T3(NDN) = FEH1_T3_TYPE(MeshCore.T3, SVector{4}([NDN, 0, 0, 0]))
 

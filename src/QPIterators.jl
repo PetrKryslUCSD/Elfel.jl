@@ -5,8 +5,11 @@ using LinearAlgebra
 using ..RefShapes: manifdim, IntegRule, quadrature
 using ..RefShapes: npts, param_coords, weights
 using ..FElements: refshape, ndofsperel
-import ..FElements: bfun, bfungradpar
+import ..FElements: bfun, bfungradpar, jacjac
 
+# To do: Create the data structure for an element that has multiple degrees of
+# freedom per entity. Also store the basic data for the scalar finite element 
+# (single degree of freedom per entity).
 function __bfundata(fe, qr)
     pc = qr.param_coords
     w  =  qr.weights
@@ -34,7 +37,6 @@ function QPIterator(fe::FET, quadraturesettings) where {FET}
     _bfundata = __bfundata(fe, _quadr)
     _pt = 0
     return QPIterator{FET, manifdim(refshape(fe))}(fe, _quadr, _bfundata[1], _bfundata[2], _pt)
-# return QPIterator{FET}(fe, _quadr, _pt)
 end
 
 function Base.iterate(it::QPIterator, state = 1)
@@ -55,5 +57,15 @@ bfun(it::QPIterator) = it._bfundata[it._pt]
 bfungradpar(it::QPIterator) = it._bfungraddata[it._pt]
 weight(it::QPIterator) = it._quadr.weights[it._pt]
 
+"""
+    jacjac(it::QPIterator)
+
+Compute the Jacobian matrix and the Jacobian determinant.
+
+At the current integration point.
+"""
+function jacjac(it::QPIterator, locs, conn)
+    return jacjac(it.fe, locs, conn, it._bfungraddata[it._pt])
+end
 
 end
