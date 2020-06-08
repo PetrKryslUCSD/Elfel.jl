@@ -11,8 +11,10 @@ using Test
 # using BenchmarkTools
 function test()
     fe = FEH1_T3(1)
+    mesh = load(Mesh(), "qmesh.mesh")
+    fesp = FESpace(Float64, fe, mesh)
     
-    qpit = QPIterator(fe, (kind = :default,))
+    qpit = QPIterator(fesp, (kind = :default,))
     @test length(qpit) == 1
     # @test isapprox(param_coords(quadrule(idom)), [0.3333333333333333 0.3333333333333333])
     # @test isapprox(weights(quadrule(idom)), [0.5])
@@ -25,7 +27,7 @@ function test()
         k = k + 1
     end
 
-    qpit = QPIterator(fe, (kind = :default, npts = 3))
+    qpit = QPIterator(fesp, (kind = :default, npts = 3))
     @test length(qpit) == 3
     # @test isapprox(param_coords(quadrule(idom)), [0.3333333333333333 0.3333333333333333])
     # @test isapprox(weights(quadrule(idom)), [0.5])

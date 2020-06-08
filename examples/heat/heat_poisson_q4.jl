@@ -56,7 +56,7 @@ function assembleK(fesp, kappa)
     end
 
     elit = FEIterator(fesp)
-    qpit = QPIterator(fesp.fe, (kind = :Gauss, order = 2))
+    qpit = QPIterator(fesp, (kind = :Gauss, order = 2))
     geom = geometry(fesp.mesh)
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, ndofs(fesp), ndofs(fesp))
@@ -83,7 +83,7 @@ function assembleF(fesp, Q)
     end
 
     elit = FEIterator(fesp)
-    qpit = QPIterator(fesp.fe, (kind = :Gauss, order = 2))
+    qpit = QPIterator(fesp, (kind = :Gauss, order = 2))
     geom = geometry(fesp.mesh)
     ass = SysvecAssembler(0.0)
     start!(ass, ndofs(fesp))

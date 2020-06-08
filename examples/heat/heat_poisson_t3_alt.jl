@@ -59,7 +59,7 @@ function assembleKF(fesp, kappa, Q)
     end
 
     elit = FEIterator(fesp)
-    qpit = QPIterator(fesp.fe, (kind = :default,))
+    qpit = QPIterator(fesp, (kind = :default,))
     geom = geometry(fesp.mesh)
     am = start!(SysmatAssemblerSparse(0.0), ndofs(fesp), ndofs(fesp))
     av = start!(SysvecAssembler(0.0), ndofs(fesp))

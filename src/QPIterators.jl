@@ -24,19 +24,19 @@ function __bfundata(fe, qr)
     return (Ns, gradNparams)
 end
 
-mutable struct QPIterator{FET, MDIM}
-    fe::FET
+mutable struct QPIterator{FES, MDIM}
+    fesp::FES
     _quadr::IntegRule
     _bfundata::Vector{Vector{Float64}}
     _bfungraddata::Vector{Vector{LinearAlgebra.Adjoint{Float64,SArray{Tuple{MDIM},Float64,1,MDIM}}}}
     _pt::Int64
 end
 
-function QPIterator(fe::FET, quadraturesettings) where {FET}
-    _quadr = quadrature(refshape(fe), quadraturesettings)
-    _bfundata = __bfundata(fe, _quadr)
+function QPIterator(fesp::FES, quadraturesettings) where {FES}
+    _quadr = quadrature(refshape(fesp.fe), quadraturesettings)
+    _bfundata = __bfundata(fesp.fe, _quadr)
     _pt = 0
-    return QPIterator{FET, manifdim(refshape(fe))}(fe, _quadr, _bfundata[1], _bfundata[2], _pt)
+    return QPIterator{FES, manifdim(refshape(fesp.fe))}(fesp, _quadr, _bfundata[1], _bfundata[2], _pt)
 end
 
 function Base.iterate(it::QPIterator, state = 1)
