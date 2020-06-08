@@ -2,14 +2,14 @@ module mfes1
 using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, refshape, FEH1_L2, FEH1_T3, FEH1_Q4
-using Elfel.FElements: bfun, bfungradpar, nfeatofdim, feathasdof
+using Elfel.FElements: bfun, bfungradpar, nfeatofdim, ndofperfeat
 using Test
 function test()
     fe = FEH1_T3()
-    @test feathasdof(fe, 0) == true
-    @test feathasdof(fe, 1) == false
-    @test feathasdof(fe, 2) == false
-    @test feathasdof(fe, 3) == false
+    @test ndofperfeat(fe, 0) == 1
+    @test ndofperfeat(fe, 1) == 0
+    @test ndofperfeat(fe, 2) == 0
+    @test ndofperfeat(fe, 3) == 0
 
     @test refshape(fe) == RefShapeTriangle
     @test manifdim(refshape(fe)) == 2
@@ -24,10 +24,10 @@ function test()
     @test isapprox(g[3], [0.; +1.]')
 
     e = FEH1_T3()
-    @test feathasdof(fe, 0) == true
-    @test feathasdof(fe, 1) == false
-    @test feathasdof(fe, 2) == false
-    @test feathasdof(fe, 3) == false
+    @test ndofperfeat(fe, 0) == true
+    @test ndofperfeat(fe, 1) == 0
+    @test ndofperfeat(fe, 2) == 0
+    @test ndofperfeat(fe, 3) == 0
     @test refshape(fe) == RefShapeTriangle
     @test manifdim(refshape(fe)) == 2
     @test isapprox(bfun(fe, [1/3, 1/3]), [0.3333333333333334, 0.3333333333333333, 0.3333333333333333])
@@ -37,10 +37,10 @@ function test()
     @test isapprox(g[3], [0.; +1.]')
 
     fe = FEH1_L2()
-    @test feathasdof(fe, 0) == true
-    @test feathasdof(fe, 1) == false
-    @test feathasdof(fe, 2) == false
-    @test feathasdof(fe, 3) == false
+    @test ndofperfeat(fe, 0) == true
+    @test ndofperfeat(fe, 1) == 0
+    @test ndofperfeat(fe, 2) == 0
+    @test ndofperfeat(fe, 3) == 0
     @test refshape(fe) == RefShapeInterval
     @test manifdim(refshape(fe)) == 1
     @test isapprox(bfun(fe, [1/3]), [0.3333333333333334, 2*0.3333333333333333])

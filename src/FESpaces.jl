@@ -4,7 +4,7 @@ using StaticArrays
 using MeshCore
 using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, manifdim, IncRel, VecAttrib
 using MeshSteward: Mesh, baseincrel, increl
-using ..FElements: nfeatofdim, feathasdof
+using ..FElements: nfeatofdim, ndofperfeat
 using ..FEFields: FEField, nterms
 import ..FEFields: numberdofs!, ndofs, setebc!, nunknowns, scattersysvec!, gathersysvec!
 import ..FElements: ndofsperel
@@ -32,7 +32,7 @@ doftype(fesp::FESpace{FET, T}) where {FET, T} = T
 function _makefields(::Type{T}, ::Type{IT}, mesh, fe, nfecopies) where {T, IT} 
     _irsfields= Dict()
     for m in 0:1:manifdim(fe.sd)
-        if feathasdof(fe, m)
+        if ndofperfeat(fe, m) > 0
             fir = increl(mesh, (manifdim(fe.sd), m))
             fld = FEField(Val(nfecopies), T, IT, nshapes(fir.right))
             _irsfields[m] = (fir, fld)
@@ -55,7 +55,7 @@ No effort is made to optimize the numbering in any way.
 """
 function numberdofs!(fesp::FES)  where {FES<:FESpace}
     for m in keys(fesp._irsfields)
-        if feathasdof(fesp.fe, m)
+        if ndofperfeat(fesp.fe, m) > 0
             v = fesp._irsfields[m]
             numberdofs!(v[2]) 
         end 
@@ -71,7 +71,7 @@ Compute the total number of degrees of freedom.
 function ndofs(fesp::FES)  where {FES<:FESpace}
     n = 0
     for m in keys(fesp._irsfields)
-        if feathasdof(fesp.fe, m) 
+        if ndofperfeat(fesp.fe, m) > 0 
             v = fesp._irsfields[m]
             n = n + ndofs(v[2]) 
         end 
@@ -87,7 +87,7 @@ Compute the total number of unknown degrees of freedom.
 function nunknowns(fesp::FES)  where {FES<:FESpace}
     n = 0
     for m in keys(fesp._irsfields)
-        if feathasdof(fesp.fe, m)
+        if ndofperfeat(fesp.fe, m) > 0
             v = fesp._irsfields[m]
             n = n + nunknowns(v[2]) 
         end 
@@ -120,7 +120,7 @@ Gather values for the whole system vector.
 """
 function gathersysvec!(v, fesp::FESpace)
     for m in keys(fesp._irsfields)
-        if feathasdof(fesp.fe, m) 
+        if ndofperfeat(fesp.fe, m) > 0 
             gathersysvec!(v, fesp._irsfields[m][2])
         end 
     end
@@ -134,7 +134,7 @@ Scatter values from the system vector.
 """
 function scattersysvec!(fesp::FESpace, v)
     for m in keys(fesp._irsfields)
-        if feathasdof(fesp.fe, m) 
+        if ndofperfeat(fesp.fe, m) > 0 
             scattersysvec!(fesp._irsfields[m][2], v)
         end 
     end
@@ -143,7 +143,7 @@ end
 
 function makeattribute(fesp::FESpace, name, comp)
     for m in keys(fesp._irsfields)
-        if feathasdof(fesp.fe, m)
+        if ndofperfeat(fesp.fe, m) > 0
             ir, fl = fesp._irsfields[m]
             ir.right.attributes[name] = VecAttrib([fl.dofvals[i][comp] for i in 1:nterms(fl)])
         end 

@@ -54,3 +54,5 @@ for i in it
     @show it.it2
 end
 ```
+
+- FE space could figure out basis function classification: which entity is it attached to, which one is it in serial order, and anything else, and share it with iterators (especially the quadrature-point iterator).

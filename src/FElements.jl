@@ -17,7 +17,7 @@ Type of a finite element set.
 """
 struct FE{RS, SD} 
     sd::SD
-    enthasdof::SVector{4, Bool}
+    _ndofperfeat::SVector{4, Int64}
 end
 
 """
@@ -39,16 +39,19 @@ refshape(fe::FE{RS, SD}) where {RS, SD} = RS
 """
     nfeatofdim(fe::FE{RS, SD}, m) where {RS, SD}
 
-Number of features of manifold dimension `m`.
+Number of features of manifold dimension `m`. Note that `0 <= m <= 3`.
 """
 nfeatofdim(fe::FE{RS, SD}, m) where {RS, SD} = MeshCore.nfeatofdim(fe.sd, m)
 
 """
     feathasdof(fe::FE{RS, SD}, m) where {RS, SD}
 
-Have the feature of manifold dimension `m` a degree of freedom attached?
+How many degrees of freedom are attached to a the feature of manifold dimension
+`m`?
+
+Note that `0 <= m <= 3`.
 """
-feathasdof(fe::FE{RS, SD}, m) where {RS, SD} = fe.enthasdof[m+1]
+ndofperfeat(fe::FE{RS, SD}, m) where {RS, SD} = fe._ndofperfeat[m+1]
 
 """
     ndofsperel(fe::FE{RS, SD}) where {RS, SD}
@@ -61,7 +64,7 @@ function ndofsperel(fe::FE{RS, SD}) where {RS, SD}
     md = manifdim(fe.sd)
     n = 0
     for m in 0:1:md
-        n = n + nfeatofdim(fe, m) * (feathasdof(fe, m) ? 1 : 0)
+        n = n + nfeatofdim(fe, m) * ndofperfeat(fe, m)
     end
     return n
 end
@@ -148,8 +151,9 @@ function jacjac(fe::FE{RS, SD}, locs, nodes, gradNpar) where {RS, SD}
 end
 
 # L2 ==================================================================
+# Linear two-node element. Only nodal basis functions.
 FEH1_L2_TYPE = FE{RefShapeInterval, typeof(MeshCore.L2)}
-FEH1_L2() = FEH1_L2_TYPE(MeshCore.L2, SVector{4}([true, false, false, false]))
+FEH1_L2() = FEH1_L2_TYPE(MeshCore.L2, SVector{4}([1, 0, 0, 0]))
 
 function bfun(self::FEH1_L2_TYPE,  param_coords) 
     return SVector{2}([(1. - param_coords[1]); (1. + param_coords[1])] / 2.0)
@@ -160,9 +164,10 @@ function bfungradpar(self::FEH1_L2_TYPE,  param_coords)
     return [SVector{1}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
-# T3 
+# Q4 ==================================================================
+# Linear triangular element. Only nodal basis functions.
 FEH1_T3_TYPE = FE{RefShapeTriangle, typeof(MeshCore.T3)}
-FEH1_T3() = FEH1_T3_TYPE(MeshCore.T3, SVector{4}([true, false, false, false]))
+FEH1_T3() = FEH1_T3_TYPE(MeshCore.T3, SVector{4}([1, 0, 0, 0]))
 
 function bfun(self::FEH1_T3_TYPE,  param_coords) 
     return SVector{3}([(1 - param_coords[1] - param_coords[2]); param_coords[1]; param_coords[2]])
@@ -174,8 +179,9 @@ function bfungradpar(self::FEH1_T3_TYPE,  param_coords)
 end
 
 # Q4 ==================================================================
+# Linear quadrilateral element. Only nodal basis functions.
 FEH1_Q4_TYPE = FE{RefShapeSquare, typeof(MeshCore.Q4)}
-FEH1_Q4() = FEH1_Q4_TYPE(MeshCore.Q4, SVector{4}([true, false, false, false]))
+FEH1_Q4() = FEH1_Q4_TYPE(MeshCore.Q4, SVector{4}([1, 0, 0, 0]))
 
 function bfun(self::FEH1_Q4_TYPE,  param_coords) 
 	val = [0.25 * (1. - param_coords[1]) * (1. - param_coords[2]);
