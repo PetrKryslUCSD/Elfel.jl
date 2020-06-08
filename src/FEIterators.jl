@@ -10,7 +10,7 @@ import ..FElements: jacjac
 using ..FEFields: FEField, ndofsperterm
 using ..FESpaces: FESpace, doftype
 import ..FESpaces: ndofsperel
-
+using ..QPIterators: QPIterator
 
 struct _LocalMatrixAssembler{IT<:Integer, T<:Number}
     row::Vector{IT}
@@ -224,8 +224,8 @@ Compute the Jacobian matrix and the Jacobian determinant.
 
 At the current integration point.
 """
-function jacjac(it::FEIterator, gradNparams)
-    return jacjac(it.fesp.fe, it._geom, it._nodes, gradNparams)
+function jacjac(it::FEIterator, qpit::QPIterator)
+    return jacjac(it.fesp.fe, it._geom, it._nodes, qpit._bfungraddata[qpit._pt])
 end
 
 end

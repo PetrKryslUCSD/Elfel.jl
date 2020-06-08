@@ -38,7 +38,7 @@ function assembleK(fesp, kappa)
         for el in elit
             for qp in qpit
                 gradNparams = bfungradpar(qp)
-                Jac, J = jacjac(el, gradNparams)
+                Jac, J = jacjac(el, qp)
                 JxW = J * weight(qp)
                 invJac = inv(Jac)
                 for j in 1:nedof
@@ -70,7 +70,7 @@ function assembleF(fesp, Q)
         for el in elit
             for qp in qpit
                 gradNparams = bfungradpar(qp)
-                Jac, J = jacjac(el, gradNparams)
+                Jac, J = jacjac(el, qp)
                 JxW = J * weight(qp)
                 N = bfun(qp)
                 for i in 1:nedof
