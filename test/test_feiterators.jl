@@ -11,9 +11,9 @@ using MeshCore
 using MeshSteward: Mesh, load, nspacedims, baseincrel
 using Test
 function test()
-    fe = FEH1_T3(1)
+    fe = FEH1_T3()
     mesh = load(Mesh(), "qmesh.mesh")
-    fesp = FESpace(Float64, fe, mesh)
+    fesp = FESpace(Float64, mesh, fe)
 
     @test doftype(fesp) == Float64
     
@@ -102,9 +102,9 @@ A = [0.6744582963441466 0.2853043149927861 0.27460710155821255;
 0.3781923479141225 0.2838873430062512 0.6316949656630075; 
 0.19369805365903336 0.8926164783344779 0.07006905962860177]
 function test()
-    fe = FEH1_T3(1)
+    fe = FEH1_T3()
     mesh = load(Mesh(), "qmesh.mesh")
-    fesp = FESpace(Float64, fe, mesh)
+    fesp = FESpace(Float64, mesh, fe)
 
     for i in [1, 4, 7, 10]
         setebc!(fesp, 0, i, 1, 0.0)
@@ -152,9 +152,9 @@ A = [0.6744582963441466 0.2853043149927861 0.27460710155821255;
 0.3781923479141225 0.2838873430062512 0.6316949656630075; 
 0.19369805365903336 0.8926164783344779 0.07006905962860177]
 function test()
-    fe = FEH1_T3(3)
+    fe = FEH1_T3()
     mesh = load(Mesh(), "qmesh.mesh")
-    fesp = FESpace(Float64, fe, mesh)
+    fesp = FESpace(Float64, mesh, fe, 3)
 
     for i in [1, 4, 7, 10]
         setebc!(fesp, 0, i, 1, 0.0)

@@ -5,10 +5,12 @@ using MeshCore
 using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, IncRel, shapedesc
 using MeshSteward: Mesh, baseincrel, increl
 using ..RefShapes: manifdim, manifdimv
-using ..FElements: refshape, nfeatofdim, ndofsperfeat
-import ..FElements: ndofsperel, jacjac
+using ..FElements: refshape, nfeatofdim
+import ..FElements: jacjac
 using ..FEFields: FEField, ndofsperterm
 using ..FESpaces: FESpace, doftype
+import ..FESpaces: ndofsperel
+
 
 struct _LocalMatrixAssembler{IT<:Integer, T<:Number}
     row::Vector{IT}
@@ -54,9 +56,9 @@ struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
     function FEIterator(fesp::FES) where {FES}
         _bir = baseincrel(fesp.mesh)
         _geom = MeshCore.attribute(_bir.right, "geom")
-        _dofs = zeros(Int64, ndofsperel(fesp.fe))
-        _entmdim = zeros(Int64, ndofsperel(fesp.fe))
-        _dofcomp = zeros(Int64, ndofsperel(fesp.fe))
+        _dofs = zeros(Int64, ndofsperel(fesp))
+        _entmdim = zeros(Int64, ndofsperel(fesp))
+        _dofcomp = zeros(Int64, ndofsperel(fesp))
         _nodes = zeros(Int64, nfeatofdim(fesp.fe, 0)) 
         _fld0 = nothing
         _fld1 = nothing
@@ -70,8 +72,8 @@ struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
         1 in keys(fesp._irsfields) && (_irs1 = fesp._irsfields[1][1]; _fld1 = fesp._irsfields[1][2])
         2 in keys(fesp._irsfields) && (_irs2 = fesp._irsfields[2][1]; _fld2 = fesp._irsfields[2][2])
         3 in keys(fesp._irsfields) && (_irs3 = fesp._irsfields[3][1]; _fld3 = fesp._irsfields[3][2])
-        _lma = _LocalMatrixAssembler(ndofsperel(fesp.fe), zero(doftype(fesp)))
-        _lva = _LocalVectorAssembler(ndofsperel(fesp.fe), zero(doftype(fesp)))
+        _lma = _LocalMatrixAssembler(ndofsperel(fesp), zero(doftype(fesp)))
+        _lva = _LocalVectorAssembler(ndofsperel(fesp), zero(doftype(fesp)))
         _manifdimv = Val(manifdim(refshape(fesp.fe)))
         p = 1
         _irs0 != nothing && (p = _init_e_d!(_entmdim, _dofcomp, p, _irs0, _fld0))
@@ -96,7 +98,7 @@ Base.length(it::FEIterator)  = nrelations(it._bir)
 
 Retrieve the number of degrees of freedom per element.
 """
-ndofsperel(it::FEIterator) = ndofsperel(it.fesp.fe)
+ndofsperel(it::FEIterator) = ndofsperel(it.fesp)
 
 """
     eldofs(it::FEIterator)

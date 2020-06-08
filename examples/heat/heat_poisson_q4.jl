@@ -98,7 +98,7 @@ end
 
 function run()
     mesh = genmesh()
-    fesp = FESpace(Float64, FEH1_Q4(1), mesh)
+    fesp = FESpace(Float64, mesh, FEH1_Q4())
     bir = boundary(mesh);
     vl = connectedv(bir);
     locs = geometry(mesh)

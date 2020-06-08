@@ -1,7 +1,7 @@
 module mfld1
 using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
-using Elfel.FElements: FE, ndofsperfeat, refshape
+using Elfel.FElements: FE, refshape
 using Elfel.FElements: bfun, bfungradpar, FEH1_T3
 using MeshSteward: Mesh, load, increl, baseincrel
 using MeshCore: nshapes
@@ -10,11 +10,11 @@ using Test
 function test()
 
     mesh = load(Mesh(), "mt3gen3.mesh")
-    fe = FEH1_T3(2)
+    fe = FEH1_T3()
 
-    fef = FEField(Val(ndofsperfeat(fe, 0)), Float64, Int64, nshapes(baseincrel(mesh).right))
+    fef = FEField(Val(2), Float64, Int64, nshapes(baseincrel(mesh).right))
     @test nterms(fef) == nshapes(baseincrel(mesh).right)
-    @test ndofsperterm(fef) == ndofsperfeat(fe, 0)
+    @test ndofsperterm(fef) == 2
     numberdofs!(fef)
     @test fef.nunknowns == nterms(fef) * ndofsperterm(fef)
     setebc!(fef, 3, 2, 3.0)

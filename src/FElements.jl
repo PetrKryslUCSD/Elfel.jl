@@ -17,7 +17,7 @@ Type of a finite element set.
 """
 struct FE{RS, SD} 
     sd::SD
-    ndof::SVector{4, Int64}
+    enthasdof::SVector{4, Bool}
 end
 
 """
@@ -44,11 +44,11 @@ Number of features of manifold dimension `m`.
 nfeatofdim(fe::FE{RS, SD}, m) where {RS, SD} = MeshCore.nfeatofdim(fe.sd, m)
 
 """
-    ndofsperfeat(fe::FE{RS, SD}, m) where {RS, SD}
+    feathasdof(fe::FE{RS, SD}, m) where {RS, SD}
 
-Number of degrees of freedom per feature of manifold dimension `m`. 
+Have the feature of manifold dimension `m` a degree of freedom attached?
 """
-ndofsperfeat(fe::FE{RS, SD}, m) where {RS, SD} = fe.ndof[m+1]
+feathasdof(fe::FE{RS, SD}, m) where {RS, SD} = fe.enthasdof[m+1]
 
 """
     ndofsperel(fe::FE{RS, SD}) where {RS, SD}
@@ -61,7 +61,7 @@ function ndofsperel(fe::FE{RS, SD}) where {RS, SD}
     md = manifdim(fe.sd)
     n = 0
     for m in 0:1:md
-        n = n + nfeatofdim(fe, m) * ndofsperfeat(fe, m)
+        n = n + nfeatofdim(fe, m) * (feathasdof(fe, m) ? 1 : 0)
     end
     return n
 end
@@ -149,7 +149,7 @@ end
 
 # L2 ==================================================================
 FEH1_L2_TYPE = FE{RefShapeInterval, typeof(MeshCore.L2)}
-FEH1_L2(NDN) = FEH1_L2_TYPE(MeshCore.L2, SVector{4}([NDN, 0, 0, 0]))
+FEH1_L2() = FEH1_L2_TYPE(MeshCore.L2, SVector{4}([true, false, false, false]))
 
 function bfun(self::FEH1_L2_TYPE,  param_coords) 
     return SVector{2}([(1. - param_coords[1]); (1. + param_coords[1])] / 2.0)
@@ -162,7 +162,7 @@ end
 
 # T3 
 FEH1_T3_TYPE = FE{RefShapeTriangle, typeof(MeshCore.T3)}
-FEH1_T3(NDN) = FEH1_T3_TYPE(MeshCore.T3, SVector{4}([NDN, 0, 0, 0]))
+FEH1_T3() = FEH1_T3_TYPE(MeshCore.T3, SVector{4}([true, false, false, false]))
 
 function bfun(self::FEH1_T3_TYPE,  param_coords) 
     return SVector{3}([(1 - param_coords[1] - param_coords[2]); param_coords[1]; param_coords[2]])
@@ -175,7 +175,7 @@ end
 
 # Q4 ==================================================================
 FEH1_Q4_TYPE = FE{RefShapeSquare, typeof(MeshCore.Q4)}
-FEH1_Q4(NDN) = FEH1_Q4_TYPE(MeshCore.Q4, SVector{4}([NDN, 0, 0, 0]))
+FEH1_Q4() = FEH1_Q4_TYPE(MeshCore.Q4, SVector{4}([true, false, false, false]))
 
 function bfun(self::FEH1_Q4_TYPE,  param_coords) 
 	val = [0.25 * (1. - param_coords[1]) * (1. - param_coords[2]);

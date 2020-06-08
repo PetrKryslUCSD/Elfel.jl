@@ -1,8 +1,6 @@
 module FEFields
 
 using StaticArrays
-using ..FElements: nfeatofdim, ndofsperfeat
-import ..FElements: ndofsperel
 
 mutable struct FEField{N, T, IT}
     dofnums::Vector{SVector{N, IT}}

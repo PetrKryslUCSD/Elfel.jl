@@ -1,9 +1,6 @@
-module heat_poisson_t3
+module mt_heat_poisson_t3
 
 using LinearAlgebra
-using BenchmarkTools
-using InteractiveUtils
-# using Profile
 using MeshCore: retrieve, nrelations, nentities
 using MeshSteward: T3block
 using MeshSteward: Mesh, insert!, baseincrel, boundary
@@ -18,12 +15,13 @@ using Elfel.FEIterators: asstolma!, lma, asstolva!, lva, jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
+using Test
 
 A = 1.0 # length of the side of the square
 kappa =  1.0; # conductivity matrix
 Q = -6.0; # internal heat generation rate
 tempf(x, y) =(1.0 + x^2 + 2.0 * y^2);#the exact distribution of temperature
-N = 1000;# number of subdivisions along the sides of the square domain
+N = 4;# number of subdivisions along the sides of the square domain
 
 function genmesh()
     conn = T3block(A, A, N, N)
@@ -60,7 +58,7 @@ function assembleK(fesp, kappa)
     geom = geometry(fesp.mesh)
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, ndofs(fesp), ndofs(fesp))
-    @time integrateK!(ass, geom, elit, qpit, kappa)
+    integrateK!(ass, geom, elit, qpit, kappa)
     return finish!(ass)
 end
 
@@ -87,16 +85,16 @@ function assembleF(fesp, Q)
     geom = geometry(fesp.mesh)
     ass = SysvecAssembler(0.0)
     start!(ass, ndofs(fesp))
-    @time integrateF!(ass, geom, elit, qpit, Q)
+    integrateF!(ass, geom, elit, qpit, Q)
     return finish!(ass)
 end
 
 function solve!(T, K, F, nu)
-    @time KT = K * T
-    @time T[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
+    KT = K * T
+    T[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
-function run()
+function test()
     mesh = genmesh()
     fesp = FESpace(Float64, mesh, FEH1_T3())
     bir = boundary(mesh);
@@ -106,7 +104,7 @@ function run()
         setebc!(fesp, 0, i, 1, tempf(locs[i]...))
     end
     numberdofs!(fesp)
-    @show nunknowns(fesp)
+    @test nunknowns(fesp) == 9
     K = assembleK(fesp, kappa)
     F = assembleF(fesp, Q)
     T = fill(0.0, ndofs(fesp))
@@ -115,9 +113,10 @@ function run()
     scattersysvec!(fesp, T)
     makeattribute(fesp, "T", 1)
     vtkwrite("heat_poisson_t3-T", baseincrel(mesh), ["T"])
+    try rm("heat_poisson_t3-T.vtu"); catch end
+    @test isapprox(T, [1.1875, 1.3749999999999998, 1.6874999999999998, 1.5624999999999998, 1.7499999999999998, 2.0625, 2.1875, 2.375, 2.6875, 1.0, 1.0625, 1.25, 1.5625, 2.0, 1.125, 2.125, 1.5, 2.5, 2.125, 3.125, 3.0, 3.0625, 3.25, 3.5625, 4.0])
 end
 
 end
-
-heat_poisson_t3.run()
-# heat_poisson_t3.run()
+using .mt_heat_poisson_t3
+mt_heat_poisson_t3.test()

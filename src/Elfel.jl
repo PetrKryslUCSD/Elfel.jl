@@ -8,7 +8,7 @@ include("RefShapes.jl")
 include("FElements.jl")
 include("FEFields.jl")
 include("FESpaces.jl")
-include("FEIterators.jl")
 include("QPIterators.jl")
+include("FEIterators.jl")
 
 end # module

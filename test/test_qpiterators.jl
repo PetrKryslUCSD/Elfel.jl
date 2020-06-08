@@ -10,9 +10,9 @@ using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
 using Test
 # using BenchmarkTools
 function test()
-    fe = FEH1_T3(1)
+    fe = FEH1_T3()
     mesh = load(Mesh(), "qmesh.mesh")
-    fesp = FESpace(Float64, fe, mesh)
+    fesp = FESpace(Float64, mesh, fe)
     
     qpit = QPIterator(fesp, (kind = :default,))
     @test length(qpit) == 1
