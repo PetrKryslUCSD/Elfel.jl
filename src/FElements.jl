@@ -164,7 +164,7 @@ function bfungradpar(self::FEH1_L2_TYPE,  param_coords)
     return [SVector{1}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
-# Q4 ==================================================================
+# T3 ==================================================================
 # Linear triangular element. Only nodal basis functions.
 FEH1_T3_TYPE = FE{RefShapeTriangle, typeof(MeshCore.T3)}
 FEH1_T3() = FEH1_T3_TYPE(MeshCore.T3, SVector{4}([1, 0, 0, 0]))
@@ -196,6 +196,28 @@ function bfungradpar(self::FEH1_Q4_TYPE,  param_coords)
             (1. - param_coords[2])*0.25 -(1. + param_coords[1])*0.25;
             (1. + param_coords[2])*0.25 (1. + param_coords[1])*0.25;
            -(1. + param_coords[2])*0.25 (1. - param_coords[1])*0.25];
+    return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
+end
+
+# T3-BUBBLE ==================================================================
+# Linear triangular element with a cubic interior bubble. 
+FEH1_T3_BUBBLE_TYPE = FE{RefShapeTriangle, typeof(MeshCore.T3)}
+FEH1_T3_BUBBLE() = FEH1_T3_BUBBLE_TYPE(MeshCore.T3, SVector{4}([1, 0, 0, 1]))
+
+function bfun(self::FEH1_T3_BUBBLE_TYPE,  param_coords) 
+    xi, eta = param_coords
+    return SVector{4}([(1 - xi - eta); 
+        xi; 
+        eta; 
+        (1 - xi - eta) * xi * eta])
+end
+
+function bfungradpar(self::FEH1_T3_BUBBLE_TYPE,  param_coords)
+    xi, eta = param_coords
+    g = [-1. -1.;  
+    +1.  0.;  
+    0. +1.;
+    (-xi * eta + (1 - xi - eta) * eta) (-xi * eta + (1 - xi - eta) * xi)]
     return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
