@@ -78,3 +78,55 @@ end
 end
 using .mfesp1
 mfesp1.test()
+
+module mfesp2
+using StaticArrays
+using Elfel
+using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
+using Elfel.FElements: FE, refshape, FEH1_T3, shapedesc
+using Elfel.FElements: FEH1_T3_BUBBLE
+using Elfel.FElements: bfun, bfungradpar
+using Elfel.FElements: nfeatofdim, ndofperfeat, ndofsperel
+using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype, nunknowns
+using Elfel.FEIterators: FEIterator
+using MeshCore
+using MeshSteward: Mesh, load, nspacedims, baseincrel
+using Test
+function test()
+    fe = FEH1_T3()
+    mesh = load(Mesh(), "qmesh.mesh")
+    fesp = FESpace(Float64, mesh, fe, 3)
+
+    @test doftype(fesp) == Float64
+    
+    @test shapedesc(fesp.fe).name == "T3"
+    @test refshape(fesp.fe) == Elfel.RefShapes.RefShapeTriangle
+
+    @show nfeatofdim(fesp.fe, 0)
+    @show ndofperfeat(fesp.fe, 0)
+
+    @show ndofsperel(fesp.fe)
+
+    @show N = bfun(fesp.fe, [1/3, 1/3])
+
+    fesp = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 1)
+
+    @show nfeatofdim(fesp.fe, 0)
+    @show nfeatofdim(fesp.fe, 1)
+    @show nfeatofdim(fesp.fe, 2)
+    @show nfeatofdim(fesp.fe, 3)
+    @show ndofperfeat(fesp.fe, 0)
+    @show ndofperfeat(fesp.fe, 1)
+    @show ndofperfeat(fesp.fe, 2)
+    @show ndofperfeat(fesp.fe, 3)
+
+    @show ndofsperel(fesp.fe)
+
+    @show N = bfun(fesp.fe, [1/3, 1/3])
+
+    true
+end
+end
+using .mfesp2
+mfesp2.test()
+

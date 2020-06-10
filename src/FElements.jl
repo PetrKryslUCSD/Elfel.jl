@@ -3,19 +3,20 @@ module FElements
 using StaticArrays
 using LinearAlgebra
 using MeshCore
-using MeshCore: manifdim
+import MeshCore: manifdim
 using ..RefShapes: RefShapePoint, RefShapeInterval, RefShapeTriangle, RefShapeTetrahedron, RefShapeSquare, RefShapeCube, manifdimv
 
+abstract type FE{RS, SD} end
 
 """
-    FE{RS, SD} 
+    FEData{RS, SD} 
 
 Type of a finite element set. 
 
 - `RS` = reference shape,
 - `SD` = shape descriptor.
 """
-struct FE{RS, SD} 
+struct FEData{SD} 
     sd::SD
     _ndofperfeat::SVector{4, Int64}
 end
@@ -27,7 +28,7 @@ Topological shape description.
 
 Refer to the MeshCore library.
 """
-shapedesc(fe::FE{RS, SD}) where {RS, SD} = fe.sd
+shapedesc(fe::FE{RS, SD}) where {RS, SD} = fe.data.sd
 
 """
     refshape(fe::FE{RS, SD}) where {RS, SD}
@@ -41,7 +42,7 @@ refshape(fe::FE{RS, SD}) where {RS, SD} = RS
 
 Number of features of manifold dimension `m`. Note that `0 <= m <= 3`.
 """
-nfeatofdim(fe::FE{RS, SD}, m) where {RS, SD} = MeshCore.nfeatofdim(fe.sd, m)
+nfeatofdim(fe::FE{RS, SD}, m) where {RS, SD} = MeshCore.nfeatofdim(fe.data.sd, m)
 
 """
     feathasdof(fe::FE{RS, SD}, m) where {RS, SD}
@@ -51,7 +52,7 @@ How many degrees of freedom are attached to a the feature of manifold dimension
 
 Note that `0 <= m <= 3`.
 """
-ndofperfeat(fe::FE{RS, SD}, m) where {RS, SD} = fe._ndofperfeat[m+1]
+ndofperfeat(fe::FE{RS, SD}, m) where {RS, SD} = fe.data._ndofperfeat[m+1]
 
 """
     ndofsperel(fe::FE{RS, SD}) where {RS, SD}
@@ -61,13 +62,15 @@ Enumerate all features of all manifold dimensions, and for each feature multiply
 by the number of degrees of freedom per feature.
 """
 function ndofsperel(fe::FE{RS, SD}) where {RS, SD}
-    md = manifdim(fe.sd)
+    md = manifdim(fe.data.sd)
     n = 0
     for m in 0:1:md
         n = n + nfeatofdim(fe, m) * ndofperfeat(fe, m)
     end
     return n
 end
+
+manifdim(fe::FE{RS, SD}) where {RS, SD} = MeshCore.manifdim(fe.data.sd)
 
 """
     Jacobian(::Val{0}, J::T) where {T}
@@ -152,8 +155,11 @@ end
 
 # L2 ==================================================================
 # Linear two-node element. Only nodal basis functions.
-FEH1_L2_TYPE = FE{RefShapeInterval, typeof(MeshCore.L2)}
-FEH1_L2() = FEH1_L2_TYPE(MeshCore.L2, SVector{4}([1, 0, 0, 0]))
+struct FEH1_L2_Type{RS, SD} <: FE{RS, SD}
+    data::FEData{SD}
+end
+FEH1_L2_TYPE = FEH1_L2_Type{RefShapeInterval, typeof(MeshCore.L2)}
+FEH1_L2() = FEH1_L2_TYPE(FEData(MeshCore.L2, SVector{4}([1, 0, 0, 0])))
 
 function bfun(self::FEH1_L2_TYPE,  param_coords) 
     return SVector{2}([(1. - param_coords[1]); (1. + param_coords[1])] / 2.0)
@@ -166,8 +172,11 @@ end
 
 # T3 ==================================================================
 # Linear triangular element. Only nodal basis functions.
-FEH1_T3_TYPE = FE{RefShapeTriangle, typeof(MeshCore.T3)}
-FEH1_T3() = FEH1_T3_TYPE(MeshCore.T3, SVector{4}([1, 0, 0, 0]))
+struct FEH1_T3_Type{RS, SD} <: FE{RS, SD}
+    data::FEData{SD}
+end
+FEH1_T3_TYPE = FEH1_T3_Type{RefShapeTriangle, typeof(MeshCore.T3)}
+FEH1_T3() = FEH1_T3_TYPE(FEData(MeshCore.T3, SVector{4}([1, 0, 0, 0])))
 
 function bfun(self::FEH1_T3_TYPE,  param_coords) 
     return SVector{3}([(1 - param_coords[1] - param_coords[2]); param_coords[1]; param_coords[2]])
@@ -180,8 +189,11 @@ end
 
 # Q4 ==================================================================
 # Linear quadrilateral element. Only nodal basis functions.
-FEH1_Q4_TYPE = FE{RefShapeSquare, typeof(MeshCore.Q4)}
-FEH1_Q4() = FEH1_Q4_TYPE(MeshCore.Q4, SVector{4}([1, 0, 0, 0]))
+struct FEH1_Q4_Type{RS, SD} <: FE{RS, SD}
+    data::FEData{SD}
+end
+FEH1_Q4_TYPE = FEH1_Q4_Type{RefShapeSquare, typeof(MeshCore.Q4)}
+FEH1_Q4() = FEH1_Q4_TYPE(FEData(MeshCore.Q4, SVector{4}([1, 0, 0, 0])))
 
 function bfun(self::FEH1_Q4_TYPE,  param_coords) 
 	val = [0.25 * (1. - param_coords[1]) * (1. - param_coords[2]);
@@ -201,8 +213,11 @@ end
 
 # T3-BUBBLE ==================================================================
 # Linear triangular element with a cubic interior bubble. 
-FEH1_T3_BUBBLE_TYPE = FE{RefShapeTriangle, typeof(MeshCore.T3)}
-FEH1_T3_BUBBLE() = FEH1_T3_BUBBLE_TYPE(MeshCore.T3, SVector{4}([1, 0, 0, 1]))
+struct FEH1_T3_BUBBLE_Type{RS, SD} <: FE{RS, SD}
+    data::FEData{SD}
+end
+FEH1_T3_BUBBLE_TYPE = FEH1_T3_BUBBLE_Type{RefShapeTriangle, typeof(MeshCore.T3)}
+FEH1_T3_BUBBLE() = FEH1_T3_BUBBLE_TYPE(FEData(MeshCore.T3, SVector{4}([1, 0, 1, 0])))
 
 function bfun(self::FEH1_T3_BUBBLE_TYPE,  param_coords) 
     xi, eta = param_coords

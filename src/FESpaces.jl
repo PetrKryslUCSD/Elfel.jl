@@ -2,9 +2,9 @@ module FESpaces
 
 using StaticArrays
 using MeshCore
-using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, manifdim, IncRel, VecAttrib
+using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, IncRel, VecAttrib
 using MeshSteward: Mesh, baseincrel, increl
-using ..FElements: nfeatofdim, ndofperfeat
+using ..FElements: nfeatofdim, ndofperfeat, manifdim
 using ..FEFields: FEField, nterms
 import ..FEFields: numberdofs!, ndofs, setebc!, nunknowns, scattersysvec!, gathersysvec!
 import ..FElements: ndofsperel
@@ -31,9 +31,9 @@ doftype(fesp::FESpace{FET, T}) where {FET, T} = T
 
 function _makefields(::Type{T}, ::Type{IT}, mesh, fe, nfecopies) where {T, IT} 
     _irsfields= Dict()
-    for m in 0:1:manifdim(fe.sd)
+    for m in 0:1:manifdim(fe)
         if ndofperfeat(fe, m) > 0
-            fir = increl(mesh, (manifdim(fe.sd), m))
+            fir = increl(mesh, (manifdim(fe), m))
             fld = FEField(Val(nfecopies), T, IT, nshapes(fir.right))
             _irsfields[m] = (fir, fld)
         end 

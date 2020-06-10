@@ -1,7 +1,7 @@
 module mqpit1
 using Elfel
 using Elfel.RefShapes: npts, param_coords, weights
-using Elfel.FElements: FE, refshape
+using Elfel.FElements: FE, FEData, refshape
 using Elfel.FElements: bfun, bfungradpar, FEH1_T3
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns
 using MeshSteward: Mesh, load, baseincrel
