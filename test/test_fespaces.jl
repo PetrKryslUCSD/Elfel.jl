@@ -125,6 +125,29 @@ function test()
 
     @test isapprox(bfun(fesp.fe, [1/3, 1/3]), [0.3333333333333334, 0.3333333333333333, 0.3333333333333333, 0.03703703703703704])
 
+    fesp = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 2)
+
+    @test nfeatofdim(fesp.fe, 0) == 3
+    @test nfeatofdim(fesp.fe, 1) == 3
+    @test nfeatofdim(fesp.fe, 2) == 1
+    @test nfeatofdim(fesp.fe, 3) == 0
+    @test ndofperfeat(fesp.fe, 0) == 1
+    @test ndofperfeat(fesp.fe, 1) == 0
+    @test ndofperfeat(fesp.fe, 2) == 1
+    @test ndofperfeat(fesp.fe, 3) == 0
+
+    @test ndofsperel(fesp.fe) == 4
+
+    @test isapprox(bfun(fesp.fe, [1/3, 1/3]), [0.3333333333333334, 0.3333333333333333, 0.3333333333333333, 0.03703703703703704])
+
+    emdim = Int64[]
+    for m in 0:1:3
+        for i in 1:nfeatofdim(fesp.fe, m) 
+            push!(emdim, m)
+        end
+    end
+    @show emdim
+
     true
 end
 end
