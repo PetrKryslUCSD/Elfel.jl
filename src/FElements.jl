@@ -58,8 +58,10 @@ ndofperfeat(fe::FE{RS, SD}, m) where {RS, SD} = fe.data._ndofperfeat[m+1]
     ndofsperel(fe::FE{RS, SD}) where {RS, SD}
 
 Provide the number of degrees of freedom per element.
+
 Enumerate all features of all manifold dimensions, and for each feature multiply
-by the number of degrees of freedom per feature.
+by the number of degrees of freedom per feature. The assumption is that this is
+a *scalar* finite element.
 """
 function ndofsperel(fe::FE{RS, SD}) where {RS, SD}
     md = manifdim(fe.data.sd)

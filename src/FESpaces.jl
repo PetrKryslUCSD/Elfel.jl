@@ -14,11 +14,15 @@ struct FESpace{FET, T}
     fe::FET
     nfecopies::Int64
     _irsfields::Dict
+    _edofmdim::Vector{Int64}
+    _edofbfnum::Vector{Int64}
+    _edofcompnt::Vector{Int64}
 
     function FESpace(::Type{T}, mesh, fe::FET, nfecopies = 1) where {FET, T}
         baseir = baseincrel(mesh)
         _irsfields = _makefields(T, indextype(baseir), mesh, fe, nfecopies)
-        return new{FET, T}(mesh, fe, nfecopies, _irsfields)
+        _edofmdim, _edofbfnum, _edofcompnt = _number_edofs(fe, nfecopies)
+        return new{FET, T}(mesh, fe, nfecopies, _irsfields, _edofmdim, _edofbfnum, _edofcompnt)
     end
 end
 
@@ -28,6 +32,10 @@ end
 Provide the type of the values of the degrees of freedom.
 """
 doftype(fesp::FESpace{FET, T}) where {FET, T} = T
+
+edofmdim(fesp::FESpace{FET, T}) where {FET, T} = fesp._edofmdim
+edofbfnum(fesp::FESpace{FET, T}) where {FET, T} = fesp._edofbfnum
+edofcompnt(fesp::FESpace{FET, T}) where {FET, T} = fesp._edofcompnt
 
 function _makefields(::Type{T}, ::Type{IT}, mesh, fe, nfecopies) where {T, IT} 
     _irsfields= Dict()
@@ -39,6 +47,28 @@ function _makefields(::Type{T}, ::Type{IT}, mesh, fe, nfecopies) where {T, IT}
         end 
     end
     return _irsfields
+end
+
+function _number_edofs(fe, nfecopies)
+    emdim = Int64[]
+    bfnum = Int64[]
+    compnt = Int64[]
+    bfn = 1
+    for m in 0:1:3
+        if ndofperfeat(fe, m) > 0
+            for i in 1:nfeatofdim(fe, m) 
+                for k in 1:ndofperfeat(fe, m)
+                    for j in 1:nfecopies
+                        push!(emdim, m)
+                        push!(bfnum, bfn)
+                        push!(compnt, j)
+                    end
+                    bfn += 1
+                end
+            end
+        end
+    end
+    return emdim, bfnum, compnt
 end
 
 ndofsperel(fesp::FES)  where {FES<:FESpace} = ndofsperel(fesp.fe) * fesp.nfecopies

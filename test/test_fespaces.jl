@@ -88,6 +88,7 @@ using Elfel.FElements: FEH1_T3_BUBBLE
 using Elfel.FElements: bfun, bfungradpar
 using Elfel.FElements: nfeatofdim, ndofperfeat, ndofsperel
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype, nunknowns
+using Elfel.FESpaces: edofmdim, edofbfnum, edofcompnt
 using Elfel.FEIterators: FEIterator
 using MeshCore: identty
 using MeshSteward: Mesh, load, nspacedims, baseincrel, insert!
@@ -141,12 +142,26 @@ function test()
     @test isapprox(bfun(fesp.fe, [1/3, 1/3]), [0.3333333333333334, 0.3333333333333333, 0.3333333333333333, 0.03703703703703704])
 
     emdim = Int64[]
+    bfnum = Int64[]
+    compnt = Int64[]
+    bfn = 1
     for m in 0:1:3
-        for i in 1:nfeatofdim(fesp.fe, m) 
-            push!(emdim, m)
+        if ndofperfeat(fesp.fe, m) > 0
+            for i in 1:nfeatofdim(fesp.fe, m) 
+                for k in 1:ndofperfeat(fesp.fe, m)
+                    for j in 1:fesp.nfecopies
+                        push!(emdim, m)
+                        push!(bfnum, bfn)
+                        push!(compnt, j)
+                    end
+                    bfn += 1
+                end
+            end
         end
     end
-    @show emdim
+    @test edofmdim(fesp) == emdim
+    @test edofbfnum(fesp) == bfnum
+    @test edofcompnt(fesp) == compnt
 
     true
 end
