@@ -89,8 +89,8 @@ using Elfel.FElements: bfun, bfungradpar
 using Elfel.FElements: nfeatofdim, ndofperfeat, ndofsperel
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype, nunknowns
 using Elfel.FEIterators: FEIterator
-using MeshCore
-using MeshSteward: Mesh, load, nspacedims, baseincrel
+using MeshCore: identty
+using MeshSteward: Mesh, load, nspacedims, baseincrel, insert!
 using Test
 function test()
     fe = FEH1_T3()
@@ -102,27 +102,28 @@ function test()
     @test shapedesc(fesp.fe).name == "T3"
     @test refshape(fesp.fe) == Elfel.RefShapes.RefShapeTriangle
 
-    @show nfeatofdim(fesp.fe, 0)
-    @show ndofperfeat(fesp.fe, 0)
+    @test nfeatofdim(fesp.fe, 0) == 3
+    @test ndofperfeat(fesp.fe, 0) == 1
 
-    @show ndofsperel(fesp.fe)
+    @test ndofsperel(fesp.fe) == 3
 
-    @show N = bfun(fesp.fe, [1/3, 1/3])
+    @test isapprox(bfun(fesp.fe, [1/3, 1/3]), [0.3333333333333334, 0.3333333333333333, 0.3333333333333333])
 
+    insert!(mesh, identty(baseincrel(mesh)))
     fesp = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 1)
 
-    @show nfeatofdim(fesp.fe, 0)
-    @show nfeatofdim(fesp.fe, 1)
-    @show nfeatofdim(fesp.fe, 2)
-    @show nfeatofdim(fesp.fe, 3)
-    @show ndofperfeat(fesp.fe, 0)
-    @show ndofperfeat(fesp.fe, 1)
-    @show ndofperfeat(fesp.fe, 2)
-    @show ndofperfeat(fesp.fe, 3)
+    @test nfeatofdim(fesp.fe, 0) == 3
+    @test nfeatofdim(fesp.fe, 1) == 3
+    @test nfeatofdim(fesp.fe, 2) == 1
+    @test nfeatofdim(fesp.fe, 3) == 0
+    @test ndofperfeat(fesp.fe, 0) == 1
+    @test ndofperfeat(fesp.fe, 1) == 0
+    @test ndofperfeat(fesp.fe, 2) == 1
+    @test ndofperfeat(fesp.fe, 3) == 0
 
-    @show ndofsperel(fesp.fe)
+    @test ndofsperel(fesp.fe) == 4
 
-    @show N = bfun(fesp.fe, [1/3, 1/3])
+    @test isapprox(bfun(fesp.fe, [1/3, 1/3]), [0.3333333333333334, 0.3333333333333333, 0.3333333333333333, 0.03703703703703704])
 
     true
 end
