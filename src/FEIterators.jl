@@ -225,7 +225,7 @@ Compute the Jacobian matrix and the Jacobian determinant.
 At the current integration point.
 """
 function jacjac(it::FEIterator, qpit::QPIterator)
-    return jacjac(it.fesp.fe, it._geom, it._nodes, bfungradpar(qpit))
+    return jacjac(it.fesp.fe, it._geom, it._nodes, qpit._scalbfungrad_ps[qpit._pt])
 end
 
 end

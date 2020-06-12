@@ -134,7 +134,7 @@ function Jacobian(::Val{3}, J::T) where {T}
 end
 
 function _jac(locs, conn, gradNpar)
-    NBFPE = length(gradNpar)
+    NBFPE = length(conn)
     j = 1
     J = locs[conn[j]] * gradNpar[j]
     @inbounds for j in 2:NBFPE
