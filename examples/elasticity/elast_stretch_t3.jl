@@ -99,8 +99,8 @@ function run()
     F = fill(0.0, ndofs(fesp))
     solve!(U, K, F, nunknowns(fesp))
     scattersysvec!(fesp, U)
-    makeattribute(fesp, "U", 1)
-    vtkwrite("heat_poisson_t3-U", baseincrel(mesh), ["U"])
+    makeattribute(fesp, "U", 1:2)
+    vtkwrite("elast_stretch_t3-U", baseincrel(mesh), [(name = "U", allxyz = true)])
 end
 
 end

@@ -114,7 +114,7 @@ function run()
     solve!(T, K, F, nunknowns(fesp))
     scattersysvec!(fesp, T)
     makeattribute(fesp, "T", 1)
-    vtkwrite("heat_poisson_t3-T", baseincrel(mesh), ["T"])
+    vtkwrite("heat_poisson_t3-T", baseincrel(mesh), [(name = "T",)])
 end
 
 end
