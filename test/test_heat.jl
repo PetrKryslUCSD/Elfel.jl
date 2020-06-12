@@ -112,7 +112,7 @@ function test()
     solve!(T, K, F, nunknowns(fesp))
     scattersysvec!(fesp, T)
     makeattribute(fesp, "T", 1)
-    vtkwrite("heat_poisson_t3-T", baseincrel(mesh), ["T"])
+    vtkwrite("heat_poisson_t3-T", baseincrel(mesh), [(name = "T",)])
     try rm("heat_poisson_t3-T.vtu"); catch end
     @test isapprox(T, [1.1875, 1.3749999999999998, 1.6874999999999998, 1.5624999999999998, 1.7499999999999998, 2.0625, 2.1875, 2.375, 2.6875, 1.0, 1.0625, 1.25, 1.5625, 2.0, 1.125, 2.125, 1.5, 2.5, 2.125, 3.125, 3.0, 3.0625, 3.25, 3.5625, 4.0])
 end

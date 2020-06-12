@@ -171,11 +171,20 @@ function scattersysvec!(fesp::FESpace, v)
     return fesp
 end
 
+"""
+    makeattribute(fesp::FESpace, name, comp)
+
+Attach attribute to the right shape collection of all incidence relations. 
+"""
 function makeattribute(fesp::FESpace, name, comp)
     for m in keys(fesp._irsfields)
         if ndofperfeat(fesp.fe, m) > 0
             ir, fl = fesp._irsfields[m]
-            ir.right.attributes[name] = VecAttrib([fl.dofvals[i][comp] for i in 1:nterms(fl)])
+            v = fill(SVector{length(comp)}(zeros(length(comp))), nterms(fl))
+            for i in 1:nterms(fl)
+                v[i] = SVector{length(comp)}(fl.dofvals[i][comp])
+            end
+            ir.right.attributes[name] = VecAttrib(v)
         end 
     end
 end
