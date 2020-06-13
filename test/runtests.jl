@@ -8,4 +8,5 @@ using Test
 @time @testset "Finite elements" begin include("test_felements.jl") end
 @time @testset "Assemblers" begin include("test_assemblers.jl") end
 @time @testset "Heat" begin include("test_heat.jl") end
+@time @testset "Elasticity" begin include("test_elasticity.jl") end
 

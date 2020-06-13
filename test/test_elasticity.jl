@@ -1,8 +1,10 @@
+module mt_elasticity_t3
+
 module elast_stretch_t3
 
 using LinearAlgebra
 using BenchmarkTools
-using InteractiveUtils
+# using InteractiveUtils
 using StaticArrays
 # using Profile
 using MeshCore: retrieve, nrelations, nentities
@@ -38,7 +40,7 @@ end
 function assembleK(fesp, D)
     function integrateK!(ass, geom, elit, qpit, D)
         B = (g, k) -> k == 1 ? SVector{3}((g[1], 0, g[2])) : SVector{3}((0, g[2], g[1]))
-        c = edofcompnt(elit.fesp)
+        @show c = edofcompnt(elit.fesp)
         nedof = ndofsperel(elit)
         for el in elit
             for qp in qpit
@@ -46,10 +48,10 @@ function assembleK(fesp, D)
                 gradN = bfungrad(qp, Jac)
                 JxW = J * weight(qp)
                 for j in 1:nedof
-                    DBj = D * B(gradN[j], c[j])
+                    Bj = B(gradN[j], c[j])
                     for i in 1:nedof
                         Bi = B(gradN[i], c[i])
-                        v = dot(DBj, Bi) * JxW
+                        v = dot(Bj, D * Bi) * JxW
                         asstolma!(el, i, j, v)
                     end
                 end
@@ -73,7 +75,7 @@ function solve!(U, K, F, nu)
     @time U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
-function run()
+function test()
     mesh = genmesh()
     fesp = FESpace(Float64, mesh, FEH1_T3(), 2)
     locs = geometry(mesh)
@@ -93,15 +95,17 @@ function run()
     numberdofs!(fesp)
     @show nunknowns(fesp)
     K = assembleK(fesp, D)
-    # U = fill(0.0, ndofs(fesp))
-    # gathersysvec!(U, fesp)
-    # F = fill(0.0, ndofs(fesp))
-    # solve!(U, K, F, nunknowns(fesp))
-    # scattersysvec!(fesp, U)
-    # makeattribute(fesp, "U", 1:2)
-    # vtkwrite("elast_stretch_t3-U", baseincrel(mesh), [(name = "U", allxyz = true)])
+    U = fill(0.0, ndofs(fesp))
+    gathersysvec!(U, fesp)
+    F = fill(0.0, ndofs(fesp))
+    solve!(U, K, F, nunknowns(fesp))
+    scattersysvec!(fesp, U)
+    makeattribute(fesp, "U", 1:2)
+    vtkwrite("elast_stretch_t3-U", baseincrel(mesh), [(name = "U", allxyz = true)])
 end
 
 end
 
-elast_stretch_t3.run()
+end
+using .mt_elasticity_t3
+mt_elasticity_t3.test()
