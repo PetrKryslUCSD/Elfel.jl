@@ -1,8 +1,8 @@
-module mt_elasticity_t3
+module elast_stretch_t6
 
 using LinearAlgebra
 using BenchmarkTools
-# using InteractiveUtils
+using InteractiveUtils
 using StaticArrays
 # using Profile
 using MeshCore: retrieve, nrelations, nentities
@@ -29,7 +29,7 @@ A = 1.0 # length of the side of the square
 N = 100;# number of subdivisions along the sides of the square domain
 
 function genmesh()
-    conn = T3block(A, A, N, N)
+    conn = T6block(A, A, N, N)
     mesh = Mesh()
     insert!(mesh, conn)
     return mesh
@@ -46,10 +46,10 @@ function assembleK(fesp, D)
                 gradN = bfungrad(qp, Jac)
                 JxW = J * weight(qp)
                 for j in 1:nedof
-                    Bj = B(gradN[j], c[j])
+                    DBj = D * B(gradN[j], c[j])
                     for i in 1:nedof
                         Bi = B(gradN[i], c[i])
-                        v = dot(Bj, D * Bi) * JxW
+                        v = dot(DBj, Bi) * JxW
                         asstolma!(el, i, j, v)
                     end
                 end
@@ -64,18 +64,18 @@ function assembleK(fesp, D)
     geom = geometry(fesp.mesh)
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, ndofs(fesp), ndofs(fesp))
-    integrateK!(ass, geom, elit, qpit, D)
+    @time integrateK!(ass, geom, elit, qpit, D)
     return finish!(ass)
 end
 
 function solve!(U, K, F, nu)
-    KT = K * U
-    U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
+    @time KT = K * U
+    @time U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
-function test()
+function run()
     mesh = genmesh()
-    fesp = FESpace(Float64, mesh, FEH1_T3(), 2)
+    fesp = FESpace(Float64, mesh, FEH1_T6(), 2)
     locs = geometry(mesh)
     inflate = A / N / 100
     box = [0.0 0.0 0.0 A]
@@ -91,17 +91,17 @@ function test()
         setebc!(fesp, 0, i, 2, 0.0)
     end
     numberdofs!(fesp)
-    nunknowns(fesp)
+    @show nunknowns(fesp)
     K = assembleK(fesp, D)
-    U = fill(0.0, ndofs(fesp))
-    gathersysvec!(U, fesp)
-    F = fill(0.0, ndofs(fesp))
-    solve!(U, K, F, nunknowns(fesp))
-    scattersysvec!(fesp, U)
-    makeattribute(fesp, "U", 1:2)
-    vtkwrite("elast_stretch_t3-U", baseincrel(mesh), [(name = "U", allxyz = true)])
+    # U = fill(0.0, ndofs(fesp))
+    # gathersysvec!(U, fesp)
+    # F = fill(0.0, ndofs(fesp))
+    # solve!(U, K, F, nunknowns(fesp))
+    # scattersysvec!(fesp, U)
+    # makeattribute(fesp, "U", 1:2)
+    # vtkwrite("elast_stretch_t6-U", baseincrel(mesh), [(name = "U", allxyz = true)])
 end
 
 end
-using .mt_elasticity_t3
-mt_elasticity_t3.test()
+
+elast_stretch_t6.run()

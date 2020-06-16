@@ -189,6 +189,40 @@ function bfungradpar(self::FEH1_T3_TYPE,  param_coords)
     return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
+# T6 ==================================================================
+# Quadratic triangular element. Only nodal basis functions.
+struct FEH1_T6_Type{RS, SD} <: FE{RS, SD}
+    data::FEData{SD}
+end
+FEH1_T6_TYPE = FEH1_T6_Type{RefShapeTriangle, typeof(MeshCore.T6)}
+FEH1_T6() = FEH1_T6_TYPE(FEData(MeshCore.T6, SVector{4}([1, 0, 0, 0])))
+
+function bfun(self::FEH1_T6_TYPE,  param_coords) 
+    r=param_coords[1];
+    s=param_coords[2];
+    t = 1. - r - s;
+    val = [t * (t + t - 1);
+           r * (r + r - 1);
+           s * (s + s - 1);
+           4 * r * t;
+           4 * r * s;
+           4 * s * t];
+    return SVector{6}(val)
+end
+
+function bfungradpar(self::FEH1_T6_TYPE,  param_coords)
+    r =param_coords[1];
+    s =param_coords[2];
+    t = 1. - r - s;
+    val = [-3+4*r+4*s  -3+4*r+4*s;
+           4*r-1  0.0;
+           0.0 4*s-1;
+           4-8*r-4*s  -4*r;
+           4*s  4*r;
+           -4*s  4-4*r-8*s];
+    return [SVector{2}(val[idx, :])' for idx in 1:size(val, 1)]
+end
+
 # Q4 ==================================================================
 # Linear quadrilateral element. Only nodal basis functions.
 struct FEH1_Q4_Type{RS, SD} <: FE{RS, SD}
