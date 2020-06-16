@@ -117,7 +117,7 @@ using MeshSteward: Mesh, insert!, baseincrel, boundary
 using MeshSteward: vselect, geometry
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: manifdim, manifdimv
-using Elfel.FElements: FEH1_T3, refshape, Jacobian
+using Elfel.FElements: FEH1_T6, refshape, Jacobian
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!, edofcompnt
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
