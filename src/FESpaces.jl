@@ -55,16 +55,15 @@ function _number_edofs(fe, nfecopies)
     compnt = Int64[]
     bfn = 1
     for m in 0:1:3
-        if ndofperfeat(fe, m) > 0
-            for i in 1:nfeatofdim(fe, m) 
-                for k in 1:ndofperfeat(fe, m)
-                    for j in 1:nfecopies
-                        push!(emdim, m)
-                        push!(bfnum, bfn)
-                        push!(compnt, j)
-                    end
-                    bfn += 1
+        @show m, nfeatofdim(fe, m),  ndofperfeat(fe, m)
+        for i in 1:nfeatofdim(fe, m) 
+            for k in 1:ndofperfeat(fe, m)
+                for j in 1:nfecopies
+                    push!(emdim, m)
+                    push!(bfnum, bfn)
+                    push!(compnt, j)
                 end
+                bfn += 1
             end
         end
     end

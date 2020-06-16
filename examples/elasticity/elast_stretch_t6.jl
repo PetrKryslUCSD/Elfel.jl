@@ -6,12 +6,12 @@ using InteractiveUtils
 using StaticArrays
 # using Profile
 using MeshCore: retrieve, nrelations, nentities
-using MeshSteward: T3block
+using MeshSteward: T6block
 using MeshSteward: Mesh, insert!, baseincrel, boundary
 using MeshSteward: vselect, geometry
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: manifdim, manifdimv
-using Elfel.FElements: FEH1_T3, refshape, Jacobian
+using Elfel.FElements: FEH1_T6, refshape, Jacobian
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!, edofcompnt
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
@@ -26,7 +26,7 @@ D = SMatrix{3, 3}(E / (1 - nu^2) * [1 nu 0
                                     nu 1 0
                                     0 0 (1 - nu) / 2])
 A = 1.0 # length of the side of the square
-N = 100;# number of subdivisions along the sides of the square domain
+N = 10;# number of subdivisions along the sides of the square domain
 
 function genmesh()
     conn = T6block(A, A, N, N)
@@ -60,7 +60,7 @@ function assembleK(fesp, D)
     end
 
     elit = FEIterator(fesp)
-    qpit = QPIterator(fesp, (kind = :default,))
+    qpit = QPIterator(fesp, (kind = :default, npts = 3,))
     geom = geometry(fesp.mesh)
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, ndofs(fesp), ndofs(fesp))
@@ -93,13 +93,13 @@ function run()
     numberdofs!(fesp)
     @show nunknowns(fesp)
     K = assembleK(fesp, D)
-    # U = fill(0.0, ndofs(fesp))
-    # gathersysvec!(U, fesp)
-    # F = fill(0.0, ndofs(fesp))
-    # solve!(U, K, F, nunknowns(fesp))
-    # scattersysvec!(fesp, U)
-    # makeattribute(fesp, "U", 1:2)
-    # vtkwrite("elast_stretch_t6-U", baseincrel(mesh), [(name = "U", allxyz = true)])
+    U = fill(0.0, ndofs(fesp))
+    gathersysvec!(U, fesp)
+    F = fill(0.0, ndofs(fesp))
+    solve!(U, K, F, nunknowns(fesp))
+    scattersysvec!(fesp, U)
+    makeattribute(fesp, "U", 1:2)
+    vtkwrite("elast_stretch_t6-U", baseincrel(mesh), [(name = "U", allxyz = true)])
 end
 
 end
