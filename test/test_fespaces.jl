@@ -49,7 +49,7 @@ function test()
     @test nunknowns(fesp) == 8
 
     it = FEIterator(fesp)
-    @time for el in it
+    for el in it
          el._dofs
     end
     # sdim = nspacedims(femesh)

@@ -1,10 +1,7 @@
 module elast_stretch_t3
 
 using LinearAlgebra
-using BenchmarkTools
-using InteractiveUtils
 using StaticArrays
-# using Profile
 using MeshCore: retrieve, nrelations, nentities
 using MeshSteward: T3block
 using MeshSteward: Mesh, insert!, baseincrel, boundary
@@ -15,10 +12,11 @@ using Elfel.FElements: FEH1_T3, refshape, Jacobian
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!, edofcompnt
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
-using Elfel.FEIterators: asstolma!, lma, asstolva!, lva, jacjac
+using Elfel.FEIterators: jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
+using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!, add!
 
 E = 1.0;
 nu = 1.0/3;
@@ -40,7 +38,9 @@ function assembleK(fesp, D)
         B = (g, k) -> k == 1 ? SVector{3}((g[1], 0, g[2])) : SVector{3}((0, g[2], g[1]))
         c = edofcompnt(elit.fesp)
         nedof = ndofsperel(elit)
+        ke = LocalMatrixAssembler(nedof, nedof, 0.0)
         for el in elit
+            init!(ke, eldofs(el), eldofs(el))
             for qp in qpit
                 Jac, J = jacjac(el, qp)
                 gradN = bfungrad(qp, Jac)
@@ -49,12 +49,11 @@ function assembleK(fesp, D)
                     DBj = D * B(gradN[j], c[j])
                     for i in 1:nedof
                         Bi = B(gradN[i], c[i])
-                        v = dot(DBj, Bi) * JxW
-                        asstolma!(el, i, j, v)
+                        ke[i, j] += dot(DBj, Bi) * JxW
                     end
                 end
             end
-            assemble!(ass, lma(el)...)
+            assemble!(ass, ke)
         end
         return ass
     end
