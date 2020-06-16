@@ -169,13 +169,13 @@ function assembleK(fesp, D)
     geom = geometry(fesp.mesh)
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, ndofs(fesp), ndofs(fesp))
-    @time integrateK!(ass, geom, elit, qpit, D)
+    integrateK!(ass, geom, elit, qpit, D)
     return finish!(ass)
 end
 
 function solve!(U, K, F, nu)
-    @time KT = K * U
-    @time U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
+    KT = K * U
+    U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
 function test()
@@ -196,7 +196,7 @@ function test()
         setebc!(fesp, 0, i, 2, 0.0)
     end
     numberdofs!(fesp)
-    @show nunknowns(fesp)
+    # @show nunknowns(fesp)
     K = assembleK(fesp, D)
     U = fill(0.0, ndofs(fesp))
     gathersysvec!(U, fesp)

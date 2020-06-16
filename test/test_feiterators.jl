@@ -53,7 +53,7 @@ function test()
 
     refd =  [[9], [1], [2], [10], [3], [4], [11], [5], [6], [12], [7], [8]]
     it = FEIterator(fesp)
-    @time for el in it
+    for el in it
          # @show el._dofs
          # @show refd[el._nodes]
          @test isapprox(el._dofs, [refd[n][1] for n in el._nodes] )
