@@ -1,23 +1,21 @@
 module heat_poisson_t3
 
 using LinearAlgebra
-using BenchmarkTools
-using InteractiveUtils
-# using Profile
 using MeshCore: retrieve, nrelations, nentities
 using MeshSteward: T3block
 using MeshSteward: Mesh, insert!, baseincrel, boundary
 using MeshSteward: connectedv, geometry
 using MeshSteward: vtkwrite
-using Elfel.RefShapes: manifdim, manifdimv
+using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
 using Elfel.FElements: FEH1_T3, refshape, Jacobian
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
 using Elfel.FEIterators: asstolma!, lma, asstolva!, lva, jacjac
-using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
+using Elfel.QPIterators: QPIterator, bfun, bfungradpar, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
+using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!, add!
 
 A = 1.0 # length of the side of the square
 kappa =  1.0; # conductivity matrix
@@ -32,63 +30,42 @@ function genmesh()
     return mesh
 end
 
-function assembleK(fesp, kappa)
-    function integrateK!(ass, geom, elit, qpit, kappa)
+function assembleKF(fesp, kappa, Q)
+    function integrate!(am, av, geom, elit, qpit, kappa, Q)
         nedof = ndofsperel(elit)
+        iterate(qpit, 1) # Why do I need to do this?
+        ke = LocalMatrixAssembler(nedof, nedof, 0.0)
+        fe = LocalVectorAssembler(nedof, 0.0)
         for el in elit
+            init!(ke, eldofs(el), eldofs(el))
+            init!(fe, eldofs(el))
             for qp in qpit
-                gradNparams = bfungradpar(qp)
                 Jac, J = jacjac(el, qp)
-                JxW = J * weight(qp)
-                invJac = inv(Jac)
-                for j in 1:nedof
-                    gradNj = gradNparams[j] * invJac
-                    for i in 1:nedof
-                        gradNi = gradNparams[i] * invJac
-                        v = dot(gradNi, gradNj) * (kappa * JxW)
-                        asstolma!(el, i, j, v)
-                    end
-                end
-            end
-            assemble!(ass, lma(el)...)
-        end
-        return ass
-    end
-
-    elit = FEIterator(fesp)
-    qpit = QPIterator(fesp, (kind = :default,))
-    geom = geometry(fesp.mesh)
-    ass = SysmatAssemblerSparse(0.0)
-    start!(ass, ndofs(fesp), ndofs(fesp))
-    @time integrateK!(ass, geom, elit, qpit, kappa)
-    return finish!(ass)
-end
-
-function assembleF(fesp, Q)
-    function integrateF!(ass, geom, elit, qpit, kappa)
-        nedof = ndofsperel(elit)
-        for el in elit
-            for qp in qpit
-                gradNparams = bfungradpar(qp)
-                Jac, J = jacjac(el, qp)
+                gradN = bfungrad(qp, Jac)
                 JxW = J * weight(qp)
                 N = bfun(qp)
-                for i in 1:nedof
-                    asstolva!(el, i, N[i] * Q * JxW)
+                for j in 1:nedof
+                    for i in 1:nedof
+                        ke[i, j] += dot(gradN[i], gradN[j]) * (kappa * JxW)
+                    end
+                    fe[j] += N[j] * Q * JxW
                 end
             end
-            assemble!(ass, lva(el)...)
+            assemble!(am, ke)
+            assemble!(av, fe)
         end
-        return ass
+        return am, av
     end
 
     elit = FEIterator(fesp)
     qpit = QPIterator(fesp, (kind = :default,))
     geom = geometry(fesp.mesh)
-    ass = SysvecAssembler(0.0)
-    start!(ass, ndofs(fesp))
-    @time integrateF!(ass, geom, elit, qpit, Q)
-    return finish!(ass)
+    am = start!(SysmatAssemblerSparse(0.0), ndofs(fesp), ndofs(fesp))
+    av = start!(SysvecAssembler(0.0), ndofs(fesp))
+
+    @time integrate!(am, av, geom, elit, qpit, kappa, Q)
+
+    return finish!(am), finish!(av)
 end
 
 function solve!(T, K, F, nu)
@@ -107,8 +84,7 @@ function run()
     end
     numberdofs!(fesp)
     @show nunknowns(fesp)
-    K = assembleK(fesp, kappa)
-    F = assembleF(fesp, Q)
+    K, F = assembleKF(fesp, kappa, Q)
     T = fill(0.0, ndofs(fesp))
     gathersysvec!(T, fesp)
     solve!(T, K, F, nunknowns(fesp))
@@ -120,4 +96,3 @@ end
 end
 
 heat_poisson_t3.run()
-# heat_poisson_t3.run()
