@@ -3,13 +3,13 @@ module LocalAssemblers
 
 
 struct LocalMatrixAssembler{IT<:Integer, T<:Number} <: AbstractArray{T, 2}
-    row::Vector{IT}
-    col::Vector{IT}
+    row::Matrix{IT}
+    col::Matrix{IT}
     M::Matrix{T}
 end
 
 function LocalMatrixAssembler(nrow::IT, ncol::IT, z::T) where {IT, T}
-    return LocalMatrixAssembler(fill(zero(IT), nrow*ncol), fill(zero(IT), nrow*ncol), fill(z, nrow, ncol))
+    return LocalMatrixAssembler(fill(zero(IT), nrow, ncol), fill(zero(IT), nrow, ncol), fill(z, nrow, ncol))
 end
 
 Base.IndexStyle(::Type{<:LocalMatrixAssembler}) = IndexLinear()
@@ -34,11 +34,6 @@ function init!(a::L, rdofs, cdofs) where {L<:LocalMatrixAssembler{IT, T}} where 
     return a
 end
 
-function add!(a::L, i, j, v) where {L<:LocalMatrixAssembler{IT, T}} where {IT, T} 
-    a.M[i, j] += v
-    return a
-end
-
 struct LocalVectorAssembler{IT<:Integer, T<:Number} <: AbstractArray{T, 1}
     row::Vector{IT}
     V::Vector{T}
@@ -56,11 +51,6 @@ Base.setindex!(a::A, v, i::Int) where {A<:LocalVectorAssembler} =  (a.V[i] = v)
 function init!(a::L, rdofs) where {L<:LocalVectorAssembler{IT, T}} where {IT, T} 
     copyto!(a.row, rdofs)
     fill!(a.V, zero(T))
-    return a
-end
-
-function add!(a::L, i, v) where {L<:LocalVectorAssembler{IT, T}} where {IT, T} 
-    a.V[i] += v
     return a
 end
 

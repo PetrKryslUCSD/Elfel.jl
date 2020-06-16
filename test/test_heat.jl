@@ -16,7 +16,7 @@ using Elfel.FEIterators: jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungradpar, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
-using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!, add!
+using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
 
 A = 1.0 # length of the side of the square
 kappa =  1.0; # conductivity matrix

@@ -16,7 +16,7 @@ using Elfel.FEIterators: jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
-using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!, add!
+using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
 
 E = 1.0;
 nu = 1.0/3;
@@ -92,13 +92,13 @@ function run()
     numberdofs!(fesp)
     @show nunknowns(fesp)
     K = assembleK(fesp, D)
-    # U = fill(0.0, ndofs(fesp))
-    # gathersysvec!(U, fesp)
-    # F = fill(0.0, ndofs(fesp))
-    # solve!(U, K, F, nunknowns(fesp))
-    # scattersysvec!(fesp, U)
-    # makeattribute(fesp, "U", 1:2)
-    # vtkwrite("elast_stretch_t3-U", baseincrel(mesh), [(name = "U", allxyz = true)])
+    U = fill(0.0, ndofs(fesp))
+    gathersysvec!(U, fesp)
+    F = fill(0.0, ndofs(fesp))
+    solve!(U, K, F, nunknowns(fesp))
+    scattersysvec!(fesp, U)
+    makeattribute(fesp, "U", 1:2)
+    vtkwrite("elast_stretch_t3-U", baseincrel(mesh), [(name = "U", allxyz = true)])
 end
 
 end

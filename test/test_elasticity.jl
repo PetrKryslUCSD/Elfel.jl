@@ -17,7 +17,7 @@ using Elfel.FEIterators: jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
-using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!, add!
+using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
 
 E = 1.0;
 nu = 1.0/3;
@@ -91,7 +91,7 @@ function test()
         setebc!(fesp, 0, i, 2, 0.0)
     end
     numberdofs!(fesp)
-    @show nunknowns(fesp)
+    # @show nunknowns(fesp)
     K = assembleK(fesp, D)
     U = fill(0.0, ndofs(fesp))
     gathersysvec!(U, fesp)
@@ -125,7 +125,7 @@ using Elfel.FEIterators: jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
-using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!, add!
+using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
 
 E = 1.0;
 nu = 1.0/3;

@@ -1,8 +1,8 @@
 module Assemblers
 
 using SparseArrays: sparse
-using LinearAlgebra: diag
-using ..LocalAssemblers: LocalMatrixAssembler, init!, add!
+using LinearAlgebra
+using ..LocalAssemblers: LocalMatrixAssembler, init!
 
 """
     AbstractSysmatAssembler
@@ -90,38 +90,26 @@ function assemble!(self::SysmatAssemblerSparse{T}, r, c, v::T) where {T<:Number}
 end
 
 """
-    assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
+    assemble!(self::SysmatAssemblerSparse{T}, lma::LocalMatrixAssembler{IT, T}) where {IT<:Integer, T<:Number}
 
-Assemble the triple of the row numbers, column numbers, and values.
+Assemble the row numbers, column numbers, and values from a local assembler.
 """
-function assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
-    append!(self.row, rs)
-    append!(self.col, cs)
-    append!(self.val, vs)
-    return self
-end
-
-"""
-    assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::AbstractVector{IT}, vs::AbstractMatrix{T}) where {IT<:Integer, T<:Number}
-
-Assemble the triple of the row numbers, column numbers, and values.
-"""
-function assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::AbstractVector{IT}, vs::AbstractMatrix{T}) where {IT<:Integer, T<:Number}
-    append!(self.row, rs)
-    append!(self.col, cs)
-    append!(self.val, vs)
-    return self
-end
-
-"""
-    assemble!(self::SysmatAssemblerSparse{T}, lma) where {IT<:Integer, T<:Number}
-
-Assemble the triple of the row numbers, column numbers, and values.
-"""
-function assemble!(self::SysmatAssemblerSparse{T}, lma) where {T<:Number}
+function assemble!(self::SysmatAssemblerSparse{T}, lma::LocalMatrixAssembler{IT, T}) where {IT<:Integer, T<:Number}
     append!(self.row, lma.row)
     append!(self.col, lma.col)
     append!(self.val, lma.M)
+    return self
+end
+
+"""
+    assemble!(self::SysmatAssemblerSparse{T}, lma::Transpose{T,LocalMatrixAssembler{IT,T}}) where {IT<:Integer, T<:Number}
+
+Assemble the row numbers, column numbers, and values from a local assembler.
+"""
+function assemble!(self::SysmatAssemblerSparse{T}, lma::Transpose{T,LocalMatrixAssembler{IT,T}}) where {IT<:Integer, T<:Number}
+    append!(self.row, transpose(lma.parent.col))
+    append!(self.col, transpose(lma.parent.row))
+    append!(self.val, transpose(lma.parent.M))
     return self
 end
 
@@ -214,26 +202,13 @@ end
     assemble!(self::SysvecAssembler{T}, vec::MV,
       dofnums::D) where {T<:Number, MV<:AbstractArray{T}, D<:AbstractArray{FInt}}
 
-Assemble an entry of an elementwise vector.
+Assemble a single value.
 
 The method assembles a column element vector using the vector of degree of
 freedom numbers for the rows.
 """
 function assemble!(self::SysvecAssembler{T}, i, val::T) where {T<:Number}
     self.val[i] = self.val[i] + val;
-    return self
-end
-
-"""
-    assemble!(self::SysvecAssembler{T}, rs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
-
-Assemble entire vector.
-"""
-function assemble!(self::SysvecAssembler{T}, rs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
-    for i in 1:length(rs)
-        gi = rs[i]
-        self.val[gi] += vs[i];
-    end
     return self
 end
 

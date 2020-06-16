@@ -97,7 +97,7 @@ using Elfel.FElements: bfun, bfungradpar
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FEIterators: FEIterator, eldofs
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
-using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!, add!
+using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
 using Test
 A = [0.6744582963441466 0.2853043149927861 0.27460710155821255; 
 0.3781923479141225 0.2838873430062512 0.6316949656630075; 
