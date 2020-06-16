@@ -69,15 +69,15 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MeshCore]]
 deps = ["StaticArrays", "Test"]
-git-tree-sha1 = "df53c15c724ac4fb2568f55065e285671a464832"
+git-tree-sha1 = "00fe5dc9681a16c1f5dd6f4bcc1ccb5f88d7b1af"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/MeshCore.jl.git"
 uuid = "43a99bba-f459-4d0e-8139-f3df11d847d4"
-version = "0.8.3"
+version = "0.8.5"
 
 [[MeshSteward]]
 deps = ["DelimitedFiles", "LinearAlgebra", "MeshCore", "StaticArrays", "Statistics", "Test", "WriteVTK"]
-git-tree-sha1 = "dd3e11ca73466b2ae3a5dcd14ad648d5d5f0369e"
+git-tree-sha1 = "897179b818445af1951f80d3349620bf31001744"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/MeshSteward.jl.git"
 uuid = "ffa89bc3-d1bd-4aea-b9f7-e9902d9f56ab"
@@ -85,11 +85,6 @@ version = "0.2.0"
 
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
-
-[[NamedTupleTools]]
-git-tree-sha1 = "696eef809b9428b080119f9addde658e3f1d29f3"
-uuid = "d9ec5142-1e00-5aa0-9d6a-321866360f50"
-version = "0.13.4"
 
 [[Parsers]]
 deps = ["Dates", "Test"]
