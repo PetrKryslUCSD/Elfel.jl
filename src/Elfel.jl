@@ -3,6 +3,7 @@ module Elfel
 # Elfel (C) 2020, Petr Krysl
 
 include("utilities.jl")
+include("LocalAssemblers.jl")
 include("Assemblers.jl")
 include("RefShapes.jl")
 include("FElements.jl")

@@ -2,7 +2,7 @@ module Assemblers
 
 using SparseArrays: sparse
 using LinearAlgebra: diag
-
+using ..LocalAssemblers: LocalMatrixAssembler, init!, add!
 
 """
     AbstractSysmatAssembler
@@ -114,19 +114,15 @@ function assemble!(self::SysmatAssemblerSparse{T}, rs::AbstractVector{IT}, cs::A
 end
 
 """
-    assemble!(self::SysmatAssemblerSparse{T}, gi, ke::AbstractMatrix{T}) where {T}
+    assemble!(self::SysmatAssemblerSparse{T}, lma) where {IT<:Integer, T<:Number}
 
-Assemble a square symmetric matrix.
+Assemble the triple of the row numbers, column numbers, and values.
 """
-function assemble!(self::SysmatAssemblerSparse{T}, gi::AbstractVector{IT}, ke::AbstractMatrix{T}) where {IT, T}
-    n = length(gi)
-    append!(self.val, ke)
-    @inbounds for j in 1:n
-        append!(self.row, gi)
-        for i in 1:n
-            push!(self.col, gi[j])
-        end
-    end
+function assemble!(self::SysmatAssemblerSparse{T}, lma) where {T<:Number}
+    append!(self.row, lma.row)
+    append!(self.col, lma.col)
+    append!(self.val, lma.M)
+    return self
 end
 
 """
@@ -237,6 +233,19 @@ function assemble!(self::SysvecAssembler{T}, rs::AbstractVector{IT}, vs::Abstrac
     for i in 1:length(rs)
         gi = rs[i]
         self.val[gi] += vs[i];
+    end
+    return self
+end
+
+"""
+    assemble!(self::SysvecAssembler{T}, rs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
+
+Assemble entire vector.
+"""
+function assemble!(self::SysvecAssembler{T}, lva) where {T<:Number}
+    for i in 1:length(lva.row)
+        gi = lva.row[i]
+        self.val[gi] += lva.V[i];
     end
     return self
 end
