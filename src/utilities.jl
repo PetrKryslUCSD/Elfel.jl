@@ -1,3 +1,5 @@
+module Utilities
+
 # An assert might be disabled at various optimization levels. This macro will not be.
 macro _check(ex, msgs...)
     msg = isempty(msgs) ? ex : msgs[1]
@@ -19,9 +21,4 @@ macro _check(ex, msgs...)
     return :($(esc(ex)) ? $(nothing) : throw(AssertionError($msg)))
 end
 
-
-function _print(a)
-    for i in 1:size(a, 1)
-        println(a[i, :])
-    end
 end
