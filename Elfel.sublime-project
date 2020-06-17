@@ -24,7 +24,8 @@
 	],
 	"settings":
 	{
-		"color_scheme": "Packages/Color Scheme - Creamy/Creamy.tmTheme",
+		// "color_scheme": "Packages/Color Scheme - Creamy/Creamy.tmTheme",
+        "color_scheme": "Packages/Alabaster Color Scheme/Alabaster.sublime-color-scheme",
 		"open_url":
 		{
 			"cwd": "project_root",
