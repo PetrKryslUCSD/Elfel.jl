@@ -4,7 +4,12 @@ using StaticArrays
 using ..FEIterators: FEIterator
 using ..Utilities: @_check
 
-#= TODO is it more natural to have access to the geometry from the font element space or from the iterator? =#
+
+"""
+    AggregateFEIterator
+
+Type of iterator that aggregates finite element iterators.
+"""
 struct AggregateFEIterator
     iterators::Vector{FEIterator}
     nel::Int64
@@ -36,6 +41,11 @@ function _update!(it::AggregateFEIterator, state)
     return it
 end
 
+"""
+    iterator(it::AggregateFEIterator, j)
+
+Access the `j`th iterator.
+"""
 iterator(it::AggregateFEIterator, j) = it.iterators[j]
     
 
