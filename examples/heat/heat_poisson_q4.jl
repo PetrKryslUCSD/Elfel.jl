@@ -11,11 +11,11 @@ using Elfel.FElements: FEH1_Q4, refshape, Jacobian
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
-using Elfel.FEIterators: asstolma!, lma, asstolva!, lva, jacjac
+using Elfel.FEIterators: jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungradpar, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
-using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!, add!
+using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
 
 A = 1.0 # length of the side of the square
 kappa =  1.0; # conductivity matrix
