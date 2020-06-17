@@ -11,5 +11,6 @@ include("FEFields.jl")
 include("FESpaces.jl")
 include("QPIterators.jl")
 include("FEIterators.jl")
+include("AggregateFEIterators.jl")
 
 end # module
