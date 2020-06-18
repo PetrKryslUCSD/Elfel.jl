@@ -33,7 +33,6 @@ end
 function assembleKF(fesp, kappa, Q)
     function integrate!(am, av, geom, elit, qpit, kappa, Q)
         nedof = ndofsperel(elit)
-        iterate(qpit, 1) # Why do I need to do this?
         ke = LocalMatrixAssembler(nedof, nedof, 0.0)
         fe = LocalVectorAssembler(nedof, 0.0)
         for el in elit
