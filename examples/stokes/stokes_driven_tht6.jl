@@ -9,42 +9,38 @@ using MeshSteward: vselect, geometry, summary
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: manifdim, manifdimv
 using Elfel.FElements: FEH1_T6, refshape, Jacobian
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
+using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!, edofcompnt
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
 using Elfel.FEIterators: jacjac
+using Elfel.AggregateFEIterators: AggregateFEIterator, iterator
 using Elfel.QPIterators: QPIterator, bfun, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
 using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
 
-E = 1.0;
-nu = 1.0/3;
-D = SMatrix{3, 3}(E / (1 - nu^2) * [1 nu 0
-                                    nu 1 0
-                                    0 0 (1 - nu) / 2])
+mu = 0.25 # dynamic viscosity
 A = 1.0 # length of the side of the square
-N = 10;# number of subdivisions along the sides of the square domain
+N = 4;# number of subdivisions along the sides of the square domain
 
 function genmesh()
     # Taylor-Hood pair of meshes is needed
     # This mesh will be for the velocities
-    conn = T6block(A, A, N, N)
-    mesh = Mesh()
-        insert!(mesh, conn, "velocity")
+    vmesh = Mesh()
+    insert!(vmesh, T6block(A, A, N, N), "velocity")
     # This mesh will be used for the pressures
-    conn = T6toT3(conn)
-    insert!(mesh, conn, "pressure")
-  @show summary(mesh)
-  return mesh
+    pmesh = Mesh()
+    insert!(pmesh, T6toT3(baseincrel(vmesh, "velocity")), "pressure")
+  return vmesh, pmesh
 end
 
-function assembleK(fesp, D)
-    function integrateK!(ass, geom, elit, qpit, D)
-        B = (g, k) -> k == 1 ? SVector{3}((g[1], 0, g[2])) : SVector{3}((0, g[2], g[1]))
-        c = edofcompnt(elit.fesp)
-        nedof = ndofsperel(elit)
+function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
+    function integrateK!(ass, geom, elit, qpit, mu)
         for el in elit
+            uxel = iterator(el, 1)
+            uyel = iterator(el, 2)
+            pel = iterator(el, 3)
             for qp in qpit
                 Jac, J = jacjac(el, qp)
                 gradN = bfungrad(qp, Jac)
@@ -63,11 +59,11 @@ function assembleK(fesp, D)
         return ass
     end
 
-    elit = FEIterator(fesp)
+    elit = AggregateFEIterator([FEIterator(uxfesp), FEIterator(uyfesp), FEIterator(pfesp)])
     qpit = QPIterator(fesp, (kind = :default, npts = 3,))
     geom = geometry(fesp.mesh)
     ass = SysmatAssemblerSparse(0.0)
-    start!(ass, ndofs(fesp), ndofs(fesp))
+    start!(ass, tndof, tndof)
     @time integrateK!(ass, geom, elit, qpit, D)
     return finish!(ass)
 end
@@ -78,29 +74,51 @@ function solve!(U, K, F, nu)
 end
 
 function run()
-    mesh = genmesh()
-    fesp = FESpace(Float64, mesh, FEH1_T6(), 2)
-    locs = geometry(mesh)
+    vmesh, pmesh = genmesh()
+    # Velocity spaces
+    uxfesp = FESpace(Float64, vmesh, FEH1_T6(), 1)
+    uyfesp = FESpace(Float64, vmesh, FEH1_T6(), 1)
+    locs = geometry(vmesh)
     inflate = A / N / 100
-    box = [0.0 0.0 0.0 A]
+    # Part of the boundary that is immovable
+    boxes = [[0.0 A 0.0 0.0], [0.0 0.0 0.0 A], [A A 0.0 A]]
+    for box in boxes
+        vl = vselect(locs; box = box, inflate = inflate)
+        for i in vl
+            setebc!(uxfesp, 0, i, 1, 0.0)
+            setebc!(uyfesp, 0, i, 1, 0.0)
+        end
+    end
+    # The lid
+    uxbar = 1.0
+    box = [0.0 A A A]
     vl = vselect(locs; box = box, inflate = inflate)
     for i in vl
-        setebc!(fesp, 0, i, 1, 0.0)
-        setebc!(fesp, 0, i, 2, 0.0)
+        setebc!(uxfesp, 0, i, 1, uxbar)
+        setebc!(uyfesp, 0, i, 1, 0.0)
     end
-    box = [A A 0.0 A]
-    vl = vselect(locs; box = box, inflate = inflate)
-    for i in vl
-        setebc!(fesp, 0, i, 1, A / 10)
-        setebc!(fesp, 0, i, 2, 0.0)
-    end
-    numberdofs!(fesp)
-    @show nunknowns(fesp)
-    K = assembleK(fesp, D)
+    # Pressure space
+    pfesp = FESpace(Float64, pmesh, FEH1_T6(), 1)
+    # Number the degrees of freedom
+    numberfreedofs!(uxfesp)
+    numberdatadofs!(uxfesp)
+    numberfreedofs!(uyfesp, nunknowns(uxfesp)+1)
+    numberdatadofs!(uyfesp)
+    numberfreedofs!(pfesp, nunknowns(uyfesp)+1)
+    numberdatadofs!(pfesp)
+    @show ndofs(uxfesp)
+    @show ndofs(uyfesp)
+    @show ndofs(pfesp)
+    @show nunknowns(uxfesp)
+    @show nunknowns(uyfesp)
+    @show nunknowns(pfesp)
+    tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
+    tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
+    K = assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
     U = fill(0.0, ndofs(fesp))
     gathersysvec!(U, fesp)
-    F = fill(0.0, ndofs(fesp))
-    solve!(U, K, F, nunknowns(fesp))
+    F = fill(0.0, tndof)
+    solve!(U, K, F, tnunk)
     scattersysvec!(fesp, U)
     makeattribute(fesp, "U", 1:2)
     vtkwrite("stokes_driven_tht6-U", baseincrel(mesh), [(name = "U", allxyz = true)])
