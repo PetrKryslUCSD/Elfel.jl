@@ -102,7 +102,8 @@ The known degrees of freedom in the FE space are numbered consecutively.
 
 No effort is made to optimize the numbering in any way. 
 """
-function numberdatadofs!(fesp::FES, firstnum = 1)  where {FES<:FESpace}
+function numberdatadofs!(fesp::FES, firstnum = 0)  where {FES<:FESpace}
+    firstnum = firstnum == 0 ? nunknowns(fesp) + 1 : firstnum
     for m in keys(fesp._irsfields)
         if ndofperfeat(fesp.fe, m) > 0
             f = fesp._irsfields[m][2]
@@ -114,28 +115,6 @@ function numberdatadofs!(fesp::FES, firstnum = 1)  where {FES<:FESpace}
     return fesp
 end
 
-"""
-    numberdatadofs!(fesp::FES)  where {FES<:FESpace}
-
-Number the data (known) degrees of freedom.
-
-The known degrees of freedom in the FE space are numbered consecutively. 
-In this case they simply start with the number of free degrees of freedom +1.
-
-No effort is made to optimize the numbering in any way. 
-"""
-function numberdatadofs!(fesp::FES)  where {FES<:FESpace}
-    firstnum = nunknowns(fesp) + 1
-    for m in keys(fesp._irsfields)
-        if ndofperfeat(fesp.fe, m) > 0
-            f = fesp._irsfields[m][2]
-            numberdatadofs!(f, firstnum) 
-            fnum, lnum, tnum = datadofnums(f)
-            firstnum = lnum + 1 
-        end 
-    end
-    return fesp
-end
 
 """
     ndofs(fesp::FES)  where {FES<:FESpace}
