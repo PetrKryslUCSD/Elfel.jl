@@ -1,24 +1,22 @@
 module stokes_driven_tht6
 
 using LinearAlgebra
-using BenchmarkTools
-using InteractiveUtils
 using StaticArrays
-# using Profile
 using MeshCore: retrieve, nrelations, nentities
-using MeshSteward: T6block
+using MeshSteward: T6block, T6toT3
 using MeshSteward: Mesh, insert!, baseincrel, boundary
-using MeshSteward: vselect, geometry
+using MeshSteward: vselect, geometry, summary
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: manifdim, manifdimv
 using Elfel.FElements: FEH1_T6, refshape, Jacobian
 using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!, edofcompnt
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
-using Elfel.FEIterators: asstolma!, lma, asstolva!, lva, jacjac
+using Elfel.FEIterators: jacjac
 using Elfel.QPIterators: QPIterator, bfun, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
+using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
 
 E = 1.0;
 nu = 1.0/3;
@@ -29,10 +27,16 @@ A = 1.0 # length of the side of the square
 N = 10;# number of subdivisions along the sides of the square domain
 
 function genmesh()
+    # Taylor-Hood pair of meshes is needed
+    # This mesh will be for the velocities
     conn = T6block(A, A, N, N)
     mesh = Mesh()
-    insert!(mesh, conn)
-    return mesh
+        insert!(mesh, conn, "velocity")
+    # This mesh will be used for the pressures
+    conn = T6toT3(conn)
+    insert!(mesh, conn, "pressure")
+  @show summary(mesh)
+  return mesh
 end
 
 function assembleK(fesp, D)
