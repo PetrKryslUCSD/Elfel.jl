@@ -9,7 +9,8 @@ using MeshSteward: connectedv, geometry
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
 using Elfel.FElements: FEH1_T3, refshape, Jacobian
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
+using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
 using Elfel.FEIterators: jacjac
@@ -83,7 +84,8 @@ function test()
     for i in vl
         setebc!(fesp, 0, i, 1, tempf(locs[i]...))
     end
-    numberdofs!(fesp)
+    numberfreedofs!(fesp)
+    numberdatadofs!(fesp)
     # @show nunknowns(fesp)
     K, F = assembleKF(fesp, kappa, Q)
     T = fill(0.0, ndofs(fesp))

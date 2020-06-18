@@ -4,7 +4,8 @@ using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, refshape, FEH1_T3
 using Elfel.FElements: bfun, bfungradpar
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
+using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
 using Elfel.FEIterators: FEIterator
 
 using MeshCore
@@ -39,13 +40,16 @@ function test()
 
     # @show summary(mesh)
 
-    numberdofs!(fesp)
+    numberfreedofs!(fesp)
+    numberdatadofs!(fesp)
     @test ndofs(fesp) == 12
+    @test nunknowns(fesp) == 12
 
     for i in [1, 4, 7, 10]
         setebc!(fesp, 0, i, 1, 0.0)
     end
-    numberdofs!(fesp)
+    numberfreedofs!(fesp)
+    numberdatadofs!(fesp)
     @test ndofs(fesp) == 12
     @test nunknowns(fesp) == 8
 
@@ -58,28 +62,6 @@ function test()
          # @show refd[el._nodes]
          @test isapprox(el._dofs, [refd[n][1] for n in el._nodes] )
     end
-    # sdim = nspacedims(femesh)
-    # mdim = manifdim(femesh)
-
-    # geom = geomattr(femesh)  
-
-    # el = 4
-    # gradNpar = bfungradpar(fespace.fe, [1/3, 1/3])
-    
-    # conn = connectivity(femesh)
-    # for c in conn
-    #     J = SMatrix{sdim, mdim}(zeros(sdim, mdim))
-    #     for j in 1:length(c)
-    #         J += geom[c[j]] * gradNpar[j]
-    #     end
-    # end
-
-    # c = iterate(conn, 1)[1]
-    # J = SMatrix{sdim, mdim}(zeros(sdim, mdim))
-    # for j in 1:length(c)
-    #     J += geom[c[j]] * gradNpar[j]
-    # end
-    # @test isapprox(J, [0.5 0.5; 0.0 0.3333333333333333])
 end
 end
 using .mfeit1
@@ -94,7 +76,8 @@ using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, refshape, FEH1_T3
 using Elfel.FElements: bfun, bfungradpar
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
+using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
 using Elfel.FEIterators: FEIterator, eldofs
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
@@ -110,7 +93,8 @@ function test()
     for i in [1, 4, 7, 10]
         setebc!(fesp, 0, i, 1, 0.0)
     end
-    numberdofs!(fesp)
+    numberfreedofs!(fesp)
+    numberdatadofs!(fesp)
 
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, 12, 12)
@@ -147,7 +131,8 @@ using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, refshape, FEH1_T3
 using Elfel.FElements: bfun, bfungradpar
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
+using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
 using Elfel.FEIterators: FEIterator, eldofs, eldofs, eldofentmdims, eldofcomps
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Test
@@ -162,7 +147,8 @@ function test()
     for i in [1, 4, 7, 10]
         setebc!(fesp, 0, i, 1, 0.0)
     end
-    numberdofs!(fesp)
+    numberfreedofs!(fesp)
+        numberdatadofs!(fesp)
 
     it = FEIterator(fesp)
     @test em = eldofentmdims(it) == [0, 0, 0, 0, 0, 0, 0, 0, 0]  

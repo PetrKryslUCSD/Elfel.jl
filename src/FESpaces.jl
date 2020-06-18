@@ -6,7 +6,8 @@ using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, IncRel, Vec
 using MeshSteward: Mesh, baseincrel, increl
 using ..FElements: nfeatofdim, ndofperfeat, manifdim
 using ..FEFields: FEField, nterms
-import ..FEFields: numberdofs!, ndofs, setebc!, nunknowns, scattersysvec!, gathersysvec!
+import ..FEFields: ndofs, setebc!, scattersysvec!, gathersysvec!
+import ..FEFields: numberfreedofs!, numberdatadofs!, freedofnums, datadofnums
 import ..FElements: ndofsperel
 
 struct FESpace{FET, T}
@@ -72,20 +73,65 @@ end
 ndofsperel(fesp::FES)  where {FES<:FESpace} = ndofsperel(fesp.fe) * fesp.nfecopies
 
 """
-    numberdofs!(self::FEField)
+    numberfreedofs!(fesp::FES, firstnum = 1)  where {FES<:FESpace}
 
-Number the degrees of freedom.
+Number the free degrees of freedom.
 
-The unknown degrees of freedom in the FE space are numbered consecutively. Then
-the datum degrees of freedom are numbered, again consecutively. 
+The unknown degrees of freedom in the FE space are numbered consecutively. 
 
 No effort is made to optimize the numbering in any way. 
 """
-function numberdofs!(fesp::FES)  where {FES<:FESpace}
+function numberfreedofs!(fesp::FES, firstnum = 1)  where {FES<:FESpace}
     for m in keys(fesp._irsfields)
         if ndofperfeat(fesp.fe, m) > 0
-            v = fesp._irsfields[m]
-            numberdofs!(v[2]) 
+            f = fesp._irsfields[m][2]
+            numberfreedofs!(f, firstnum) 
+            fnum, lnum, tnum = freedofnums(f)
+            firstnum = lnum + 1 
+        end 
+    end
+    return fesp
+end
+
+"""
+    numberdatadofs!(fesp::FES, firstnum = 1)  where {FES<:FESpace}
+
+Number the data (known) degrees of freedom.
+
+The known degrees of freedom in the FE space are numbered consecutively. 
+
+No effort is made to optimize the numbering in any way. 
+"""
+function numberdatadofs!(fesp::FES, firstnum = 1)  where {FES<:FESpace}
+    for m in keys(fesp._irsfields)
+        if ndofperfeat(fesp.fe, m) > 0
+            f = fesp._irsfields[m][2]
+            numberdatadofs!(f, firstnum) 
+            fnum, lnum, tnum = datadofnums(f)
+            firstnum = lnum + 1 
+        end 
+    end
+    return fesp
+end
+
+"""
+    numberdatadofs!(fesp::FES)  where {FES<:FESpace}
+
+Number the data (known) degrees of freedom.
+
+The known degrees of freedom in the FE space are numbered consecutively. 
+In this case they simply start with the number of free degrees of freedom +1.
+
+No effort is made to optimize the numbering in any way. 
+"""
+function numberdatadofs!(fesp::FES)  where {FES<:FESpace}
+    firstnum = nunknowns(fesp) + 1
+    for m in keys(fesp._irsfields)
+        if ndofperfeat(fesp.fe, m) > 0
+            f = fesp._irsfields[m][2]
+            numberdatadofs!(f, firstnum) 
+            fnum, lnum, tnum = datadofnums(f)
+            firstnum = lnum + 1 
         end 
     end
     return fesp
@@ -116,8 +162,9 @@ function nunknowns(fesp::FES)  where {FES<:FESpace}
     n = 0
     for m in keys(fesp._irsfields)
         if ndofperfeat(fesp.fe, m) > 0
-            v = fesp._irsfields[m]
-            n = n + nunknowns(v[2]) 
+            f = fesp._irsfields[m][2]
+            fnum, lnum, tnum = freedofnums(f)
+            n += tnum
         end 
     end
     return n

@@ -6,7 +6,6 @@ mutable struct FEField{N, T, IT}
     dofnums::Vector{SVector{N, IT}}
     isdatum::Vector{SVector{N, Bool}}
     dofvals::Vector{SVector{N, T}}
-    nunknowns::Int64
 
     function FEField(::Val{N}, ::Type{T}, ::Type{IT}, ns) where {N, T, IT}
         z = fill(zero(IT), N)
@@ -15,15 +14,15 @@ mutable struct FEField{N, T, IT}
         isdatum = [z for i in 1:ns]
         z = fill(zero(T), N)
         dofvals = [SVector{N}(z) for i in 1:ns]
-        return new{N, T, IT}(dofnums, isdatum, dofvals, 0)
+        return new{N, T, IT}(dofnums, isdatum, dofvals)
     end
 end
 
 doftype(fef::FEField{N, T, IT}) where {N, T, IT} = T
+dofnumtype(fef::FEField{N, T, IT}) where {N, T, IT} = IT
 nterms(fef::FEField) = length(fef.dofnums)
 ndofsperterm(fef::FEField{N}) where {N} = N
 ndofs(fef::FEField) = nterms(fef) * ndofsperterm(fef)
-nunknowns(fef::FEField) = fef.nunknowns
 
 function setebc!(self::FEField, tid, comp, val::T) where {T}
     ik = MVector(self.isdatum[tid])
@@ -35,32 +34,85 @@ function setebc!(self::FEField, tid, comp, val::T) where {T}
     return  self
 end
 
-function numberdofs!(f::FEField) 
-    num = zero(typeof(f.nunknowns))
-    nt = nterms(f)
-    ndpt = ndofsperterm(f)
-    for i in 1:nt
+"""
+    numberfreedofs!(f::FEField, firstnum = 1) 
+
+Number the unknowns in the field, starting from the one supplied on input.
+
+Note: The data degrees of freedom have their numbers zeroed out.
+"""
+function numberfreedofs!(f::FEField, firstnum = 1) 
+    lnum = fnum = zero(dofnumtype(f)) + firstnum
+    tnum = 0
+    for i in 1:nterms(f)
         n = MVector(f.dofnums[i])
-        for j in 1:ndpt
+        for j in 1:ndofsperterm(f)
             if (!f.isdatum[i][j]) # unknown degree of freedom
-                num = num + 1
-                n[j] = num
-            end
-        end
-        f.dofnums[i] = n
-    end
-    f.nunknowns = num
-    for i in 1:nt
-        n = MVector(f.dofnums[i])
-        for j in 1:ndpt
-            if f.isdatum[i][j] # datum degree of freedom
-                num = num + 1
-                n[j] = num
+                n[j] = lnum
+                tnum = tnum + 1
+                lnum = lnum + 1
+            else
+                n[j] = zero(dofnumtype(f))
             end
         end
         f.dofnums[i] = n
     end
     return  f
+end
+
+"""
+    numberdatadofs!(f::FEField, firstnum = 1)
+
+Number the data degrees of freedom in the field. Start from the
+number supplied on input.
+
+Note: The free degrees of freedom are numbered first.
+"""
+function numberdatadofs!(f::FEField, firstnum = 1) 
+    num = zero(dofnumtype(f)) + firstnum
+    for i in 1:nterms(f)
+        n = MVector(f.dofnums[i])
+        for j in 1:ndofsperterm(f)
+            if (f.isdatum[i][j]) # known (data) degree of freedom
+                n[j] = num
+                num = num + 1
+            end
+        end
+        f.dofnums[i] = n
+    end
+    return  f
+end
+
+function freedofnums(f::FEField) 
+    tnum = lnum = zero(dofnumtype(f))
+    fnum = typemax(dofnumtype(f))
+    for i in 1:nterms(f)
+        for j in 1:ndofsperterm(f)
+            # unknown degree of freedom
+            if (!f.isdatum[i][j]) 
+                tnum = tnum + 1
+                lnum = max(lnum, f.dofnums[i][j])
+                fnum = min(fnum, f.dofnums[i][j])
+            end
+        end
+    end
+    return  (fnum, lnum, tnum)
+end
+
+function datadofnums(f::FEField) 
+    tnum = lnum = zero(dofnumtype(f))
+    fnum = typemax(dofnumtype(f))
+    for i in 1:nterms(f)
+        for j in 1:ndofsperterm(f)
+            # known degree of freedom
+            if (f.isdatum[i][j]) 
+                tnum = tnum + 1
+                lnum = max(lnum, f.dofnums[i][j])
+                fnum = min(fnum, f.dofnums[i][j])
+            end
+        end
+    end
+    return  (fnum, lnum, tnum)
 end
 
 function gathersysvec!(vec, self::FEField)

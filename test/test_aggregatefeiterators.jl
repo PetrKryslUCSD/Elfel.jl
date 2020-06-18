@@ -4,7 +4,7 @@ using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, refshape, FEH1_T3
 using Elfel.FElements: bfun, bfungradpar
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
 using Elfel.FEIterators: FEIterator, elnodes
 using Elfel.AggregateFEIterators: AggregateFEIterator, iterator
 using Elfel.Utilities: @_check

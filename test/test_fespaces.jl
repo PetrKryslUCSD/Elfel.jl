@@ -4,7 +4,8 @@ using Elfel
 using Elfel.RefShapes: RefShapeTriangle, manifdim, RefShapeInterval
 using Elfel.FElements: FE, refshape, FEH1_T3
 using Elfel.FElements: bfun, bfungradpar
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype, nunknowns
+using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype, nunknowns
+using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
 using Elfel.FEIterators: FEIterator
 using MeshCore
 using MeshSteward: Mesh, load, nspacedims, baseincrel
@@ -38,13 +39,14 @@ function test()
 
     # @show summary(mesh)
 
-    numberdofs!(fesp)
+    numberfreedofs!(fesp)
     @test ndofs(fesp) == 12
+    @test nunknowns(fesp) == 12
 
     for i in [1, 4, 7, 10]
         setebc!(fesp, 0, i, 1, 0.0)
     end
-    numberdofs!(fesp)
+    numberfreedofs!(fesp)
     @test ndofs(fesp) == 12
     @test nunknowns(fesp) == 8
 
@@ -87,7 +89,8 @@ using Elfel.FElements: FE, refshape, FEH1_T3, shapedesc
 using Elfel.FElements: FEH1_T3_BUBBLE
 using Elfel.FElements: bfun, bfungradpar
 using Elfel.FElements: nfeatofdim, ndofperfeat, ndofsperel
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype, nunknowns
+using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype, nunknowns
+using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
 using Elfel.FESpaces: edofmdim, edofbfnum, edofcompnt
 using Elfel.FEIterators: FEIterator
 using MeshCore: identty
