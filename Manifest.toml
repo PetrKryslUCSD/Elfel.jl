@@ -77,11 +77,11 @@ version = "0.8.5"
 
 [[MeshSteward]]
 deps = ["DelimitedFiles", "LinearAlgebra", "MeshCore", "StaticArrays", "Statistics", "Test", "WriteVTK"]
-git-tree-sha1 = "897179b818445af1951f80d3349620bf31001744"
+git-tree-sha1 = "1444ef97609d25f1c05707f7030a0a85c889b17b"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/MeshSteward.jl.git"
 uuid = "ffa89bc3-d1bd-4aea-b9f7-e9902d9f56ab"
-version = "0.2.0"
+version = "0.3.0"
 
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
