@@ -1,14 +1,15 @@
 module heat_poisson_t3
 
 using LinearAlgebra
-using MeshCore: retrieve, nrelations, nentities
+using MeshCore: retrieve, nrelations, nentities, attribute, @_check
 using MeshSteward: T3block
 using MeshSteward: Mesh, insert!, baseincrel, boundary
 using MeshSteward: connectedv, geometry
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
 using Elfel.FElements: FEH1_T3, refshape, Jacobian
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
+using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
 using Elfel.FEIterators: jacjac
@@ -72,6 +73,17 @@ function solve!(T, K, F, nu)
     @time T[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
+function checkcorrectness(fesp)
+    geom = geometry(fesp.mesh)
+    ir = baseincrel(fesp.mesh)
+    T = attribute(ir.right, "T")
+    std = 0.0
+    for i in 1:length(T)
+        std += abs(T[i][1] - tempf(geom[i]...))
+    end
+    @_check (std / length(T)) <= 1.0e-9
+end
+
 function run()
     mesh = genmesh()
     fesp = FESpace(Float64, mesh, FEH1_T3())
@@ -81,7 +93,8 @@ function run()
     for i in vl
         setebc!(fesp, 0, i, 1, tempf(locs[i]...))
     end
-    numberdofs!(fesp)
+    numberfreedofs!(fesp)
+    numberdatadofs!(fesp) 
     @show nunknowns(fesp)
     K, F = assembleKF(fesp, kappa, Q)
     T = fill(0.0, ndofs(fesp))
@@ -89,6 +102,7 @@ function run()
     solve!(T, K, F, nunknowns(fesp))
     scattersysvec!(fesp, T)
     makeattribute(fesp, "T", 1)
+    checkcorrectness(fesp)
     vtkwrite("heat_poisson_t3-T", baseincrel(mesh), [(name = "T",)])
 end
 

@@ -9,7 +9,8 @@ using MeshSteward: vselect, geometry
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: manifdim, manifdimv
 using Elfel.FElements: FEH1_T3, refshape, Jacobian
-using Elfel.FESpaces: FESpace, ndofs, numberdofs!, setebc!, nunknowns, doftype
+using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
+using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!, edofcompnt
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
 using Elfel.FEIterators: jacjac
@@ -89,7 +90,8 @@ function run()
         setebc!(fesp, 0, i, 1, A / 10)
         setebc!(fesp, 0, i, 2, 0.0)
     end
-    numberdofs!(fesp)
+    numberfreedofs!(fesp)
+    numberdatadofs!(fesp)
     @show nunknowns(fesp)
     K = assembleK(fesp, D)
     U = fill(0.0, ndofs(fesp))

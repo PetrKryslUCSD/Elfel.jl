@@ -2,7 +2,7 @@ module mt_heat_poisson_t3
 
 using Test
 using LinearAlgebra
-using MeshCore: retrieve, nrelations, nentities
+using MeshCore: retrieve, nrelations, nentities, @_check, attribute
 using MeshSteward: T3block
 using MeshSteward: Mesh, insert!, baseincrel, boundary
 using MeshSteward: connectedv, geometry
@@ -75,6 +75,17 @@ function solve!(T, K, F, nu)
     T[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
+function checkcorrectness(fesp)
+    geom = geometry(fesp.mesh)
+    ir = baseincrel(fesp.mesh)
+    T = attribute(ir.right, "T")
+    std = 0.0
+    for i in 1:length(T)
+        std += abs(T[i][1] - tempf(geom[i]...))
+    end
+    @_check (std / length(T)) <= 1.0e-9
+end
+
 function test()
     mesh = genmesh()
     fesp = FESpace(Float64, mesh, FEH1_T3())
@@ -93,6 +104,7 @@ function test()
     solve!(T, K, F, nunknowns(fesp))
     scattersysvec!(fesp, T)
     makeattribute(fesp, "T", 1)
+    checkcorrectness(fesp)
     vtkwrite("heat_poisson_t3-T", baseincrel(mesh), [(name = "T",)])
     try rm("heat_poisson_t3-T.vtu"); catch end
     @test isapprox(T, [1.1875, 1.3749999999999998, 1.6874999999999998, 1.5624999999999998, 1.7499999999999998, 2.0625, 2.1875, 2.375, 2.6875, 1.0, 1.0625, 1.25, 1.5625, 2.0, 1.125, 2.125, 1.5, 2.5, 2.125, 3.125, 3.0, 3.0625, 3.25, 3.5625, 4.0])
