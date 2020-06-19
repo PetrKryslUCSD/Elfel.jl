@@ -99,6 +99,8 @@ function freedofnums(f::FEField)
     return  (fnum, lnum, tnum)
 end
 
+highestfreedofnum(f::FEField) = freedofnums(f)[2]
+
 function datadofnums(f::FEField) 
     tnum = lnum = zero(dofnumtype(f))
     fnum = typemax(dofnumtype(f))
@@ -114,6 +116,8 @@ function datadofnums(f::FEField)
     end
     return  (fnum, lnum, tnum)
 end
+
+highestdatadofnum(f::FEField) = datadofnums(f)[2]
 
 function gathersysvec!(vec, self::FEField)
     nt = nterms(self)

@@ -8,6 +8,7 @@ using ..FElements: nfeatofdim, ndofperfeat, manifdim
 using ..FEFields: FEField, nterms
 import ..FEFields: ndofs, setebc!, scattersysvec!, gathersysvec!
 import ..FEFields: numberfreedofs!, numberdatadofs!, freedofnums, datadofnums
+import ..FEFields: highestfreedofnum, highestdatadofnum
 import ..FElements: ndofsperel
 
 struct FESpace{FET, T}
@@ -103,7 +104,7 @@ The known degrees of freedom in the FE space are numbered consecutively.
 No effort is made to optimize the numbering in any way. 
 """
 function numberdatadofs!(fesp::FES, firstnum = 0)  where {FES<:FESpace}
-    firstnum = firstnum == 0 ? nunknowns(fesp) + 1 : firstnum
+    firstnum = (firstnum == 0 ? nunknowns(fesp) + 1 : firstnum)
     for m in keys(fesp._irsfields)
         if ndofperfeat(fesp.fe, m) > 0
             f = fesp._irsfields[m][2]
@@ -125,8 +126,8 @@ function ndofs(fesp::FES)  where {FES<:FESpace}
     n = 0
     for m in keys(fesp._irsfields)
         if ndofperfeat(fesp.fe, m) > 0 
-            v = fesp._irsfields[m]
-            n = n + ndofs(v[2]) 
+            f = fesp._irsfields[m][2]
+            n = n + ndofs(f) 
         end 
     end
     return n
@@ -144,6 +145,38 @@ function nunknowns(fesp::FES)  where {FES<:FESpace}
             f = fesp._irsfields[m][2]
             fnum, lnum, tnum = freedofnums(f)
             n += tnum
+        end 
+    end
+    return n
+end
+
+"""
+    highestfreedofnum(fesp::FES)  where {FES<:FESpace}
+
+Compute the highest number of free (unknown) degrees of freedom.
+"""
+function highestfreedofnum(fesp::FES)  where {FES<:FESpace}
+    n = 0
+    for m in keys(fesp._irsfields)
+        if ndofperfeat(fesp.fe, m) > 0
+            f = fesp._irsfields[m][2]
+            n = max(n, highestfreedofnum(f))
+        end 
+    end
+    return n
+end
+
+"""
+    highestfreedofnum(fesp::FES)  where {FES<:FESpace}
+
+Compute the highest number of data (known) degrees of freedom.
+"""
+function highestdatadofnum(fesp::FES)  where {FES<:FESpace}
+    n = 0
+    for m in keys(fesp._irsfields)
+        if ndofperfeat(fesp.fe, m) > 0
+            f = fesp._irsfields[m][2]
+            n = max(n, highestdatadofnum(f))
         end 
     end
     return n
