@@ -174,7 +174,10 @@ function run()
     scattersysvec!(uyfesp, U)
     scattersysvec!(pfesp, U)
     makeattribute(pfesp, "p", 1)
-    vtkwrite("stokes_driven_tht6-p", baseincrel(pmesh), [(name = "p",)])
+    makeattribute(uxfesp, "ux", 1)
+    makeattribute(uyfesp, "uy", 1)
+    vtkwrite("stokes_driven_tht6-p", baseincrel(pmesh), [(name = "p",), ])
+    vtkwrite("stokes_driven_tht6-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
     # vtkwrite("stokes_driven_tht6-p", baseincrel(pmesh), [(name = "p", allxyz = true)])
 end
 
