@@ -33,3 +33,5 @@ Clone the repository, and execute
 using Pkg; Pkg.activate("."); Pkg.instantiate()
 ```
 in the `Elfel` folder.
+
+The `examples` folder can be explored by simply running the files with `include`.
