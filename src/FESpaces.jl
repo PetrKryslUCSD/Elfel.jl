@@ -116,7 +116,6 @@ function numberdatadofs!(fesp::FES, firstnum = 0)  where {FES<:FESpace}
     return fesp
 end
 
-
 """
     ndofs(fesp::FES)  where {FES<:FESpace}
 
@@ -180,6 +179,22 @@ function highestdatadofnum(fesp::FES)  where {FES<:FESpace}
         end 
     end
     return n
+end
+
+"""
+    numberdofs!(fesp...)
+
+Number the degrees of freedom of a collection of FE spaces.
+"""
+function numberdofs!(fesp...) 
+    numberfreedofs!(fesp[1], 1)
+    for i in 2:length(fesp)
+        numberfreedofs!(fesp[i], highestfreedofnum(fesp[i-1])+1)
+    end
+    numberdatadofs!(fesp[1], highestfreedofnum(fesp[end])+1)
+    for i in 2:length(fesp)
+        numberdatadofs!(fesp[i], highestdatadofnum(fesp[i-1])+1)
+    end
 end
 
 """

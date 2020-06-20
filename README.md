@@ -10,7 +10,7 @@ G. *adjective*. different, like something else, unique, unparalled
 
 ## Introduction
 ## 
-This package provides support for the development of Finite Element Method applications, especially in continuum mechanics.
+This package provides support for the development of Finite Element Method applications, especially in continuum mechanics. Mixed methods with cooperating finite element spaces are supported.
 
 ## Dependencies
 
