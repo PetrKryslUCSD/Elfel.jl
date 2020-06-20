@@ -2,13 +2,5 @@
 
 # How to Guide
 
-## How to create simple meshes
-
-## How to visualize meshes
-
-## How to export and import meshes
-
-## How to manipulate topology
-
-## How to select entities
+Needs to be written.
 
