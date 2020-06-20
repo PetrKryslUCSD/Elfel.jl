@@ -141,17 +141,19 @@ function run()
     setebc!(pfesp, 0, 1, 1, 0.0)
     # Number the degrees of freedom
     numberdofs!(uxfesp, uyfesp, pfesp)
-
     @show tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
     @show tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
+    # Assemble the coefficient matrix
     K = assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
     p = spy(K, canvas = DotCanvas)
     display(p)
+    # Solve the system
     U = fill(0.0, tndof)
-    gathersysvec!(U, uxfesp, uyfesp, pfesp)
+    gathersysvec!(U, (uxfesp, uyfesp, pfesp))
     F = fill(0.0, tndof)
     solve!(U, K, F, tnunk)
-    scattersysvec!(U, uxfesp, uyfesp, pfesp)
+    scattersysvec!((uxfesp, uyfesp, pfesp), U)
+    # Postprocessing
     makeattribute(pfesp, "p", 1)
     makeattribute(uxfesp, "ux", 1)
     makeattribute(uyfesp, "uy", 1)

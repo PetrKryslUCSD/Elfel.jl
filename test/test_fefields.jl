@@ -25,8 +25,8 @@ function test()
     @test tnum == nterms(fef) * ndofsperterm(fef)
     fnum, lnum, tnum = datadofnums(fef)
     @test tnum == 0
-    @show highestfreedofnum(fef)
-    @show highestdatadofnum(fef)
+    @test highestfreedofnum(fef) == 42
+    @test highestdatadofnum(fef) == 0
 
     # Case of 2 degrees of freedom prescribed
     setebc!(fef, 3, 2, 3.0)
@@ -42,8 +42,8 @@ function test()
     @test tnum == 2
     @test fnum == nterms(fef) * ndofsperterm(fef) - 2 + 1
     @test lnum == nterms(fef) * ndofsperterm(fef)
-    @show highestfreedofnum(fef)
-    @show highestdatadofnum(fef)
+    @test highestfreedofnum(fef) == 40
+    @test highestdatadofnum(fef) == 42
 
     @test doftype(fef) == Float64
 

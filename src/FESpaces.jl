@@ -230,11 +230,13 @@ function gathersysvec!(v, fesp::FESpace)
 end
 
 """
-    gathersysvec!(v, fesp...)
+    gathersysvec!(v, fesp)
 
 Gather values for the whole system vector from all FE spaces contributing to it.
+
+`fesp` is either a vector or a tuple of FE spaces.
 """
-function gathersysvec!(v, fesp...)
+function gathersysvec!(v, fesp)
     for i in 1:length(fesp)
         gathersysvec!(v, fesp[i])
     end
@@ -256,16 +258,13 @@ function scattersysvec!(fesp::FESpace, v)
 end
 
 """
-    scattersysvec!(v, fesp...)
+    scattersysvec!(fesp, v)
 
 Scatter values for the whole system vector to all FE spaces contributing to it.
 
-It is the list of FE spaces that gets changed. It is a limitation on the
-variable number of arguments in Julia that insists on that being the final
-argument in the list. This conflicts with the convention that the first
-argument gets modified by the function.
+`fesp` is either a vector or a tuple of FE spaces.
 """
-function scattersysvec!(v, fesp...)
+function scattersysvec!(fesp, v)
     for i in 1:length(fesp)
         scattersysvec!(fesp[i], v)
     end
