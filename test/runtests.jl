@@ -9,4 +9,5 @@ using Test
 @time @testset "Assemblers" begin include("test_assemblers.jl") end
 @time @testset "Heat" begin include("test_heat.jl") end
 @time @testset "Elasticity" begin include("test_elasticity.jl") end
+@time @testset "Stokes" begin include("test_stokes.jl") end
 

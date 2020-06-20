@@ -102,6 +102,7 @@ function test()
     scattersysvec!(fesp, U)
     makeattribute(fesp, "U", 1:2)
     vtkwrite("elast_stretch_t3-U", baseincrel(mesh), [(name = "U", allxyz = true)])
+    try rm("elast_stretch_t3-U.vtu"); catch end
 end
 
 end
@@ -212,6 +213,7 @@ function test()
     scattersysvec!(fesp, U)
     makeattribute(fesp, "U", 1:2)
     vtkwrite("elast_stretch_t6-U", baseincrel(mesh), [(name = "U", allxyz = true)])
+    try rm("elast_stretch_t6-U.vtu"); catch end
 end
 
 end
