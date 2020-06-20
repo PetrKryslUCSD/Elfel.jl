@@ -1,3 +1,12 @@
+"""
+    stokes_driven_tht6
+
+The famous driven-cavity benchmark is solved here with Taylor-Hood combination
+of quadratic and linear triangles.
+
+The formulation is the one derived in Reddy, Introduction to the finite element
+method, 1993. Page 486 ff.
+"""
 module stokes_driven_tht6
 
 using LinearAlgebra
@@ -23,7 +32,7 @@ using UnicodePlots
 
 mu = 0.25 # dynamic viscosity
 A = 1.0 # length of the side of the square
-N = 10;# number of subdivisions along the sides of the square domain
+N = 100;# number of subdivisions along the sides of the square domain
 
 function genmesh()
     # Taylor-Hood pair of meshes is needed
@@ -149,16 +158,7 @@ function run()
     numberdatadofs!(uxfesp, highestfreedofnum(pfesp)+1)
     numberdatadofs!(uyfesp, highestdatadofnum(uxfesp)+1)
     numberdatadofs!(pfesp, highestdatadofnum(uyfesp)+1)
-    @show highestfreedofnum(uxfesp), highestdatadofnum(uxfesp)
-    @show highestfreedofnum(uyfesp), highestdatadofnum(uyfesp)
-    @show highestfreedofnum(pfesp), highestdatadofnum(pfesp)
 
-    @show ndofs(uxfesp)
-    @show ndofs(uyfesp)
-    @show ndofs(pfesp)
-    @show nunknowns(uxfesp)
-    @show nunknowns(uyfesp)
-    @show nunknowns(pfesp)
     @show tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
     @show tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
     K = assembleK(uxfesp, uyfesp, pfesp, tndof, mu)

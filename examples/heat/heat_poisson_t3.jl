@@ -1,3 +1,9 @@
+"""
+    heat_poisson_t3
+
+Compute the solution of the Poisson equation of heat conduction with a nonzero
+heat source. Linear triangle elements are used.
+"""
 module heat_poisson_t3
 
 using LinearAlgebra

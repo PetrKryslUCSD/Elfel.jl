@@ -1,3 +1,9 @@
+"""
+    heat_poisson_q4
+
+Compute the solution of the Poisson equation of heat conduction with a nonzero
+heat source. Quadrilateral four-node elements are used.
+"""
 module heat_poisson_q4
 
 using LinearAlgebra
