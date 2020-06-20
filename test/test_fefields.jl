@@ -6,7 +6,7 @@ using Elfel.FElements: bfun, bfungradpar, FEH1_T3
 using MeshSteward: Mesh, load, increl, baseincrel
 using MeshCore: nshapes
 using Elfel.FEFields: FEField, nterms, ndofsperterm, doftype, setebc!, gathersysvec!, ndofs
-using Elfel.FEFields: numberfreedofs!, freedofnums, numberdatadofs!, datadofnums
+using Elfel.FEFields: numberfreedofs!, freedofnums, numberdatadofs!, datadofnums, highestfreedofnum, highestdatadofnum
 using Test
 function test()
 
@@ -25,6 +25,8 @@ function test()
     @test tnum == nterms(fef) * ndofsperterm(fef)
     fnum, lnum, tnum = datadofnums(fef)
     @test tnum == 0
+    @show highestfreedofnum(fef)
+    @show highestdatadofnum(fef)
 
     # Case of 2 degrees of freedom prescribed
     setebc!(fef, 3, 2, 3.0)
@@ -40,6 +42,8 @@ function test()
     @test tnum == 2
     @test fnum == nterms(fef) * ndofsperterm(fef) - 2 + 1
     @test lnum == nterms(fef) * ndofsperterm(fef)
+    @show highestfreedofnum(fef)
+    @show highestdatadofnum(fef)
 
     @test doftype(fef) == Float64
 
