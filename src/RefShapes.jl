@@ -16,6 +16,12 @@ struct RefShapeTetrahedron <: AbstractRefShape{3} end
 Get the manifold dimension of the reference shape.
 """
 manifdim(::Type{T}) where {T<:AbstractRefShape{MANIFDIM}} where {MANIFDIM} = MANIFDIM
+
+"""
+    manifdimv(::Type{T}) where {T<:AbstractRefShape{MANIFDIM}} where {MANIFDIM}
+
+Get the manifold dimension of the reference shape as `Val`. 
+"""
 manifdimv(::Type{T}) where {T<:AbstractRefShape{MANIFDIM}} where {MANIFDIM} = Val(MANIFDIM)
 
 """
