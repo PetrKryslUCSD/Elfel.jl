@@ -8,13 +8,9 @@ CurrentModule = Elfel
 
 
 ```@docs
-initbox
-updatebox!
-boundingbox
-inflatebox!
-inbox
-boxesoverlap
-intersectboxes
+manifdim
+manifdimv
+quadrature
 ```
 
 
