@@ -230,6 +230,18 @@ function gathersysvec!(v, fesp::FESpace)
 end
 
 """
+    gathersysvec!(v, fesp...)
+
+Gather values for the whole system vector from all FE spaces contributing to it.
+"""
+function gathersysvec!(v, fesp...)
+    for i in 1:length(fesp)
+        gathersysvec!(v, fesp[i])
+    end
+    return v
+end
+
+"""
     scattersysvec!(fesp::FESpace, v)
 
 Scatter values from the system vector.
@@ -239,6 +251,23 @@ function scattersysvec!(fesp::FESpace, v)
         if ndofperfeat(fesp.fe, m) > 0 
             scattersysvec!(fesp._irsfields[m][2], v)
         end 
+    end
+    return fesp
+end
+
+"""
+    scattersysvec!(v, fesp...)
+
+Scatter values for the whole system vector to all FE spaces contributing to it.
+
+It is the list of FE spaces that gets changed. It is a limitation on the
+variable number of arguments in Julia that insists on that being the final
+argument in the list. This conflicts with the convention that the first
+argument gets modified by the function.
+"""
+function scattersysvec!(v, fesp...)
+    for i in 1:length(fesp)
+        scattersysvec!(fesp[i], v)
     end
     return fesp
 end

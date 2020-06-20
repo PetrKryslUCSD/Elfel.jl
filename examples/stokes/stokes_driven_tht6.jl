@@ -39,7 +39,9 @@ function genmesh()
     # This mesh will be for the velocities
     vmesh = Mesh()
     insert!(vmesh, T6block(A, A, N, N), "velocity")
-    # This mesh will be used for the pressures
+    # This mesh will be used for the pressures. Notice that it needs to be
+    # "compatible" with the velocity mesh in the sense that they need to share
+    # the nodes at the corners of the triangles.
     pmesh = Mesh()
     insert!(pmesh, T6toT3(baseincrel(vmesh, "velocity")), "pressure")
     return vmesh, pmesh
