@@ -99,6 +99,7 @@ function test()
     gj = [1 7 5]             
     gi = [5 2 1 4]       
     la = LocalMatrixAssembler(4, 3, 0.0)
+    @test size(la) == (4, 3)
     init!(la, gi, gj)
     for j in 1:size(m, 2), i in 1:size(m, 1)
         la[i, j] += m[i, j]
@@ -126,6 +127,8 @@ function test()
     0         0           0           0          0         0         0
     0.995379  0.00206713  0.317078    1.55676    0.786024  0.159064  0.261821  ]
     @test norm(A - B) / norm(B) < 1.0e-5
+    la = LocalVectorAssembler(4, 0.0)
+    @test size(la)  == (4, )
     true
 end
 end
