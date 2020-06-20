@@ -51,3 +51,39 @@ end
 end
 using .mrs3
 mrs3.test()
+
+module mrs4
+using Elfel
+using Elfel.RefShapes: RefShapeSquare, manifdim
+using Elfel.RefShapes: quadrature, npts, param_coords, weights
+using Test
+function test()
+    @test manifdim(RefShapeSquare) == 2
+    qr = quadrature(RefShapeSquare)
+    # @show qr
+    for o in 1:10
+        qr = quadrature(RefShapeSquare, (order = o,))
+        @test npts(qr) == o^2
+    end
+    true
+end
+end
+using .mrs4
+mrs4.test()
+
+module mrs5
+using Elfel
+using Elfel.RefShapes: RefShapeTriangle, manifdim
+using Elfel.RefShapes: quadrature, npts, param_coords, weights
+using Test
+function test()
+    @test manifdim(RefShapeTriangle) == 2
+   for n in [1, 3, 4, 6, 7, 9, 12, 13]
+        qr = quadrature(RefShapeTriangle, (npts = n,))
+        @test npts(qr) == n
+    end
+    true
+end
+end
+using .mrs5
+mrs5.test()
