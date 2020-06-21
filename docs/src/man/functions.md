@@ -16,6 +16,15 @@ quadrature
 
 ## Elements
 
+```@docs
+shapedesc
+refshape
+nfeatofdim
+ndofperfeat
+ndofsperel
+manifdim
+```
+
 ## Fields
 
 ## Spaces
