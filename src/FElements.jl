@@ -6,15 +6,22 @@ using MeshCore
 import MeshCore: manifdim
 using ..RefShapes: RefShapePoint, RefShapeInterval, RefShapeTriangle, RefShapeTetrahedron, RefShapeSquare, RefShapeCube, manifdimv
 
+"""
+    FE{RS, SD}
+
+Abstract type of finite element, parameterized by
+- `RS`: type of reference shape of the element (triangle, square, ...), and
+- `SD`: shape descriptor; refer to the package `MeshCore`.
+"""
 abstract type FE{RS, SD} end
 
 """
-    FEData{RS, SD} 
+    FEData{SD} 
 
-Type of a finite element set. 
+Type of a finite element data. 
 
-- `RS` = reference shape,
-- `SD` = shape descriptor.
+Parameterized by
+- `SD` = shape descriptor; refer to the package `MeshCore`.
 """
 struct FEData{SD} 
     sd::SD
@@ -149,7 +156,7 @@ function _jac(locs, conn, gradNpar)
 end
 
 """
-    jacjac(fe::FE{RS, SD}, locs, gradNpar) where {RS, SD}
+    jacjac(fe::FE{RS, SD}, locs, nodes, gradNpar) where {RS, SD}
 
 Compute the Jacobian matrix and the Jacobian determinant.
 
@@ -160,12 +167,39 @@ function jacjac(fe::FE{RS, SD}, locs, nodes, gradNpar) where {RS, SD}
     return (Jac, Jacobian(manifdimv(refshape(fe)), Jac))
 end
 
+"""
+    bfun(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}}
+
+Evaluate the basis functions for all degrees of freedom of the scalar finite
+element at the parametric coordinates. Return a vector of the values.
+"""
+function bfun(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}}
+end
+
+"""
+    bfungradpar(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}}
+
+Evaluate the gradients of the basis functions for all degrees of freedom of
+the scalar finite element with respect to the parametric coordinates, at the
+parametric coordinates given. Return a vector of the gradients.
+"""
+function bfungradpar(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}}
+end
+
 # L2 ==================================================================
 # Linear two-node element. Only nodal basis functions.
 struct FEH1_L2_Type{RS, SD} <: FE{RS, SD}
     data::FEData{SD}
 end
 FEH1_L2_TYPE = FEH1_L2_Type{RefShapeInterval, typeof(MeshCore.L2)}
+
+"""
+    FEH1_L2()
+
+Construct an H1 finite element of the type L2.
+
+L2 is two-node linear segment element.
+"""
 FEH1_L2() = FEH1_L2_TYPE(FEData(MeshCore.L2, SVector{4}([1, 0, 0, 0])))
 
 function bfun(self::FEH1_L2_TYPE,  param_coords) 
@@ -183,6 +217,14 @@ struct FEH1_T3_Type{RS, SD} <: FE{RS, SD}
     data::FEData{SD}
 end
 FEH1_T3_TYPE = FEH1_T3_Type{RefShapeTriangle, typeof(MeshCore.T3)}
+
+"""
+    FEH1_T3()
+
+Construct an H1 finite element of the type T3.
+
+T3 is 3-node linear triangle element.
+"""
 FEH1_T3() = FEH1_T3_TYPE(FEData(MeshCore.T3, SVector{4}([1, 0, 0, 0])))
 
 function bfun(self::FEH1_T3_TYPE,  param_coords) 
@@ -200,6 +242,14 @@ struct FEH1_T6_Type{RS, SD} <: FE{RS, SD}
     data::FEData{SD}
 end
 FEH1_T6_TYPE = FEH1_T6_Type{RefShapeTriangle, typeof(MeshCore.T6)}
+
+"""
+    FEH1_T6()
+
+Construct an H1 finite element of the type T6.
+
+T6 is 6-node quadratic triangle element.
+"""
 FEH1_T6() = FEH1_T6_TYPE(FEData(MeshCore.T6, SVector{4}([1, 0, 0, 0])))
 
 function bfun(self::FEH1_T6_TYPE,  param_coords) 
@@ -234,6 +284,14 @@ struct FEH1_Q4_Type{RS, SD} <: FE{RS, SD}
     data::FEData{SD}
 end
 FEH1_Q4_TYPE = FEH1_Q4_Type{RefShapeSquare, typeof(MeshCore.Q4)}
+
+"""
+    FEH1_Q4()
+
+Construct an H1 finite element of the type Q4.
+
+Q4 is 4-node linear quadrilateral element.
+"""
 FEH1_Q4() = FEH1_Q4_TYPE(FEData(MeshCore.Q4, SVector{4}([1, 0, 0, 0])))
 
 function bfun(self::FEH1_Q4_TYPE,  param_coords) 
@@ -258,6 +316,16 @@ struct FEH1_T3_BUBBLE_Type{RS, SD} <: FE{RS, SD}
     data::FEData{SD}
 end
 FEH1_T3_BUBBLE_TYPE = FEH1_T3_BUBBLE_Type{RefShapeTriangle, typeof(MeshCore.T3)}
+
+"""
+    FEH1_T3_BUBBLE()
+
+Construct an H1 finite element of the type T3 with a cubic bubble.
+
+T3 is 3-node linear triangle element with a cubic bubble. It has the usual
+nodal basis functions associated with the vertices, and cubic bubble
+associated with the element itself.
+"""
 FEH1_T3_BUBBLE() = FEH1_T3_BUBBLE_TYPE(FEData(MeshCore.T3, SVector{4}([1, 0, 1, 0])))
 
 function bfun(self::FEH1_T3_BUBBLE_TYPE,  param_coords) 
