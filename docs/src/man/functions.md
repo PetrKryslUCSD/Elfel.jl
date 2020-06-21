@@ -65,10 +65,40 @@ scattersysvec!
 CurrentModule = Elfel.FESpaces
 ```
 
+
+```@docs
+doftype
+edofmdim
+edofbfnum
+edofcompnt
+ndofsperel
+numberfreedofs!
+numberdatadofs!
+ndofs
+nunknowns
+highestfreedofnum
+highestdatadofnum
+numberdofs!
+setebc!
+gathersysvec!
+scattersysvec!
+makeattribute
+```
+
 ## Finite element iterators
 
 ```@meta
 CurrentModule = Elfel.FEIterators
+```
+
+```@docs
+Base.iterate
+ndofsperel
+eldofs
+elnodes
+eldofentmdims
+eldofcomps
+jacjac
 ```
 
 ## Quadrature-point iterators
@@ -77,10 +107,26 @@ CurrentModule = Elfel.FEIterators
 CurrentModule = Elfel.QPIterators
 ```
 
+```@docs
+Base.iterate
+bfun
+bfungradpar
+bfungrad
+weight
+```
+
 ## Assemblers
 
 ```@meta
 CurrentModule = Elfel.Assemblers
+```
+
+```@docs
+SysmatAssemblerSparse
+start!
+assemble!
+finish!
+SysvecAssembler
 ```
 
 ## Local Assemblers
@@ -89,6 +135,14 @@ CurrentModule = Elfel.Assemblers
 CurrentModule = Elfel.LocalAssemblers
 ```
 
+```@docs
+LocalMatrixAssembler
+LocalVectorAssembler
+Base.size
+Base.getindex
+Base.setindex!
+init!
+```
 
 ## Index
 
