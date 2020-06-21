@@ -3,6 +3,12 @@
 [![Coverage Status](https://coveralls.io/repos/github/PetrKryslUCSD/Elfel.jl/badge.svg?branch=master)](https://coveralls.io/github/PetrKryslUCSD/Elfel.jl?branch=master)
 [![Latest documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://petrkryslucsd.github.io/Elfel.jl/dev)
 
+    _/_/_/  _/       _/_/_/  _/_/_/  _/
+   _/      _/       _/      _/      _/
+  _/_/_/  _/       _/_/_/  _/_/_/  _/
+ _/      _/      _/       _/      _/
+_/_/_/  _/_/_/  _/       _/_/_/  _/_/_/       
+
 # Elfel.jl: Extensible library for finite element methods
 
 **elfel**<br>
