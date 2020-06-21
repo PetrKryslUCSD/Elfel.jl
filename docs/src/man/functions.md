@@ -29,6 +29,8 @@ ndofsperel
 manifdim
 Jacobian
 jacjac
+bfun
+bfungradpar
 FEH1_L2
 FEH1_T3
 FEH1_Q4
@@ -67,19 +69,19 @@ CurrentModule = Elfel.FESpaces
 
 
 ```@docs
-doftype
+doftype(fesp::FESpace{FET, T}) where {FET, T}
 edofmdim
 edofbfnum
 edofcompnt
 ndofsperel
 numberfreedofs!
 numberdatadofs!
-ndofs
-nunknowns
-highestfreedofnum
-highestdatadofnum
+ndofsperel(fesp::FES)  where {FES<:FESpace}
+nunknowns(fesp::FES)  where {FES<:FESpace}
+highestfreedofnum(fesp::FES)  where {FES<:FESpace}
+highestdatadofnum(fesp::FES)  where {FES<:FESpace}
 numberdofs!
-setebc!
+setebc!(fesp::FESpace, mid, eid, comp, val::T) where {T}
 gathersysvec!
 scattersysvec!
 makeattribute
