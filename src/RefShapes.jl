@@ -1,13 +1,55 @@
 module RefShapes
 
 
+"""
+    AbstractRefShape{MANIFDIM}
+
+Abstract type of a reference shape.
+"""
 abstract type AbstractRefShape{MANIFDIM} end
 
+"""
+    RefShapePoint
+
+Type of a reference shape for a zero-dimensional manifold (point).
+"""
 struct RefShapePoint <: AbstractRefShape{0} end
+
+"""
+    RefShapeInterval
+
+Type of a reference shape for a 1-dimensional manifold (curve).
+"""
 struct RefShapeInterval <: AbstractRefShape{1} end
+
+"""
+    RefShapeSquare
+
+Type of a logically rectangular reference shape for a 2-dimensional manifold 
+(surface).
+"""
 struct RefShapeSquare <: AbstractRefShape{2} end
+
+"""
+    RefShapeCube
+
+Type of a reference shape for a 3-dimensional manifold (solid) bounded by six quadrilaterals.
+"""
 struct RefShapeCube <: AbstractRefShape{3} end
+
+"""
+    RefShapeTriangle
+
+Type of a logically triangular reference shape for a 2-dimensional manifold 
+(surface).
+"""
 struct RefShapeTriangle <: AbstractRefShape{2} end
+
+"""
+    RefShapeTetrahedron
+
+Type of a reference shape for a 3-dimensional manifold (solid) bounded by 4 triangles.
+"""
 struct RefShapeTetrahedron <: AbstractRefShape{3} end
 
 """
