@@ -68,9 +68,9 @@ FESpaces.highestfreedofnum
 FESpaces.highestdatadofnum
 FESpaces.numberdofs!
 FESpaces.setebc!
-FESpaces.gathersysvec!(v, fesp)
+FESpaces.gathersysvec!(v, fesp::FESpaces.FESpace)
 FESpaces.gathersysvec!(v, fesp::AbstractVector) 
-FESpaces.scattersysvec!(fesp, v)
+scattersysvec!(fesp::FESpaces.FESpace, v)
 FESpaces.scattersysvec!(fesp::AbstractVector, v) 
 FESpaces.makeattribute
 ```
@@ -79,12 +79,12 @@ FESpaces.makeattribute
 
 ```@docs
 Base.iterate
-FEIterators.ndofsperel
+FEIterators.ndofsperel(it::FEIterators.FEIterator)
 FEIterators.eldofs
 FEIterators.elnodes
 FEIterators.eldofentmdims
 FEIterators.eldofcomps
-FEIterators.jacjac
+FEIterators.jacjac(it::FEIterators.FEIterator, qpit::QPIterators.QPIterator)
 ```
 
 ## Quadrature-point iterators
