@@ -23,6 +23,13 @@ nfeatofdim
 ndofperfeat
 ndofsperel
 manifdim
+Jacobian
+jacjac
+FEH1_L2
+FEH1_T3
+FEH1_Q4
+FEH1_T6
+FEH1_T3_BUBBLE
 ```
 
 ## Fields
