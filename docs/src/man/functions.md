@@ -1,10 +1,10 @@
 # Functions
 
-```@meta
-CurrentModule = Elfel
-```
-
 ## Reference shapes
+
+```@meta
+CurrentModule = Elfel.RefShapes
+```
 
 
 ```@docs
@@ -15,6 +15,10 @@ quadrature
 
 
 ## Elements
+
+```@meta
+CurrentModule = Elfel.FElements
+```
 
 ```@docs
 shapedesc
