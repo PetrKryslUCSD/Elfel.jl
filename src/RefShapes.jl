@@ -266,6 +266,14 @@ function _triangle(npts=1)
     return npts, param_coords, weights
 end
 
+"""
+    quadrature(::Type{RefShapeInterval}, quadraturesettings = (kind = :default,))
+
+Create a quadrature rule for the reference shape of an interval.
+
+The default is Gauss integration rule, where the order is set with the keyword
+`order`.
+"""
 function quadrature(::Type{RefShapeInterval}, quadraturesettings = (kind = :default,))
 	kind = :default
 	for apair in pairs(quadraturesettings)
@@ -290,6 +298,14 @@ function quadrature(::Type{RefShapeInterval}, quadraturesettings = (kind = :defa
     end
 end
 
+"""
+    quadrature(::Type{RefShapeTriangle}, quadraturesettings = (kind = :default,))
+
+Create a quadrature rule for the reference shape of an triangle.
+
+The default is a triangle rule, distinguished by the number of points set with
+the keyword `npts`.
+"""
 function quadrature(::Type{RefShapeTriangle}, quadraturesettings = (kind = :default,))
 	kind = :default
 	for apair in pairs(quadraturesettings)
@@ -314,6 +330,14 @@ function quadrature(::Type{RefShapeTriangle}, quadraturesettings = (kind = :defa
     end
 end
 
+"""
+    quadrature(::Type{RefShapeSquare}, quadraturesettings = (kind = :default,))
+
+Create a quadrature rule for the reference shape of a square.
+
+The default is Gauss integration rule, where the order is set with the keyword
+`order`.
+"""
 function quadrature(::Type{RefShapeSquare}, quadraturesettings = (kind = :default,))
 	kind = :default
 	for apair in pairs(quadraturesettings)

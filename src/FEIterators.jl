@@ -13,6 +13,24 @@ import ..FESpaces: ndofsperel
 using ..QPIterators: QPIterator, bfungradpar
 
 #= TODO is it more natural to have access to the geometry from the font element space or from the iterator? =#
+
+"""
+    FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
+
+Type of finite element iterator. Parameterized with the types of
+- `FES`: finite element space,
+- `IR`: base incidence relation of the mesh, 
+- `G`: type of the geometry attribute, 
+- `IT`: type of integer indices, such as the  numbers of nodes and degrees of freedom, 
+- `T`: type of the degree of freedom value (real double, complex float, ... ), 
+- `V`: `Val` representation of the manifold dimension of the base relation elements, 
+- `IR0`, `IR1`, `IR2`, `IR3`: types of incidence relations with which degrees
+  of freedom are associated in the finite element space, for each of the
+  manifolds dimensions 0, 1, 2, 3, 
+- `F0`, `F1`, `F2`, `F3`: types of fields with which degrees
+  of freedom are associated in the finite element space, for each of the
+  manifolds dimensions 0, 1, 2, 3.
+"""
 struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
     fesp::FES
     _bir::IR
@@ -60,6 +78,14 @@ struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
     end
 end
 
+"""
+    Base.iterate(it::FEIterator, state = 1)
+
+Advance the iterator to the next entity.
+
+The nodes of the finite element are cached, as is a vector of all the degrees
+of freedom represented on the element.
+"""
 function Base.iterate(it::FEIterator, state = 1)
     if state > nrelations(it._bir)
         return nothing
@@ -67,6 +93,12 @@ function Base.iterate(it::FEIterator, state = 1)
         return (_update!(it, state), state+1)
     end
 end
+
+"""
+    Base.length(it::FEIterator) 
+
+Number of elements represented by this iterator.
+"""
 Base.length(it::FEIterator)  = nrelations(it._bir)
 
 """
@@ -94,6 +126,10 @@ elnodes(it::FEIterator) = it._nodes
     eldofentmdims(it::FEIterator)
 
 Retrieve the vector of the entity dimensions for each element degree of freedom.
+
+Each degree of freedom is associated with some entity of the finite element:
+vertices, edges, faces, and so on. This vector records the dimension of the
+manifold entity with which each degree of freedom is associated.
 """
 eldofentmdims(it::FEIterator) = it._entmdim
 
@@ -101,6 +137,9 @@ eldofentmdims(it::FEIterator) = it._entmdim
     eldofcomps(it::FEIterator)
 
 Retrieve the vector of the component numbers for each element degree of freedom.
+
+If multiple copies of the finite element are referenced in the finite element
+space, each copy is referred to as component.
 """
 eldofcomps(it::FEIterator) = it._dofcomp
 
@@ -139,11 +178,12 @@ function _update!(it::FEIterator, state)
 end
 
 """
-    jacjac(it::QPIterator)
+    jacjac(it::FEIterator, qpit::QPIterator)
 
 Compute the Jacobian matrix and the Jacobian determinant.
 
-At the current integration point.
+The finite element iterator cooperates with the quadrature point iterator here
+to compute the Jacobian at the current integration point.
 """
 function jacjac(it::FEIterator, qpit::QPIterator)
     return jacjac(it.fesp.fe, it._geom, it._nodes, qpit._scalbfungrad_ps[qpit._pt])
