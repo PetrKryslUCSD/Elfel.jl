@@ -41,6 +41,13 @@ function __bfundata(fesp, qr)
     return (bfnum, scalNs, scalgradNps, scalgradN, Ns, gradNps, gradN)
 end
 
+"""
+    QPIterator{FES, MDIM}
+
+Type of quadrature-point iterator, parameterized by 
+- `FES`: the type of the finite element space, 
+- `MDIM`: the manifold dimension of the finite element.
+"""
 mutable struct QPIterator{FES, MDIM}
     fesp::FES
     _quadr::IntegRule
@@ -54,6 +61,11 @@ mutable struct QPIterator{FES, MDIM}
     _pt::Int64
 end
 
+"""
+    QPIterator(fesp::FES, quadraturesettings) where {FES}
+
+Construct quadrature-point iterator by associating it with a finite element space and supplying quadrature rule settings.
+"""
 function QPIterator(fesp::FES, quadraturesettings) where {FES}
     _quadr = quadrature(refshape(fesp.fe), quadraturesettings)
     bfnum, scalNs, scalgradNps, scalgradN, Ns, gradNps, gradN = __bfundata(fesp, _quadr)
@@ -61,6 +73,11 @@ function QPIterator(fesp::FES, quadraturesettings) where {FES}
     return QPIterator{FES, manifdim(refshape(fesp.fe))}(fesp, _quadr, bfnum, scalNs, scalgradNps, scalgradN, Ns, gradNps, gradN, _pt)
 end
 
+"""
+    Base.iterate(it::QPIterator, state = 1)
+
+Advance a quadrature point iterator.
+"""
 function Base.iterate(it::QPIterator, state = 1)
     if state > npts(it._quadr)
         return nothing
@@ -75,14 +92,33 @@ function _update!(it::QPIterator, state)
     return it
 end
 
+"""
+    bfun(it::QPIterator)
+
+Retrieve vector of basis function values for the current quadrature point.
+"""
 function bfun(it::QPIterator)
     return it._bfuns[it._pt]
 end
 
+"""
+    bfungradpar(it::QPIterator)
+
+Retrieve vector of basis function gradients with respect to the parametric coordinates for the current quadrature point.
+"""
 function bfungradpar(it::QPIterator)
     return it._bfungrad_ps[it._pt]
 end
 
+"""
+    bfungrad(it::QPIterator, Jac)
+
+Retrieve vector of basis function gradients with respect to spatial coordinates
+for the current quadrature point.
+
+The Jacobian matrix maps between vectors in the parametric space and the spatial
+vectors.
+"""
 function bfungrad(it::QPIterator, Jac)
     for j in 1:length(it._scalbfungrads)
         it._scalbfungrads[j] = it._scalbfungrad_ps[it._pt][j] / Jac
@@ -93,6 +129,11 @@ function bfungrad(it::QPIterator, Jac)
     return it._bfungrads
 end
 
+"""
+    weight(it::QPIterator) 
+
+Retrieve weight of the current quadrature point.
+"""
 weight(it::QPIterator) = it._quadr.weights[it._pt]
 
 end
