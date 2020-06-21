@@ -25,7 +25,7 @@ shapedesc
 refshape
 nfeatofdim
 ndofperfeat
-ndofsperel
+ndofsperel(fe::FE{RS, SD}) where {RS, SD}
 manifdim
 Jacobian
 jacjac
@@ -102,7 +102,7 @@ eldofs
 elnodes
 eldofentmdims
 eldofcomps
-jacjac
+jacjac(it::FEIterator, qpit::QPIterator)
 ```
 
 ## Quadrature-point iterators
