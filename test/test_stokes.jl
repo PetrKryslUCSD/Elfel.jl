@@ -174,7 +174,7 @@ using Elfel.QPIterators: QPIterator, bfun, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
 using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
-using UnicodePlots
+# using UnicodePlots
 
 mu = 0.25 # dynamic viscosity
 A = 1.0 # length of the side of the square
@@ -288,14 +288,14 @@ function test()
     tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix
     K = assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
-    p = spy(K, canvas = DotCanvas)
-    display(p)
+    # p = spy(K, canvas = DotCanvas)
+    # display(p)
     # Solve the system
     U = fill(0.0, tndof)
-    gathersysvec!(U, (uxfesp, uyfesp, pfesp))
+    gathersysvec!(U, [uxfesp, uyfesp, pfesp])
     F = fill(0.0, tndof)
     solve!(U, K, F, tnunk)
-    scattersysvec!((uxfesp, uyfesp, pfesp), U)
+    scattersysvec!([uxfesp, uyfesp, pfesp], U)
     # Postprocessing
     makeattribute(pfesp, "p", 1)
     makeattribute(uxfesp, "ux", 1)
