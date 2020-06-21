@@ -72,6 +72,11 @@ function ndofsperel(fe::FE{RS, SD}) where {RS, SD}
     return n
 end
 
+"""
+    manifdim(fe::FE{RS, SD}) where {RS, SD}
+
+Get the manifold dimension of the finite element.
+"""
 manifdim(fe::FE{RS, SD}) where {RS, SD} = MeshCore.manifdim(fe.data.sd)
 
 """
