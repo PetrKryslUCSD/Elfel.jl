@@ -91,8 +91,8 @@ FEIterators.jacjac
 
 ```@docs
 Base.iterate
-QPIterators.bfun
-QPIterators.bfungradpar
+QPIterators.bfun(it::QPIterators.QPIterator)
+QPIterators.bfungradpar(it::QPIterators.QPIterator)
 QPIterators.bfungrad
 QPIterators.weight
 ```
