@@ -3,96 +3,67 @@
 ## Reference shapes
 
 ```@meta
-CurrentModule = Elfel.RefShapes
+CurrentModule = Elfel
 ```
 
 
 ```@docs
-AbstractRefShape
-RefShapePoint
-RefShapeInterval
-RefShapeSquare
-RefShapeCube
-RefShapeTriangle
-RefShapeTetrahedron
-IntegRule
+RefShapes.AbstractRefShape
+RefShapes.RefShapePoint
+RefShapes.RefShapeInterval
+RefShapes.RefShapeSquare
+RefShapes.RefShapeCube
+RefShapes.RefShapeTriangle
+RefShapes.RefShapeTetrahedron
+RefShapes.IntegRule
 ```
 
 
 ## Elements
 
-```@meta
-CurrentModule = Elfel.FElements
-```
-
 ```@docs
-FE{RS, SD}
-FEData{SD}
+FElements.FE
+FElements.FEData
 ```
 
 ## Fields
 
-```@meta
-CurrentModule = Elfel.FEFields
-```
-
 ```@docs
-FEField{N, T, IT}
+FEFields.FEField
 ```
 
 ## Spaces
 
-```@meta
-CurrentModule = Elfel.FESpaces
-```
-
-
 ```@docs
-FESpace{FET, T}
+FESpaces.FESpace
 ```
 
 ## Finite element iterators
 
-```@meta
-CurrentModule = Elfel.FEIterators
-```
-
 ```@docs
-FEIterator
+FEIterators.FEIterator
 ```
 
 ## Quadrature-point iterators
 
-```@meta
-CurrentModule = Elfel.QPIterators
-```
-
 ```@docs
-QPIterator
+QPIterators.QPIterator
 ```
 
 ## Assemblers
 
-```@meta
-CurrentModule = Elfel.Assemblers
-```
-
 ```@docs
-AbstractSysmatAssembler
-SysmatAssemblerSparse{T<:Number}
-AbstractSysvecAssembler
-SysvecAssembler{T<:Number}
+Assemblers.AbstractSysmatAssembler
+Assemblers.SysmatAssemblerSparse
+Assemblers.AbstractSysvecAssembler
+Assemblers.SysvecAssembler
 ```
 
 ## Local Assemblers
 
-```@meta
-CurrentModule = Elfel.LocalAssemblers
-```
-
 ```@docs
-LocalMatrixAssembler{IT<:Integer, T<:Number}
-LocalVectorAssembler{IT<:Integer, T<:Number}
+LocalAssemblers.LocalMatrixAssembler
+LocalAssemblers.LocalVectorAssembler
 ```
 
 ## Index
