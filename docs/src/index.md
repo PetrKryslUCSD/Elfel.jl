@@ -1,5 +1,6 @@
 # Elfel Documentation
 
+Elfel provides support for the development of Finite Element Method applications, especially in the area of continuum mechanics. Mixed methods with cooperating finite element spaces are supported. High performance is one of the focus points.
 
 ## How to guide
 
@@ -21,7 +22,7 @@ Pages = [
     "man/types.md",
     "man/functions.md",
 ]
-Depth = 3
+Depth = 1
 ```
 
 ## Concepts

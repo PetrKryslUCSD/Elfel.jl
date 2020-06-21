@@ -2,135 +2,106 @@
 
 ## Reference shapes
 
-```@meta
-CurrentModule = Elfel.RefShapes
-```
-
-
 ```@docs
-manifdim
-manifdimv
-quadrature
+Elfel.RefShapes.manifdim
+Elfel.RefShapes.manifdimv
+Elfel.RefShapes.quadrature
 ```
 
 
 ## Elements
 
-```@meta
-CurrentModule = Elfel.FElements
-```
-
 ```@docs
-shapedesc
-refshape
-nfeatofdim
-ndofperfeat
-ndofsperel(fe::FE{RS, SD}) where {RS, SD}
-manifdim
-Jacobian
-jacjac
-bfun
-bfungradpar
-FEH1_L2
-FEH1_T3
-FEH1_Q4
-FEH1_T6
-FEH1_T3_BUBBLE
+Elfel.FElements.shapedesc
+Elfel.FElements.refshape
+Elfel.FElements.nfeatofdim
+Elfel.FElements.ndofperfeat
+Elfel.FElements.ndofsperel(fe::FE{RS, SD}) where {RS, SD}
+Elfel.FElements.manifdim
+Elfel.FElements.Jacobian
+Elfel.FElements.jacjac
+Elfel.FElements.bfun
+Elfel.FElements.bfungradpar
+Elfel.FElements.FEH1_L2
+Elfel.FElements.FEH1_T3
+Elfel.FElements.FEH1_Q4
+Elfel.FElements.FEH1_T6
+Elfel.FElements.FEH1_T3_BUBBLE
 ```
 
 ## Fields
 
-```@meta
-CurrentModule = Elfel.FEFields
-```
-
 ```@docs
-doftype
-dofnumtype
-nterms
-ndofsperterm
-ndofs
-setebc!
-numberfreedofs!
-numberdatadofs!
-freedofnums
-datadofnums
-highestfreedofnum
-highestdatadofnum
-gathersysvec!
-scattersysvec!
+Elfel.FEFields.doftype
+Elfel.FEFields.dofnumtype
+Elfel.FEFields.nterms
+Elfel.FEFields.ndofsperterm
+Elfel.FEFields.ndofs
+Elfel.FEFields.setebc!
+Elfel.FEFields.numberfreedofs!
+Elfel.FEFields.numberdatadofs!
+Elfel.FEFields.freedofnums
+Elfel.FEFields.datadofnums
+Elfel.FEFields.highestfreedofnum
+Elfel.FEFields.highestdatadofnum
+Elfel.FEFields.gathersysvec!
+Elfel.FEFields.scattersysvec!
 ```
 
 ## Spaces
 
-```@meta
-CurrentModule = Elfel.FESpaces
-```
-
 
 ```@docs
-doftype(fesp::FESpace{FET, T}) where {FET, T}
-edofmdim
-edofbfnum
-edofcompnt
-ndofsperel(fesp::FES)  where {FES<:FESpace}
-numberfreedofs!(fesp::FES, firstnum = 1)  where {FES<:FESpace}
-numberdatadofs!(fesp::FES, firstnum = 0)  where {FES<:FESpace}
-ndofs(fesp::FES)  where {FES<:FESpace}
-nunknowns(fesp::FES)  where {FES<:FESpace}
-highestfreedofnum(fesp::FES)  where {FES<:FESpace}
-highestdatadofnum(fesp::FES)  where {FES<:FESpace}
-numberdofs!
-setebc!(fesp::FESpace, mid, eid, comp, val::T) where {T}
-gathersysvec!(v, fesp::FESpace)
-gathersysvec!(v, fesp::AbstractVector) 
-scattersysvec!(fesp::FESpace, v)
-scattersysvec!(fesp::AbstractVector, v) 
-makeattribute
+Elfel.FESpaces.doftype(fesp::FESpace{FET, T}) where {FET, T}
+Elfel.FESpaces.edofmdim
+Elfel.FESpaces.edofbfnum
+Elfel.FESpaces.edofcompnt
+Elfel.FESpaces.ndofsperel(fesp::FES)  where {FES<:FESpace}
+Elfel.FESpaces.numberfreedofs!(fesp::FES, firstnum = 1)  where {FES<:FESpace}
+Elfel.FESpaces.numberdatadofs!(fesp::FES, firstnum = 0)  where {FES<:FESpace}
+Elfel.FESpaces.ndofs(fesp::FES)  where {FES<:FESpace}
+Elfel.FESpaces.nunknowns(fesp::FES)  where {FES<:FESpace}
+Elfel.FESpaces.highestfreedofnum(fesp::FES)  where {FES<:FESpace}
+Elfel.FESpaces.highestdatadofnum(fesp::FES)  where {FES<:FESpace}
+Elfel.FESpaces.numberdofs!
+Elfel.FESpaces.setebc!(fesp::FESpace, mid, eid, comp, val::T) where {T}
+Elfel.FESpaces.gathersysvec!(v, fesp::FESpace)
+Elfel.FESpaces.gathersysvec!(v, fesp::AbstractVector) 
+Elfel.FESpaces.scattersysvec!(fesp::FESpace, v)
+Elfel.FESpaces.scattersysvec!(fesp::AbstractVector, v) 
+Elfel.FESpaces.makeattribute
 ```
 
 ## Finite element iterators
 
-```@meta
-CurrentModule = Elfel.FEIterators
-```
-
 ```@docs
 Base.iterate
-ndofsperel
-eldofs
-elnodes
-eldofentmdims
-eldofcomps
-jacjac(it::FEIterator, qpit::QPIterator)
+Elfel.FEIterators.ndofsperel
+Elfel.FEIterators.eldofs
+Elfel.FEIterators.elnodes
+Elfel.FEIterators.eldofentmdims
+Elfel.FEIterators.eldofcomps
+Elfel.FEIterators.jacjac(it::FEIterator, qpit::QPIterator)
 ```
 
 ## Quadrature-point iterators
 
-```@meta
-CurrentModule = Elfel.QPIterators
-```
-
 ```@docs
-Base.iterate
-bfun
-bfungradpar
-bfungrad
-weight
+Elfel.QPIterators.Base.iterate
+Elfel.QPIterators.bfun
+Elfel.QPIterators.bfungradpar
+Elfel.QPIterators.bfungrad
+Elfel.QPIterators.weight
 ```
 
 ## Assemblers
 
-```@meta
-CurrentModule = Elfel.Assemblers
-```
-
 ```@docs
-SysmatAssemblerSparse
-start!
-assemble!
-finish!
-SysvecAssembler
+Elfel.Assemblers.SysmatAssemblerSparse
+Elfel.Assemblers.start!
+Elfel.Assemblers.assemble!
+Elfel.Assemblers.finish!
+Elfel.Assemblers.SysvecAssembler
 ```
 
 ## Local Assemblers
@@ -140,12 +111,12 @@ CurrentModule = Elfel.LocalAssemblers
 ```
 
 ```@docs
-LocalMatrixAssembler
-LocalVectorAssembler
+Elfel.LocalAssemblers.LocalMatrixAssembler
+Elfel.LocalAssemblers.LocalVectorAssembler
 Base.size
 Base.getindex
 Base.setindex!
-init!
+Elfel.LocalAssemblers.init!
 ```
 
 ## Index
