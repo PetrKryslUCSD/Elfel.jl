@@ -1,23 +1,24 @@
 """
-    stokes_driven_tht6
+    stokes_driven_t3b
 
-The famous driven-cavity benchmark is solved here with Taylor-Hood combination
-of quadratic and linear triangles.
+The famous driven-cavity benchmark is solved here with linear triangles with
+cubic bubbles for the velocity space and continuous linear triangle pressure
+space.
 
 The formulation is the one derived in Reddy, Introduction to the finite element
 method, 1993. Page 486 ff.
 """
-module stokes_driven_tht6
+module stokes_driven_t3b
 
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities
-using MeshSteward: T6block, T6toT3
+using MeshCore: retrieve, nrelations, nentities, identty
+using MeshSteward: T3block
 using MeshSteward: Mesh, insert!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: manifdim, manifdimv
-using Elfel.FElements: FEH1_T6, FEH1_T3, refshape, Jacobian
+using Elfel.FElements: FEH1_T3_BUBBLE, FEH1_T3, refshape, Jacobian
 using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
 using Elfel.FESpaces: numberfreedofs!, numberdatadofs!, numberdofs!
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!, edofcompnt
@@ -35,16 +36,13 @@ A = 1.0 # length of the side of the square
 N = 100;# number of subdivisions along the sides of the square domain
 
 function genmesh()
-    # Taylor-Hood pair of meshes is needed
-    # This mesh will be for the velocities
-    vmesh = Mesh()
-    insert!(vmesh, T6block(A, A, N, N), "velocity")
-    # This mesh will be used for the pressures. Notice that it needs to be
-        # "compatible" with the velocity mesh in the sense that they need to share
-        # the nodes at the corners of the triangles.
-        pmesh = Mesh()
-    insert!(pmesh, T6toT3(baseincrel(vmesh, "velocity")), "pressure")
-    return vmesh, pmesh
+    # This mesh will be both for the velocities and for the pressure
+    mesh = Mesh()
+    insert!(mesh, T3block(A, A, N, N), "velocity+pressure")
+    ir = baseincrel(mesh)
+    eidir = identty(ir)
+    insert!(mesh, eidir)
+    return mesh
 end
 
 function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
@@ -113,11 +111,11 @@ function solve!(U, K, F, nu)
 end
 
 function run()
-    vmesh, pmesh = genmesh()
+    mesh = genmesh()
     # Velocity spaces
-    uxfesp = FESpace(Float64, vmesh, FEH1_T6(), 1)
-    uyfesp = FESpace(Float64, vmesh, FEH1_T6(), 1)
-    locs = geometry(vmesh)
+    uxfesp = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 1)
+    uyfesp = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 1)
+    locs = geometry(mesh)
     inflate = A / N / 100
     # Part of the boundary that is immovable
     boxes = [[0.0 A 0.0 0.0], [0.0 0.0 0.0 A], [A A 0.0 A]]
@@ -137,7 +135,7 @@ function run()
         setebc!(uyfesp, 0, i, 1, 0.0)
     end
     # Pressure space
-    pfesp = FESpace(Float64, pmesh, FEH1_T3(), 1)
+    pfesp = FESpace(Float64, mesh, FEH1_T3(), 1)
     setebc!(pfesp, 0, 1, 1, 0.0)
     # Number the degrees of freedom
     numberdofs!(uxfesp, uyfesp, pfesp)
@@ -157,11 +155,11 @@ function run()
     makeattribute(pfesp, "p", 1)
     makeattribute(uxfesp, "ux", 1)
     makeattribute(uyfesp, "uy", 1)
-    vtkwrite("stokes_driven_tht6-p", baseincrel(pmesh), [(name = "p",), ])
-    vtkwrite("stokes_driven_tht6-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
-    # vtkwrite("stokes_driven_tht6-p", baseincrel(pmesh), [(name = "p", allxyz = true)])
+    vtkwrite("stokes_driven_t3b-p", baseincrel(mesh), [(name = "p",), ])
+    vtkwrite("stokes_driven_t3b-v", baseincrel(mesh), [(name = "ux",), (name = "uy",)])
+    true
 end
 
 end
 
-stokes_driven_tht6.run()
+stokes_driven_t3b.run()
