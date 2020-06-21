@@ -82,8 +82,10 @@ highestfreedofnum(fesp::FES)  where {FES<:FESpace}
 highestdatadofnum(fesp::FES)  where {FES<:FESpace}
 numberdofs!
 setebc!(fesp::FESpace, mid, eid, comp, val::T) where {T}
-gathersysvec!
-scattersysvec!
+gathersysvec!(v, fesp::FESpace)
+gathersysvec!(v, fesp::AbstractVector) 
+scattersysvec!(fesp::FESpace, v)
+scattersysvec!(fesp::AbstractVector, v) 
 makeattribute
 ```
 

@@ -278,7 +278,7 @@ Gather values for the whole system vector from all FE spaces contributing to it.
 
 `fesp` is either a vector or a tuple of FE spaces.
 """
-function gathersysvec!(v, fesp::A) where {A<:AbstractVector{FESpace}}
+function gathersysvec!(v, fesp::AbstractVector) 
     for i in 1:length(fesp)
         gathersysvec!(v, fesp[i])
     end
@@ -306,7 +306,7 @@ Scatter values for the whole system vector to all FE spaces contributing to it.
 
 `fesp` is either a vector or a tuple of FE spaces.
 """
-function scattersysvec!(fesp::A, v) where {A<:AbstractVector{FESpace}}
+function scattersysvec!(fesp::AbstractVector, v) 
     for i in 1:length(fesp)
         scattersysvec!(fesp[i], v)
     end
