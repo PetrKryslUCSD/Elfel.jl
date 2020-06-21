@@ -59,15 +59,15 @@ FESpaces.doftype
 FESpaces.edofmdim
 FESpaces.edofbfnum
 FESpaces.edofcompnt
-FESpaces.ndofsperel
-FESpaces.numberfreedofs!
-FESpaces.numberdatadofs!
+FESpaces.ndofsperel(fesp::FESpaces.FESpace)
+FESpaces.numberfreedofs!(fesp::FESpaces.FESpace, firstnum = 1)
+FESpaces.numberdatadofs!(fesp::FESpaces.FESpace, firstnum = 0)
 FESpaces.ndofs
 FESpaces.nunknowns
-FESpaces.highestfreedofnum
-FESpaces.highestdatadofnum
+FESpaces.highestfreedofnum(fesp::FESpaces.FESpace)
+FESpaces.highestdatadofnum(fesp::FESpaces.FESpace)
 FESpaces.numberdofs!
-FESpaces.setebc!
+FESpaces.setebc!(fesp::FESpaces.FESpace, mid, eid, comp, val)
 FESpaces.gathersysvec!(v, fesp::FESpaces.FESpace)
 FESpaces.gathersysvec!(v, fesp::AbstractVector) 
 scattersysvec!(fesp::FESpaces.FESpace, v)
