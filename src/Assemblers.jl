@@ -182,8 +182,7 @@ function SysvecAssembler(zero::T=0.0) where {T<:Number}
 end
 
 """
-    start!(self::SysvecAssembler{T},
-      nrow::FInt) where {T<:Number}
+    start!(self::SysvecAssembler{T},  nrow::Int64) where {T<:Number}
 
 Start assembly.
 
@@ -199,13 +198,9 @@ function start!(self::SysvecAssembler{T},  nrow::Int64) where {T<:Number}
 end
 
 """
-    assemble!(self::SysvecAssembler{T}, vec::MV,
-      dofnums::D) where {T<:Number, MV<:AbstractArray{T}, D<:AbstractArray{FInt}}
+    assemble!(self::SysvecAssembler{T}, i, val::T) where {T<:Number}
 
-Assemble a single value.
-
-The method assembles a column element vector using the vector of degree of
-freedom numbers for the rows.
+Assemble a single value into the row `i`.
 """
 function assemble!(self::SysvecAssembler{T}, i, val::T) where {T<:Number}
     self.val[i] = self.val[i] + val;
@@ -213,9 +208,9 @@ function assemble!(self::SysvecAssembler{T}, i, val::T) where {T<:Number}
 end
 
 """
-    assemble!(self::SysvecAssembler{T}, rs::AbstractVector{IT}, vs::AbstractVector{T}) where {IT<:Integer, T<:Number}
+    assemble!(self::SysvecAssembler{T}, lva) where {T<:Number}
 
-Assemble entire vector.
+Assemble local vector assembler.
 """
 function assemble!(self::SysvecAssembler{T}, lva) where {T<:Number}
     for i in 1:length(lva.row)
