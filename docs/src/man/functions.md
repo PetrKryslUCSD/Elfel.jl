@@ -76,7 +76,7 @@ edofcompnt
 ndofsperel(fesp::FES)  where {FES<:FESpace}
 numberfreedofs!(fesp::FES, firstnum = 1)  where {FES<:FESpace}
 numberdatadofs!(fesp::FES, firstnum = 0)  where {FES<:FESpace}
-ndofsperel(fesp::FES)  where {FES<:FESpace}
+ndofs(fesp::FES)  where {FES<:FESpace}
 nunknowns(fesp::FES)  where {FES<:FESpace}
 highestfreedofnum(fesp::FES)  where {FES<:FESpace}
 highestdatadofnum(fesp::FES)  where {FES<:FESpace}
