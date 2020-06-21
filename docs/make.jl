@@ -1,7 +1,7 @@
 using Documenter, Elfel
 
 makedocs(
-	modules = [Elfel],
+	modules = [Elfel, Elfel.RefShapes, Elfel.FElements, Elfel.FESpaces, Elfel.FEIterators, Elfel.QPIterators],
 	doctest = false, clean = true,
 	format = Documenter.HTML(prettyurls = false),
 	authors = "Petr Krysl",
