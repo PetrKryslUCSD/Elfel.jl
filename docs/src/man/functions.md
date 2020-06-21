@@ -2,6 +2,10 @@
 
 ## Reference shapes
 
+```@meta
+CurrentModule = Elfel.RefShapes
+```
+
 ```@docs
 Elfel.RefShapes.manifdim
 Elfel.RefShapes.manifdimv
@@ -11,12 +15,16 @@ Elfel.RefShapes.quadrature
 
 ## Elements
 
+```@meta
+CurrentModule = Elfel.FElements
+```
+
 ```@docs
 Elfel.FElements.shapedesc
 Elfel.FElements.refshape
 Elfel.FElements.nfeatofdim
 Elfel.FElements.ndofperfeat
-Elfel.FElements.ndofsperel(fe::FE{RS, SD}) where {RS, SD}
+Elfel.FElements.ndofsperel
 Elfel.FElements.manifdim
 Elfel.FElements.Jacobian
 Elfel.FElements.jacjac
@@ -50,21 +58,25 @@ Elfel.FEFields.scattersysvec!
 
 ## Spaces
 
+```@meta
+CurrentModule = Elfel.FESpaces
+```
+
 
 ```@docs
-Elfel.FESpaces.doftype(fesp::FESpace{FET, T}) where {FET, T}
+Elfel.FESpaces.doftype
 Elfel.FESpaces.edofmdim
 Elfel.FESpaces.edofbfnum
 Elfel.FESpaces.edofcompnt
-Elfel.FESpaces.ndofsperel(fesp::FES)  where {FES<:FESpace}
-Elfel.FESpaces.numberfreedofs!(fesp::FES, firstnum = 1)  where {FES<:FESpace}
-Elfel.FESpaces.numberdatadofs!(fesp::FES, firstnum = 0)  where {FES<:FESpace}
-Elfel.FESpaces.ndofs(fesp::FES)  where {FES<:FESpace}
-Elfel.FESpaces.nunknowns(fesp::FES)  where {FES<:FESpace}
-Elfel.FESpaces.highestfreedofnum(fesp::FES)  where {FES<:FESpace}
-Elfel.FESpaces.highestdatadofnum(fesp::FES)  where {FES<:FESpace}
+Elfel.FESpaces.ndofsperel
+Elfel.FESpaces.numberfreedofs!
+Elfel.FESpaces.numberdatadofs!
+Elfel.FESpaces.ndofs
+Elfel.FESpaces.nunknowns
+Elfel.FESpaces.highestfreedofnum
+Elfel.FESpaces.highestdatadofnum
 Elfel.FESpaces.numberdofs!
-Elfel.FESpaces.setebc!(fesp::FESpace, mid, eid, comp, val::T) where {T}
+Elfel.FESpaces.setebc!
 Elfel.FESpaces.gathersysvec!(v, fesp::FESpace)
 Elfel.FESpaces.gathersysvec!(v, fesp::AbstractVector) 
 Elfel.FESpaces.scattersysvec!(fesp::FESpace, v)
@@ -81,13 +93,13 @@ Elfel.FEIterators.eldofs
 Elfel.FEIterators.elnodes
 Elfel.FEIterators.eldofentmdims
 Elfel.FEIterators.eldofcomps
-Elfel.FEIterators.jacjac(it::FEIterator, qpit::QPIterator)
+Elfel.FEIterators.jacjac
 ```
 
 ## Quadrature-point iterators
 
 ```@docs
-Elfel.QPIterators.Base.iterate
+Base.iterate
 Elfel.QPIterators.bfun
 Elfel.QPIterators.bfungradpar
 Elfel.QPIterators.bfungrad
@@ -105,10 +117,6 @@ Elfel.Assemblers.SysvecAssembler
 ```
 
 ## Local Assemblers
-
-```@meta
-CurrentModule = Elfel.LocalAssemblers
-```
 
 ```@docs
 Elfel.LocalAssemblers.LocalMatrixAssembler
