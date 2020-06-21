@@ -11,6 +11,13 @@ import ..FEFields: numberfreedofs!, numberdatadofs!, freedofnums, datadofnums
 import ..FEFields: highestfreedofnum, highestdatadofnum
 import ..FElements: ndofsperel
 
+"""
+    FESpace{FET, T}
+
+Type of a finite element space, parameterized with
+- `FET`: type of finite element, it is a *scalar* finite element, 
+- `T`: type of degree of freedom value (double, complex, ...).
+"""
 struct FESpace{FET, T}
     mesh::Mesh
     fe::FET
@@ -35,8 +42,30 @@ Provide the type of the values of the degrees of freedom.
 """
 doftype(fesp::FESpace{FET, T}) where {FET, T} = T
 
+"""
+    edofmdim(fesp::FESpace{FET, T}) where {FET, T}
+
+Access vector of manifold dimensions of entities associated with each degree
+of freedom.
+"""
 edofmdim(fesp::FESpace{FET, T}) where {FET, T} = fesp._edofmdim
+"""
+    edofbfnum(fesp::FESpace{FET, T}) where {FET, T}
+
+Access vector of numbers of basis functions associated with each degree
+of freedom.
+"""
 edofbfnum(fesp::FESpace{FET, T}) where {FET, T} = fesp._edofbfnum
+
+"""
+    edofcompnt(fesp::FESpace{FET, T}) where {FET, T}
+
+Access vector of component number associated with each degree
+of freedom.
+
+When the finite element space consists of multiple copies of the scalar finite
+element, the component is the serial number of the copy.
+"""
 edofcompnt(fesp::FESpace{FET, T}) where {FET, T} = fesp._edofcompnt
 
 function _makefields(::Type{T}, ::Type{IT}, mesh, fe, nfecopies) where {T, IT} 
@@ -71,6 +100,14 @@ function _number_edofs(fe, nfecopies)
     return emdim, bfnum, compnt
 end
 
+"""
+    ndofsperel(fesp::FES)  where {FES<:FESpace}
+
+Total number of degrees of freedom associated with each finite element.
+
+Essentially a product of the number of the degrees of freedom the scalar
+finite element and the number of copies of this element in the space.
+"""
 ndofsperel(fesp::FES)  where {FES<:FESpace} = ndofsperel(fesp.fe) * fesp.nfecopies
 
 """
@@ -185,6 +222,11 @@ end
     numberdofs!(fesp...)
 
 Number the degrees of freedom of a collection of FE spaces.
+
+The unknown (free) degrees of freedom in the FE space are numbered consecutively, and
+then the data degrees of freedom (the known values) are numbered. 
+
+No effort is made to optimize the numbering in any way. 
 """
 function numberdofs!(fesp...) 
     numberfreedofs!(fesp[1], 1)
