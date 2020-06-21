@@ -79,8 +79,9 @@ CurrentModule = Elfel.Assemblers
 
 ```@docs
 AbstractSysmatAssembler
-SysmatAssemblerSparse
-SysvecAssembler
+SysmatAssemblerSparse{T<:Number} <: AbstractSysmatAssembler
+AbstractSysvecAssembler
+SysvecAssembler{T<:Number} <: AbstractSysvecAssembler
 ```
 
 ## Local Assemblers
@@ -90,8 +91,8 @@ CurrentModule = Elfel.LocalAssemblers
 ```
 
 ```@docs
-LocalMatrixAssembler
-LocalVectorAssembler
+LocalMatrixAssembler{IT<:Integer, T<:Number} <: AbstractArray{T, 2}
+LocalVectorAssembler{IT<:Integer, T<:Number} <: AbstractArray{T, 1}
 ```
 
 ## Index
