@@ -9,21 +9,21 @@ Abstract type of a reference shape.
 abstract type AbstractRefShape{MANIFDIM} end
 
 """
-    RefShapePoint
+    RefShapePoint <: AbstractRefShape{0}
 
 Type of a reference shape for a zero-dimensional manifold (point).
 """
 struct RefShapePoint <: AbstractRefShape{0} end
 
 """
-    RefShapeInterval
+    RefShapeInterval <: AbstractRefShape{1}
 
 Type of a reference shape for a 1-dimensional manifold (curve).
 """
 struct RefShapeInterval <: AbstractRefShape{1} end
 
 """
-    RefShapeSquare
+    RefShapeSquare <: AbstractRefShape{2}
 
 Type of a logically rectangular reference shape for a 2-dimensional manifold 
 (surface).
@@ -31,14 +31,14 @@ Type of a logically rectangular reference shape for a 2-dimensional manifold
 struct RefShapeSquare <: AbstractRefShape{2} end
 
 """
-    RefShapeCube
+    RefShapeCube <: AbstractRefShape{3}
 
 Type of a reference shape for a 3-dimensional manifold (solid) bounded by six quadrilaterals.
 """
 struct RefShapeCube <: AbstractRefShape{3} end
 
 """
-    RefShapeTriangle
+    RefShapeTriangle <: AbstractRefShape{2}
 
 Type of a logically triangular reference shape for a 2-dimensional manifold 
 (surface).
@@ -46,7 +46,7 @@ Type of a logically triangular reference shape for a 2-dimensional manifold
 struct RefShapeTriangle <: AbstractRefShape{2} end
 
 """
-    RefShapeTetrahedron
+    RefShapeTetrahedron <: AbstractRefShape{3}
 
 Type of a reference shape for a 3-dimensional manifold (solid) bounded by 4 triangles.
 """
