@@ -68,9 +68,9 @@ FESpaces.highestfreedofnum
 FESpaces.highestdatadofnum
 FESpaces.numberdofs!
 FESpaces.setebc!
-FESpaces.gathersysvec!(v, fesp::FESpace)
+FESpaces.gathersysvec!(v, fesp)
 FESpaces.gathersysvec!(v, fesp::AbstractVector) 
-FESpaces.scattersysvec!(fesp::FESpace, v)
+FESpaces.scattersysvec!(fesp, v)
 FESpaces.scattersysvec!(fesp::AbstractVector, v) 
 FESpaces.makeattribute
 ```
