@@ -62,7 +62,7 @@ FESpaces.edofcompnt
 FESpaces.ndofsperel(fesp::FESpaces.FESpace)
 FESpaces.numberfreedofs!(fesp::FESpaces.FESpace, firstnum = 1)
 FESpaces.numberdatadofs!(fesp::FESpaces.FESpace, firstnum = 0)
-FESpaces.ndofs
+FESpaces.ndofs(fesp::FESpaces.FESpace)
 FESpaces.nunknowns
 FESpaces.highestfreedofnum(fesp::FESpaces.FESpace)
 FESpaces.highestdatadofnum(fesp::FESpaces.FESpace)
@@ -70,7 +70,7 @@ FESpaces.numberdofs!
 FESpaces.setebc!(fesp::FESpaces.FESpace, mid, eid, comp, val)
 FESpaces.gathersysvec!(v, fesp::FESpaces.FESpace)
 FESpaces.gathersysvec!(v, fesp::AbstractVector) 
-scattersysvec!(fesp::FESpaces.FESpace, v)
+FESpaces.scattersysvec!(fesp::FESpaces.FESpace, v)
 FESpaces.scattersysvec!(fesp::AbstractVector, v) 
 FESpaces.makeattribute
 ```
@@ -100,18 +100,18 @@ QPIterators.weight
 ## Assemblers
 
 ```@docs
-Assemblers.SysmatAssemblerSparse
+Assemblers.SysmatAssemblerSparse(zero::T=0.0) where {T<:Number}
 Assemblers.start!
 Assemblers.assemble!
 Assemblers.finish!
-Assemblers.SysvecAssembler
+Assemblers.SysvecAssembler(zero::T=0.0) where {T<:Number}
 ```
 
 ## Local Assemblers
 
 ```@docs
-LocalAssemblers.LocalMatrixAssembler
-LocalAssemblers.LocalVectorAssembler
+LocalAssemblers.LocalMatrixAssembler(nrow::IT, ncol::IT, z::T) where {IT, T}
+LocalAssemblers.LocalVectorAssembler(nrow::IT, z::T) where {IT, T}
 Base.size
 Base.getindex
 Base.setindex!
