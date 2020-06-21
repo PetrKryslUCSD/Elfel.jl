@@ -173,7 +173,7 @@ end
 Evaluate the basis functions for all degrees of freedom of the scalar finite
 element at the parametric coordinates. Return a vector of the values.
 """
-function bfun(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}}
+function bfun(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}} where {RS, SD}
 end
 
 """
@@ -183,7 +183,7 @@ Evaluate the gradients of the basis functions for all degrees of freedom of
 the scalar finite element with respect to the parametric coordinates, at the
 parametric coordinates given. Return a vector of the gradients.
 """
-function bfungradpar(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}}
+function bfungradpar(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}} where {RS, SD}
 end
 
 # L2 ==================================================================
