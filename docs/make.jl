@@ -1,7 +1,7 @@
 using Documenter, Elfel
 
 makedocs(
-	modules = [Elfel, Elfel.RefShapes, Elfel.FElements, Elfel.FESpaces, Elfel.FEIterators, Elfel.QPIterators],
+	modules = [Elfel],
 	doctest = false, clean = true,
 	format = Documenter.HTML(prettyurls = false),
 	authors = "Petr Krysl",
@@ -9,9 +9,7 @@ makedocs(
 	pages = Any[
 			"Home" => "index.md",
 			"How to guide" => "guide/guide.md",
-			"Reference" => Any[
-				"man/types.md",
-				"man/functions.md"],
+			"Reference" => "man/reference.md",
 			"Concepts" => "concepts/concepts.md"	
 		],
 	)

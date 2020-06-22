@@ -13,14 +13,13 @@ Pages = [
 Depth = 1
 ```
 
-## Manual
+## Reference manual
 
-The description of the types and of the functions.
+The description of the types and functions.
 
 ```@contents
 Pages = [
-    "man/types.md",
-    "man/functions.md",
+    "man/reference.md",
 ]
 Depth = 1
 ```
