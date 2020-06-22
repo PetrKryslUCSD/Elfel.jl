@@ -89,12 +89,9 @@ FEIterators.jacjac(it::FEIterators.FEIterator, qpit::QPIterators.QPIterator)
 
 ## Quadrature-point iterators
 
-```@docs
-Base.iterate
-QPIterators.bfun(it::QPIterators.QPIterator)
-QPIterators.bfungradpar(it::QPIterators.QPIterator)
-QPIterators.bfungrad
-QPIterators.weight
+```@autodocs
+Modules = [Elfel]
+Pages   = ["QPIterators.jl"]
 ```
 
 ## Assemblers
