@@ -90,7 +90,7 @@ FEIterators.jacjac(it::FEIterators.FEIterator, qpit::QPIterators.QPIterator)
 ## Quadrature-point iterators
 
 ```@autodocs
-Modules = [Elfel]
+Modules = [Elfel.QPIterators]
 Pages   = ["QPIterators.jl"]
 ```
 
