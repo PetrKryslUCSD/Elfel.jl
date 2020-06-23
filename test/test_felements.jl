@@ -51,3 +51,34 @@ end
 end
 using .mfes1
 mfes1.test()
+
+module mfes2
+using Elfel
+using Elfel.RefShapes: manifdim, RefShapeTetrahedron
+using Elfel.FElements: FE, refshape, FEH1_T4
+using Elfel.FElements: bfun, bfungradpar, nfeatofdim, ndofperfeat
+using Test
+function test()
+    fe = FEH1_T4()
+    @test ndofperfeat(fe, 0) == 1
+    @test ndofperfeat(fe, 1) == 0
+    @test ndofperfeat(fe, 2) == 0
+    @test ndofperfeat(fe, 3) == 0
+
+    @test refshape(fe) == RefShapeTetrahedron
+    @test manifdim(refshape(fe)) == 3
+    @test nfeatofdim(fe, 0) == 4
+    @test nfeatofdim(fe, 1) == 6
+    @test nfeatofdim(fe, 2) == 4
+    @test nfeatofdim(fe, 3) == 1
+    @test isapprox(bfun(fe, [1/4, 1/4, 1/4]), [1/4, 1/4, 1/4, 1/4])
+    g = bfungradpar(fe, [1/4, 1/4, 1/4])
+    @test isapprox(g[1], [-1. -1. -1.])
+    @test isapprox(g[2], [+1.  0. 0.])
+    @test isapprox(g[3], [0. +1.  0.])
+    @test isapprox(g[4], [0. 0. +1. ])
+true
+end
+end
+using .mfes2
+mfes2.test()

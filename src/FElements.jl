@@ -345,4 +345,35 @@ function bfungradpar(self::FEH1_T3_BUBBLE_TYPE,  param_coords)
     return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
+# T4 ==================================================================
+# Linear tetrahedral element. Only nodal basis functions.
+struct FEH1_T4_Type{RS, SD} <: FE{RS, SD}
+    data::FEData{SD}
+end
+FEH1_T4_TYPE = FEH1_T4_Type{RefShapeTetrahedron, typeof(MeshCore.T4)}
+
+"""
+    FEH1_T4()
+
+Construct an H1 finite element of the type T4.
+
+T4 is 4-node linear tetrahedral element.
+"""
+FEH1_T4() = FEH1_T4_TYPE(FEData(MeshCore.T4, SVector{4}([1, 0, 0, 0])))
+
+function bfun(self::FEH1_T4_TYPE,  param_coords) 
+    return SVector{4}([(1 - param_coords[1] - param_coords[2] - param_coords[3]);
+            param_coords[1];
+            param_coords[2];
+            param_coords[3]])
+end
+
+function bfungradpar(self::FEH1_T4_TYPE,  param_coords)
+    g = [-1.0 -1.0 -1.0;
+         +1.0  0.0  0.0;
+          0.0 +1.0  0.0;
+          0.0  0.0 +1.0]
+    return [SVector{3}(g[idx, :])' for idx in 1:size(g, 1)]
+end
+
 end # module
