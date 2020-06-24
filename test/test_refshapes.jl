@@ -87,3 +87,35 @@ end
 end
 using .mrs5
 mrs5.test()
+
+
+module mrs6
+using Elfel.RefShapes: RefShapeTetrahedron, manifdim
+using Elfel.RefShapes: quadrature, npts, param_coords, weights
+using Test
+function test()
+    @test manifdim(RefShapeTetrahedron) == 3
+    qr = quadrature(RefShapeTetrahedron)
+    @test npts(qr) == 1
+    @test isapprox(param_coords(qr), [0.25 0.25 0.25])                         
+    @test isapprox(weights(qr), [0.16666666666666666])    
+    qr = quadrature(RefShapeTetrahedron, (npts = 4,))
+    @test npts(qr) == 4
+    @test isapprox(param_coords(qr),  [0.1381966 0.1381966 0.1381966; 
+        0.5854102 0.1381966 0.1381966; 
+        0.1381966  0.5854102 0.1381966; 
+        0.1381966 0.1381966 0.5854102] )                         
+    @test isapprox(weights(qr), [0.041666666666666664, 0.041666666666666664, 0.041666666666666664, 0.041666666666666664])   
+    qr = quadrature(RefShapeTetrahedron, (npts = 5,))
+    @test npts(qr) == 5
+    @test isapprox(param_coords(qr), [0.25 0.25 0.25; 
+        0.5 0.16666666666666666 0.16666666666666666; 
+        0.16666666666666666 0.5 0.16666666666666666; 
+        0.16666666666666666 0.16666666666666666 0.5; 
+        0.16666666666666666 0.16666666666666666 0.16666666666666666])                         
+    @test isapprox(weights(qr), [-0.13333333333333333, 0.075, 0.075, 0.075, 0.075] )  
+end
+end
+using .mrs6
+mrs6.test()
+

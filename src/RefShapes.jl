@@ -308,6 +308,35 @@ function _triangle(npts=1)
     return npts, param_coords, weights
 end
 
+function _tetrahedron(npts=1)
+    if npts == 1 # integrates exactly linear polynomials
+        param_coords = reshape([0.25,0.25,0.25],1,3);
+        weights = reshape([1.0]/6.0,1,1);
+    elseif npts == 4 # integrates exactly quadratic polynomials
+        param_coords = [[0.13819660 0.13819660 0.13819660];
+        [0.58541020 0.13819660 0.13819660];
+        [0.13819660 0.58541020 0.13819660];
+        [0.13819660 0.13819660 0.58541020]];;
+        weights = [ 0.041666666666666666667   0.041666666666666666667   0.041666666666666666667   0.041666666666666666667];
+    elseif npts == 5 #  Zienkiewicz #3.
+        a =   1.0 / 6.0;
+        b =   0.25;
+        c =   0.5;
+        d = - 0.8;
+        e =   0.45;
+        param_coords = [[b b b];
+        [c a a];
+        [a c a];
+        [a a c];
+        [a a a]];
+        weights = [d  e  e  e  e]/6;
+    else
+        #nothing doing: this input is wrong
+        error( "Unknown number of integration points $(npts)" )
+    end
+    return npts, param_coords, weights
+end
+
 """
     quadrature(::Type{RefShapeInterval}, quadraturesettings = (kind = :default,))
 
@@ -410,6 +439,38 @@ function quadrature(::Type{RefShapeSquare}, quadraturesettings = (kind = :defaul
         end
         npts = r - 1 # back off one to reach the total number of points
         return IntegRule(npts, param_coords, weights)
+    else
+        error("Integration rule $(kind) not available")
+    end
+end
+
+"""
+    quadrature(::Type{RefShapeTetrahedron}, quadraturesettings = (kind = :default,))
+
+Create a quadrature rule for the reference shape of a tetrahedron.
+
+The default is a one-point tetrahedron rule; other rules may be chosen based on
+the number of points set with the keyword `npts`.
+"""
+function quadrature(::Type{RefShapeTetrahedron}, quadraturesettings = (kind = :default,))
+    kind = :default
+    for apair in pairs(quadraturesettings)
+        sy, val = apair
+        if sy == :kind
+            kind = val
+        end
+    end
+    if kind == :default
+        # Extract arguments
+        npts = 1; 
+        for apair in pairs(quadraturesettings)
+            sy, val = apair
+            if sy == :npts
+                npts = val
+            end
+        end
+        npts, param_coords, weights = _tetrahedron(npts)
+        return IntegRule(npts, reshape(param_coords, size(param_coords, 1), 3), vec(weights))
     else
         error("Integration rule $(kind) not available")
     end
