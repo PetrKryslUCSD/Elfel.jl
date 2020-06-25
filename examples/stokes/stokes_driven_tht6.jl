@@ -149,10 +149,10 @@ function run()
     display(p)
     # Solve the system
     U = fill(0.0, tndof)
-    gathersysvec!(U, (uxfesp, uyfesp, pfesp))
+    gathersysvec!(U, [uxfesp, uyfesp, pfesp])
     F = fill(0.0, tndof)
     solve!(U, K, F, tnunk)
-    scattersysvec!((uxfesp, uyfesp, pfesp), U)
+    scattersysvec!([uxfesp, uyfesp, pfesp], U)
     # Postprocessing
     makeattribute(pfesp, "p", 1)
     makeattribute(uxfesp, "ux", 1)
