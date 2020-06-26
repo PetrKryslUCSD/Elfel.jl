@@ -376,4 +376,32 @@ function bfungradpar(self::FEH1_T4_TYPE,  param_coords)
     return [SVector{3}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
+# Q4 ==================================================================
+# Quadrilateral element. Only interior basis functions.
+struct FEL2_Q4_Type{RS, SD} <: FE{RS, SD}
+    data::FEData{SD}
+end
+FEL2_Q4_TYPE = FEL2_Q4_Type{RefShapeSquare, typeof(MeshCore.Q4)}
+
+"""
+    FEL2_Q4()
+
+Construct an L2 finite element of the type Q4.
+
+Q4 is 4-node linear quadrilateral element.
+
+To do: Enable multiple basis functions in the interior of the element; perhaps
+linear.
+"""
+FEL2_Q4() = FEL2_Q4_TYPE(FEData(MeshCore.Q4, SVector{4}([0, 0, 1, 0])))
+
+function bfun(self::FEL2_Q4_TYPE,  param_coords) 
+    return SVector{1}(1.0)
+end
+
+function bfungradpar(self::FEL2_Q4_TYPE,  param_coords) 
+    g =   [0.0 0.0];
+    return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
+end
+
 end # module

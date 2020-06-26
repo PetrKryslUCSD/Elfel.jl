@@ -82,3 +82,31 @@ end
 end
 using .mfes2
 mfes2.test()
+
+module mfes3
+using Elfel
+using Elfel.RefShapes: manifdim, RefShapeSquare
+using Elfel.FElements: FE, refshape, FEL2_Q4
+using Elfel.FElements: bfun, bfungradpar, nfeatofdim, ndofperfeat
+using Test
+function test()
+    fe = FEL2_Q4()
+    @test ndofperfeat(fe, 0) == 0
+    @test ndofperfeat(fe, 1) == 0
+    @test ndofperfeat(fe, 2) == 1
+    @test ndofperfeat(fe, 3) == 0
+
+    @test refshape(fe) == RefShapeSquare
+    @test manifdim(refshape(fe)) == 2
+    @test nfeatofdim(fe, 0) == 4
+    @test nfeatofdim(fe, 1) == 4
+    @test nfeatofdim(fe, 2) == 1
+    @test nfeatofdim(fe, 3) == 0
+    @test isapprox(bfun(fe, [1/4, 1/4]), [1.0])
+    g = bfungradpar(fe, [1/4, 1/4])
+    @test isapprox(g[1], [0. 0. ])
+true
+end
+end
+using .mfes3
+mfes3.test()
