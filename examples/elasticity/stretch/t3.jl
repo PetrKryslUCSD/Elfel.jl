@@ -1,4 +1,4 @@
-module elast_stretch_t3
+module t3
 
 using LinearAlgebra
 using StaticArrays
@@ -100,9 +100,9 @@ function run()
     solve!(U, K, F, nunknowns(fesp))
     scattersysvec!(fesp, U)
     makeattribute(fesp, "U", 1:2)
-    vtkwrite("elast_stretch_t3-U", baseincrel(mesh), [(name = "U", allxyz = true)])
+    vtkwrite("t3-U", baseincrel(mesh), [(name = "U", allxyz = true)])
 end
 
 end
 
-elast_stretch_t3.run()
+t3.run()

@@ -1,10 +1,10 @@
 """
-    heat_poisson_t3
+    t3
 
 Compute the solution of the Poisson equation of heat conduction with a nonzero
 heat source. Linear triangle elements are used.
 """
-module heat_poisson_t3
+module t3
 
 using LinearAlgebra
 using MeshCore: retrieve, nrelations, nentities, attribute, @_check
@@ -109,9 +109,9 @@ function run()
     scattersysvec!(fesp, T)
     makeattribute(fesp, "T", 1)
     checkcorrectness(fesp)
-    vtkwrite("heat_poisson_t3-T", baseincrel(mesh), [(name = "T",)])
+    vtkwrite("t3-T", baseincrel(mesh), [(name = "T",)])
 end
 
 end
 
-heat_poisson_t3.run()
+t3.run()

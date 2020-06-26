@@ -1,8 +1,8 @@
-module elast_stretch_t6
+module t6
 
 using LinearAlgebra
-using BenchmarkTools
-using InteractiveUtils
+# using BenchmarkTools
+# using InteractiveUtils
 using StaticArrays
 # using Profile
 using MeshCore: retrieve, nrelations, nentities
@@ -103,9 +103,9 @@ function run()
     solve!(U, K, F, nunknowns(fesp))
     scattersysvec!(fesp, U)
     makeattribute(fesp, "U", 1:2)
-    vtkwrite("elast_stretch_t6-U", baseincrel(mesh), [(name = "U", allxyz = true)])
+    vtkwrite("t6-U", baseincrel(mesh), [(name = "U", allxyz = true)])
 end
 
 end
 
-elast_stretch_t6.run()
+t6.run()

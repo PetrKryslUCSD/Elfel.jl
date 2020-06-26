@@ -1,11 +1,11 @@
 """
-    heat_poisson_t4
+    t4
 
 Compute the solution of the Poisson equation of heat conduction with a nonzero
 heat source. Three-dimensional version of the problem in a cube. Linear
 tetrahedral elements are used.
 """
-module heat_poisson_t4
+module t4
 
 using LinearAlgebra
 using MeshCore: retrieve, nrelations, nentities, attribute, @_check
@@ -110,9 +110,9 @@ function run()
     scattersysvec!(fesp, T)
     makeattribute(fesp, "T", 1)
     checkcorrectness(fesp)
-    vtkwrite("heat_poisson_t4-T", baseincrel(mesh), [(name = "T",)])
+    vtkwrite("t4-T", baseincrel(mesh), [(name = "T",)])
 end
 
 end
 
-heat_poisson_t4.run()
+t4.run()

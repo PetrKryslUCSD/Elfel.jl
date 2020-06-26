@@ -1,10 +1,10 @@
 """
-    heat_poisson_q4
+    q4
 
 Compute the solution of the Poisson equation of heat conduction with a nonzero
 heat source. Quadrilateral four-node elements are used.
 """
-module heat_poisson_q4
+module q4
 
 using LinearAlgebra
 using MeshCore: retrieve, nrelations, nentities, attribute, @_check
@@ -109,10 +109,10 @@ function run()
     scattersysvec!(fesp, T)
     makeattribute(fesp, "T", 1)
     checkcorrectness(fesp)
-    vtkwrite("heat_poisson_q4-T", baseincrel(mesh), [(name = "T",)])
+    vtkwrite("q4-T", baseincrel(mesh), [(name = "T",)])
 end
 
 end
 
-heat_poisson_q4.run()
-# heat_poisson_q4.run()
+q4.run()
+# q4.run()
