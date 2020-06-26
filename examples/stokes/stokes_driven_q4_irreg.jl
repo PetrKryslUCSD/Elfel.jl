@@ -1,9 +1,11 @@
 """
     stokes_driven_q4_irreg
 
-The famous driven-cavity benchmark is solved here with linear triangles with
-cubic bubbles for the velocity space and continuous linear triangle pressure
-space.
+The famous driven-cavity benchmark is solved here with quadrilaterals with
+continuous bilinear representation for the velocity space and discontinuous
+piecewise constant pressure space.
+
+A strongly distorted mesh is used.
 
 The formulation is the one derived in Reddy, Introduction to the finite element
 method, 1993. Page 486 ff.
