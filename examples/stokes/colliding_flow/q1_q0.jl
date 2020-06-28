@@ -1,23 +1,25 @@
 """
-    p1b_p1
+    q1_q0
 
-The manufactured-solution colliding flow example from Elman et al 2014.
-Formulation on linear triangles with a cubic bubble for the velocity.
+The manufactured-solution colliding flow example from Elman et al 2014. The
+linear quadrilaterals for the velocity and discontinuous
+pressure.
 
 The formulation is the one derived in Reddy, Introduction to the finite element
 method, 1993. Page 486 ff.
 """
-module p1b_p1
+module q1_q0
 
 using LinearAlgebra
 using StaticArrays
+using MeshCore
 using MeshCore: retrieve, nrelations, nentities, identty, attribute
-using MeshSteward: T3block
-using MeshSteward: Mesh, insert!, baseincrel, boundary
+using MeshSteward: Q4block
+using MeshSteward: Mesh, insert!, baseincrel, boundary, increl
 using MeshSteward: vselect, geometry, summary, transform
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: manifdim, manifdimv
-using Elfel.FElements: FEH1_T3_BUBBLE, FEH1_T3, refshape, Jacobian
+using Elfel.FElements: FEL2_Q4, FEH1_Q4, refshape, Jacobian
 using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
 using Elfel.FESpaces: numberfreedofs!, numberdatadofs!, numberdofs!
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!, edofcompnt
@@ -31,7 +33,7 @@ using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
 using UnicodePlots
 
 mu = 1.0 # dynamic viscosity
-A = 1.0 # half of the length of the side of the square
+A = 1.0 # length of the side of the square
 trueux = (x, y) -> 20 * x * y ^ 3
 trueuy = (x, y) -> 5 * x ^ 4 - 5 * y ^ 4
 truep = (x, y) -> 60 * x ^ 2 * y - 20 * y ^ 3
@@ -39,7 +41,7 @@ truep = (x, y) -> 60 * x ^ 2 * y - 20 * y ^ 3
 function genmesh(N)
     # This mesh will be both for the velocities and for the pressure
     mesh = Mesh()
-    insert!(mesh, T3block(2 * A, 2 * A, N, N), "velocity+pressure")
+    insert!(mesh, Q4block(2 * A, 2 * A, N, N), "velocity+pressure")
     ir = baseincrel(mesh)
     transform(ir, x -> x .- A)
     eidir = identty(ir)
@@ -64,7 +66,7 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
             init!(kuyp, eldofs(uyel), eldofs(pel))
             for qp in zip(qpits...)
                 uxqp, uyqp, pqp = qp
-                Jac, J = jacjac(pel, pqp)
+                Jac, J = jacjac(uxel, uxqp) # L2 pressure: must integrate elsewhere
                 JxW = J * weight(pqp)
                 gradNp = bfungrad(pqp, Jac)
                 gradNux = bfungrad(uxqp, Jac)
@@ -99,32 +101,38 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
     end
 
     elits = (FEIterator(uxfesp), FEIterator(uyfesp), FEIterator(pfesp))
-    qargs = (kind = :default, npts = 3,)
+    qargs = (kind = :default, order = 2,)
     qpits = (QPIterator(uxfesp, qargs), QPIterator(uyfesp, qargs), QPIterator(pfesp, qargs))
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, tndof, tndof)
-    integrateK!(ass, elits, qpits, mu)
+    @time integrateK!(ass, elits, qpits, mu)
     return finish!(ass)
 end
 
 function solve!(U, K, F, nu)
-    KT = K * U
-    U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
+    @time KT = K * U
+    @time U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
+end
+
+centroid(p, c) = begin
+    (p[c[1]] + p[c[2]] + p[c[3]] + p[c[4]]) / 4
 end
 
 function evaluate_error(uxfesp, uyfesp, pfesp)
     geom = geometry(pfesp.mesh)
-    ir = baseincrel(pfesp.mesh)
-    p = attribute(ir.right, "p")
-    pt = [truep(geom[i]...) for i in 1:length(geom)] 
+    bir = baseincrel(pfesp.mesh)
+    points = MeshCore.attribute(bir.right, "geom")
+    centroids = [centroid(points, retrieve(bir, i)) for i in 1:nrelations(bir)] 
+    p = attribute(increl(pfesp.mesh, (2, 2)).right, "p")
+    pt = [truep(centroids[i]...) for i in 1:length(centroids)] 
     return norm(p - pt) / norm(pt)
 end
 
 function run(N)
     mesh = genmesh(N)
     # Velocity spaces
-    uxfesp = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 1)
-    uyfesp = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 1)
+    uxfesp = FESpace(Float64, mesh, FEH1_Q4(), 1)
+    uyfesp = FESpace(Float64, mesh, FEH1_Q4(), 1)
     locs = geometry(mesh)
     inflate = A / N / 100
     # The entire boundary
@@ -137,9 +145,9 @@ function run(N)
         end
     end
     # Pressure space
-    pfesp = FESpace(Float64, mesh, FEH1_T3(), 1)
-    atcenter = vselect(geometry(pfesp.mesh); nearestto = [0.0, 0.0])
-    setebc!(pfesp, 0, atcenter[1], 1, 0.0)
+    pfesp = FESpace(Float64, mesh, FEL2_Q4(), 1)
+    atcenter = vselect(geometry(mesh); nearestto = [0.0, 0.0])
+    setebc!(pfesp, 2, atcenter[1], 1, 0.0)
     # Number the degrees of freedom
     numberdofs!(uxfesp, uyfesp, pfesp)
     @show tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
@@ -159,8 +167,8 @@ function run(N)
     makeattribute(uxfesp, "ux", 1)
     makeattribute(uyfesp, "uy", 1)
     @show evaluate_error(uxfesp, uyfesp, pfesp)
-    vtkwrite("p1b_p1-p", baseincrel(mesh), [(name = "p",), ])
-    vtkwrite("p1b_p1-v", baseincrel(mesh), [(name = "ux",), (name = "uy",)])
+    vtkwrite("q1_q0-p", baseincrel(mesh), [(name = "p",), ])
+    vtkwrite("q1_q0-v", baseincrel(mesh), [(name = "ux",), (name = "uy",)])
     true
 end
 
@@ -170,7 +178,7 @@ end
 let
     N = 4
     for loop in 1:5
-        p1b_p1.run(N)
+        q1_q0.run(N)
         N = N * 2
     end
 end
