@@ -1,9 +1,9 @@
 """
     th_p2_p1
 
-The famous driven-cavity benchmark is solved here with linear triangles with
-cubic bubbles for the velocity space and continuous linear triangle pressure
-space.
+The manufactured-solution colliding flow example from Elman et al 2014. The
+Taylor-Hood formulation with quadratic triangles for the velocity and continuous
+pressure on linear triangles.
 
 The formulation is the one derived in Reddy, Introduction to the finite element
 method, 1993. Page 486 ff.
@@ -33,7 +33,7 @@ using UnicodePlots
 
 mu = 0.25 # dynamic viscosity
 A = 1.0 # half of the length of the side of the square
-N = 2*2*2*2*10;# number of subdivisions along the sides of the square domain
+N = 2*10;# number of subdivisions along the sides of the square domain
 trueux = (x, y) -> 20 * x * y ^ 3
 trueuy = (x, y) -> 5 * x ^ 4 - 5 * y ^ 4
 truep = (x, y) -> 60 * x ^ 2 * y - 20 * y ^ 3
@@ -144,7 +144,8 @@ function run()
     end
     # Pressure space
     pfesp = FESpace(Float64, pmesh, FEH1_T3(), 1)
-    setebc!(pfesp, 0, 1, 1, 0.0)
+    atcenter = vselect(geometry(pmesh); nearestto = [0.0, 0.0])
+    setebc!(pfesp, 0, atcenter[1], 1, 0.0)
     # Number the degrees of freedom
     numberdofs!(uxfesp, uyfesp, pfesp)
     @show tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)

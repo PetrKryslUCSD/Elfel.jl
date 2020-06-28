@@ -1,9 +1,8 @@
 """
     p1b_p1
 
-The famous driven-cavity benchmark is solved here with linear triangles with
-cubic bubbles for the velocity space and continuous linear triangle pressure
-space.
+The manufactured-solution colliding flow example from Elman et al 2014.
+Formulation on linear triangles with a cubic bubble for the velocity.
 
 The formulation is the one derived in Reddy, Introduction to the finite element
 method, 1993. Page 486 ff.
