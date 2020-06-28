@@ -66,7 +66,7 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
             init!(kuyp, eldofs(uyel), eldofs(pel))
             for qp in zip(qpits...)
                 uxqp, uyqp, pqp = qp
-                Jac, J = jacjac(uxel, uxqp) # L2 pressure: must integrate elsewhere
+                Jac, J = jacjac(uxel, uxqp) # L2 pressure: must integrate over the velocity mesh
                 JxW = J * weight(pqp)
                 gradNp = bfungrad(pqp, Jac)
                 gradNux = bfungrad(uxqp, Jac)
