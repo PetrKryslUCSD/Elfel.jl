@@ -12,7 +12,7 @@ module th_p2_p1
 
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities, identty, attribute
+using MeshCore: retrieve, nrelations, nentities, identty, attribute, VecAttrib
 using MeshSteward: T6block, T6toT3
 using MeshSteward: Mesh, insert!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary, transform
@@ -31,14 +31,13 @@ using Elfel.Assemblers: SysvecAssembler
 using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
 using UnicodePlots
 
-mu = 0.25 # dynamic viscosity
+mu = 1.0 # dynamic viscosity
 A = 1.0 # half of the length of the side of the square
-N = 2*10;# number of subdivisions along the sides of the square domain
 trueux = (x, y) -> 20 * x * y ^ 3
 trueuy = (x, y) -> 5 * x ^ 4 - 5 * y ^ 4
 truep = (x, y) -> 60 * x ^ 2 * y - 20 * y ^ 3
 
-function genmesh()
+function genmesh(N)
     # Taylor-Hood pair of meshes is needed
     # This mesh will be for the velocities
     vmesh = Mesh()
@@ -109,13 +108,13 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
     qpits = (QPIterator(uxfesp, qargs), QPIterator(uyfesp, qargs), QPIterator(pfesp, qargs))
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, tndof, tndof)
-    @time integrateK!(ass, elits, qpits, mu)
+    integrateK!(ass, elits, qpits, mu)
     return finish!(ass)
 end
 
 function solve!(U, K, F, nu)
-    @time KT = K * U
-    @time U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
+    KT = K * U
+    U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
 function evaluate_error(uxfesp, uyfesp, pfesp)
@@ -123,11 +122,11 @@ function evaluate_error(uxfesp, uyfesp, pfesp)
     ir = baseincrel(pfesp.mesh)
     p = attribute(ir.right, "p")
     pt = [truep(geom[i]...) for i in 1:length(geom)] 
-    return norm(p - pt) / norm(p) / norm(pt)
+    return norm(p - pt) / norm(pt)
 end
 
-function run()
-    vmesh, pmesh = genmesh()
+function run(N)
+    vmesh, pmesh = genmesh(N)
     # Velocity spaces
     uxfesp = FESpace(Float64, vmesh, FEH1_T6(), 1)
     uyfesp = FESpace(Float64, vmesh, FEH1_T6(), 1)
@@ -152,8 +151,8 @@ function run()
     @show tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix
     K = assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
-    p = spy(K, canvas = DotCanvas)
-    display(p)
+    # p = spy(K, canvas = DotCanvas)
+    # display(p)
     # Solve the system
     U = fill(0.0, tndof)
     gathersysvec!(U, [uxfesp, uyfesp, pfesp])
@@ -167,9 +166,21 @@ function run()
     @show evaluate_error(uxfesp, uyfesp, pfesp)
     vtkwrite("th_p2_p1-p", baseincrel(pmesh), [(name = "p",), ])
     vtkwrite("th_p2_p1-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
+    geom = geometry(pfesp.mesh)
+    ir = baseincrel(pfesp.mesh)
+    pt = VecAttrib([truep(geom[i]...) for i in 1:length(geom)])
+    ir.right.attributes["pt"] = pt
+    vtkwrite("th_p2_p1-pt", baseincrel(pmesh), [(name = "pt",), ])
     true
 end
 
 end
 
-th_p2_p1.run()
+let
+    N = 4
+    for loop in 1:5
+        th_p2_p1.run(N)
+        N = N * 2
+    end
+end
+
