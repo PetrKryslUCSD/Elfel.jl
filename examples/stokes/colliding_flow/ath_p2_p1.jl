@@ -117,26 +117,6 @@ function solve!(U, K, F, nu)
     U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
-function evaluate_pressure_error(uxfesp, uyfesp, pfesp)
-    geom = geometry(pfesp.mesh)
-    ir = baseincrel(pfesp.mesh)
-    p = attribute(ir.right, "p")
-    pt = [truep(geom[i]...) for i in 1:length(geom)] 
-    return norm(p - pt) / norm(pt)
-end
-
-function evaluate_velocity_error(uxfesp, uyfesp, pfesp)
-    geom = geometry(uxfesp.mesh)
-    ir = baseincrel(uxfesp.mesh)
-    ux = attribute(ir.right, "ux")
-    uy = attribute(ir.right, "uy")
-    uxa = [ux[i][1] for i in 1:length(ux)]
-    uya = [uy[i][1] for i in 1:length(uy)]
-    uxt = [trueux(geom[i]...) for i in 1:length(geom)] 
-    uyt = [trueuy(geom[i]...) for i in 1:length(geom)] 
-    return sqrt(sum(vec(uxt .- uxa).^2 + vec(uyt .- uya).^2)) / sqrt(sum((uxt).^2 + (uyt).^2))
-end
-
 function evaluate_pressure_error(pfesp)
     function integrate!(elit, qpit, truep)
         pnedof = ndofsperel(elit)
@@ -162,6 +142,39 @@ function evaluate_pressure_error(pfesp)
     qargs = (kind = :default, npts = 3,)
     qpit = QPIterator(pfesp, qargs)
     return integrate!(elit, qpit, truep)
+end
+
+function evaluate_velocity_error(uxfesp, uyfesp)
+    function integrate!(elits, qpits, trueux, trueuy)
+        uxnedof, uynedof = ndofsperel.(elits)
+        E = 0.0
+        for el in zip(elits...)
+            uxel, uyel = el
+            uxdofvals = eldofvals(uxel)
+            uydofvals = eldofvals(uyel)
+            for qp in zip(qpits...)
+                uxqp, uyqp = qp
+                Jac, J = jacjac(uxel, uxqp)
+                JxW = J * weight(uxqp)
+                Np = bfun(uxqp)
+                uxt = trueux(location(uxel, uxqp)...)
+                uyt = trueuy(location(uyel, uyqp)...)
+                uxa = 0.0
+                uya = 0.0
+                for j in 1:uxnedof
+                    uxa += (uxdofvals[j] * Np[j])
+                    uya += (uydofvals[j] * Np[j])
+                end
+                E += (JxW) * ((uxa - uxt)^2 + (uya - uyt)^2)
+            end
+        end
+        return sqrt(E)
+    end
+
+    elits = (FEIterator(uxfesp), FEIterator(uyfesp),)
+    qargs = (kind = :default, npts = 3,)
+    qpits = (QPIterator(uxfesp, qargs), QPIterator(uyfesp, qargs),)
+    return integrate!(elits, qpits, trueux, trueuy)
 end
 
 function run(N)
@@ -203,8 +216,7 @@ function run(N)
     makeattribute(uxfesp, "ux", 1)
     makeattribute(uyfesp, "uy", 1)
     @show evaluate_pressure_error(pfesp)
-    @show evaluate_pressure_error(uxfesp, uyfesp, pfesp)
-    @show evaluate_velocity_error(uxfesp, uyfesp, pfesp)
+    @show evaluate_velocity_error(uxfesp, uyfesp)
     vtkwrite("th_p2_p1-p", baseincrel(pmesh), [(name = "p",), ])
     vtkwrite("th_p2_p1-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
     geom = geometry(pfesp.mesh)
