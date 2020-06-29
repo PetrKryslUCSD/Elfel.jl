@@ -112,12 +112,24 @@ function solve!(U, K, F, nu)
     U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
-function evaluate_error(uxfesp, uyfesp, pfesp)
+function evaluate_pressure_error(uxfesp, uyfesp, pfesp)
     geom = geometry(pfesp.mesh)
     ir = baseincrel(pfesp.mesh)
     p = attribute(ir.right, "p")
     pt = [truep(geom[i]...) for i in 1:length(geom)] 
     return norm(p - pt) / norm(pt)
+end
+
+function evaluate_velocity_error(uxfesp, uyfesp, pfesp)
+    geom = geometry(uxfesp.mesh)
+    ir = baseincrel(uxfesp.mesh)
+    ux = attribute(ir.right, "ux")
+    uy = attribute(ir.right, "uy")
+    uxa = [ux[i][1] for i in 1:length(ux)]
+    uya = [uy[i][1] for i in 1:length(uy)]
+    uxt = [trueux(geom[i]...) for i in 1:length(geom)] 
+    uyt = [trueuy(geom[i]...) for i in 1:length(geom)] 
+    return sqrt(sum(vec(uxt .- uxa).^2 + vec(uyt .- uya).^2)) / sqrt(sum((uxt).^2 + (uyt).^2))
 end
 
 function run(N)
@@ -158,7 +170,8 @@ function run(N)
     makeattribute(pfesp, "p", 1)
     makeattribute(uxfesp, "ux", 1)
     makeattribute(uyfesp, "uy", 1)
-    @show evaluate_error(uxfesp, uyfesp, pfesp)
+    @show evaluate_pressure_error(uxfesp, uyfesp, pfesp)
+    @show evaluate_velocity_error(uxfesp, uyfesp, pfesp)
     vtkwrite("p1b_p1-p", baseincrel(mesh), [(name = "p",), ])
     vtkwrite("p1b_p1-v", baseincrel(mesh), [(name = "ux",), (name = "uy",)])
     true
