@@ -136,19 +136,5 @@ Retrieve weight of the current quadrature point.
 """
 weight(it::QPIterator) = it._quadr.weights[it._pt]
 
-"""
-    location(qpit::QPIterator)
-
-Calculate the location of the quadrature point.
-"""
-function location(qpit::QPIterator)
-    n = it._nodes[1]
-    loc = it._geom[n] * qpit._scalbfuns[qpit._pt][1]
-    for i in 2:length(it._nodes)
-        n = it._nodes[i]
-        loc += it._geom[n] * qpit._scalbfuns[qpit._pt][i]
-    end
-    return loc
-end
 
 end

@@ -49,6 +49,7 @@ struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
     _fld2::Union{Nothing, F2}
     _fld3::Union{Nothing, F3}
     _manifdimv::V
+    _state::Vector{IT}
     
     function FEIterator(fesp::FES) where {FES}
         _bir = baseincrel(fesp.mesh)
@@ -76,7 +77,7 @@ struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
         _irs1 != nothing && (p = _init_e_d!(_entmdim, _dofcomp, p, _irs1, _fld1))
         _irs2 != nothing && (p = _init_e_d!(_entmdim, _dofcomp, p, _irs2, _fld2))
         _irs3 != nothing && (p = _init_e_d!(_entmdim, _dofcomp, p, _irs3, _fld3))
-        return new{FES, typeof(_bir), typeof(_geom), eltype(_dofs), doftype(fesp), typeof(_manifdimv), typeof(_irs0), typeof(_irs1), typeof(_irs2), typeof(_irs3), typeof(_fld0), typeof(_fld1), typeof(_fld2), typeof(_fld3)}(fesp, _bir, _geom, _dofs, _dofvals, _entmdim, _dofcomp, _nodes, _irs0, _irs1, _irs2, _irs3, _fld0, _fld1, _fld2, _fld3, _manifdimv)
+        return new{FES, typeof(_bir), typeof(_geom), eltype(_dofs), doftype(fesp), typeof(_manifdimv), typeof(_irs0), typeof(_irs1), typeof(_irs2), typeof(_irs3), typeof(_fld0), typeof(_fld1), typeof(_fld2), typeof(_fld3)}(fesp, _bir, _geom, _dofs, _dofvals, _entmdim, _dofcomp, _nodes, _irs0, _irs1, _irs2, _irs3, _fld0, _fld1, _fld2, _fld3, _manifdimv, [0])
     end
 end
 
@@ -182,6 +183,7 @@ function _storedofvals!(d, p, e, ir, fl)
 end
 
 function _update!(it::FEIterator, state)
+    it._state[1] = state
     copyto!(it._nodes, retrieve(it._bir, state))
     p = 1
     it._irs0 != nothing && (p = _storedofs!(it._dofs, p, state, it._irs0, it._fld0))
@@ -198,10 +200,11 @@ Provide access to vector of element degrees of freedom.
 """
 function eldofvals(it::FEIterator)
     p = 1
-    it._irs0 != nothing && (p = _storedofvals!(it._dofvals, p, state, it._irs0, it._fld0))
-    it._irs1 != nothing && (p = _storedofvals!(it._dofvals, p, state, it._irs1, it._fld1))
-    it._irs2 != nothing && (p = _storedofvals!(it._dofvals, p, state, it._irs2, it._fld2))
-    it._irs3 != nothing && (p = _storedofvals!(it._dofvals, p, state, it._irs3, it._fld3))
+    it._irs0 != nothing && (p = _storedofvals!(it._dofvals, p, it._state[1], it._irs0, it._fld0))
+    it._irs1 != nothing && (p = _storedofvals!(it._dofvals, p, it._state[1], it._irs1, it._fld1))
+    it._irs2 != nothing && (p = _storedofvals!(it._dofvals, p, it._state[1], it._irs2, it._fld2))
+    it._irs3 != nothing && (p = _storedofvals!(it._dofvals, p, it._state[1], it._irs3, it._fld3))
+    return it._dofvals
 end
 
 """
@@ -214,6 +217,21 @@ to compute the Jacobian at the current integration point.
 """
 function jacjac(it::FEIterator, qpit::QPIterator)
     return jacjac(it.fesp.fe, it._geom, it._nodes, qpit._scalbfungrad_ps[qpit._pt])
+end
+
+"""
+    location(it::FEIterator, qpit::QPIterator)
+
+Calculate the location of the quadrature point.
+"""
+function location(it::FEIterator, qpit::QPIterator)
+    n = it._nodes[1]
+    loc = it._geom[n] * qpit._scalbfuns[qpit._pt][1]
+    for i in 2:length(it._nodes)
+        n = it._nodes[i]
+        loc += it._geom[n] * qpit._scalbfuns[qpit._pt][i]
+    end
+    return loc
 end
 
 end

@@ -24,8 +24,8 @@ using Elfel.FESpaces: numberfreedofs!, numberdatadofs!, numberdofs!
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!, edofcompnt
 using Elfel.FESpaces: highestfreedofnum, highestdatadofnum
 using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs, eldofvals
-using Elfel.FEIterators: jacjac
-using Elfel.QPIterators: QPIterator, bfun, bfungrad, weight, location
+using Elfel.FEIterators: jacjac, location
+using Elfel.QPIterators: QPIterator, bfun, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
 using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
@@ -138,18 +138,16 @@ function evaluate_velocity_error(uxfesp, uyfesp, pfesp)
 end
 
 function evaluate_pressure_error(pfesp)
-    function integrate!(elits, qpits, truep)
-        pnedof = ndofsperel.(elits)
+    function integrate!(elit, qpit, truep)
+        pnedof = ndofsperel(elit)
         E = 0.0
-        for el in zip(elits...)
-            pel = el
-            dofvals = eldofvals(pel)
-            for qp in zip(qpits...)
-                pqp = qp
-                Jac, J = jacjac(pel, pqp)
-                JxW = J * weight(pqp)
-                Np = bfun(pqp)
-                pt = truep(location(pqp)...)
+        for el in elit
+            dofvals = eldofvals(el)
+            for qp in qpit
+                Jac, J = jacjac(el, qp)
+                JxW = J * weight(qp)
+                Np = bfun(qp)
+                pt = truep(location(el, qp)...)
                 pa = 0.0
                 for j in 1:pnedof
                     pa += (dofvals[j] * Np[j])
@@ -157,13 +155,13 @@ function evaluate_pressure_error(pfesp)
                 E += (JxW) * (pa - pt)^2
             end
         end
-        return E
+        return sqrt(E)
     end
 
-    elits = (FEIterator(pfesp),)
+    elit = FEIterator(pfesp)
     qargs = (kind = :default, npts = 3,)
-    qpits = (QPIterator(pfesp, qargs),)
-    return integrate!(elits, qpits, truep)
+    qpit = QPIterator(pfesp, qargs)
+    return integrate!(elit, qpit, truep)
 end
 
 function run(N)
