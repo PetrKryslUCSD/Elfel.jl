@@ -36,6 +36,7 @@ struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
     _bir::IR
     _geom::G
     _dofs::Vector{IT}
+    _dofvals::Vector{T}
     _entmdim::Vector{IT}
     _dofcomp::Vector{IT}
     _nodes::Vector{IT}
@@ -53,6 +54,7 @@ struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
         _bir = baseincrel(fesp.mesh)
         _geom = MeshCore.attribute(_bir.right, "geom")
         _dofs = zeros(Int64, ndofsperel(fesp))
+        _dofvals = zeros(doftype(fesp), ndofsperel(fesp))
         _entmdim = zeros(Int64, ndofsperel(fesp))
         _dofcomp = zeros(Int64, ndofsperel(fesp))
         _nodes = zeros(Int64, nfeatofdim(fesp.fe, 0)) 
@@ -74,7 +76,7 @@ struct FEIterator{FES, IR, G, IT, T, V, IR0, IR1, IR2, IR3, F0, F1, F2, F3}
         _irs1 != nothing && (p = _init_e_d!(_entmdim, _dofcomp, p, _irs1, _fld1))
         _irs2 != nothing && (p = _init_e_d!(_entmdim, _dofcomp, p, _irs2, _fld2))
         _irs3 != nothing && (p = _init_e_d!(_entmdim, _dofcomp, p, _irs3, _fld3))
-        return new{FES, typeof(_bir), typeof(_geom), eltype(_dofs), doftype(fesp), typeof(_manifdimv), typeof(_irs0), typeof(_irs1), typeof(_irs2), typeof(_irs3), typeof(_fld0), typeof(_fld1), typeof(_fld2), typeof(_fld3)}(fesp, _bir, _geom, _dofs, _entmdim, _dofcomp, _nodes, _irs0, _irs1, _irs2, _irs3, _fld0, _fld1, _fld2, _fld3, _manifdimv)
+        return new{FES, typeof(_bir), typeof(_geom), eltype(_dofs), doftype(fesp), typeof(_manifdimv), typeof(_irs0), typeof(_irs1), typeof(_irs2), typeof(_irs3), typeof(_fld0), typeof(_fld1), typeof(_fld2), typeof(_fld3)}(fesp, _bir, _geom, _dofs, _dofvals, _entmdim, _dofcomp, _nodes, _irs0, _irs1, _irs2, _irs3, _fld0, _fld1, _fld2, _fld3, _manifdimv)
     end
 end
 
@@ -167,6 +169,18 @@ function _storedofs!(d, p, e, ir, fl)
     return p
 end
 
+function _storedofvals!(d, p, e, ir, fl)
+    ndpt = ndofsperterm(fl)
+    for k in 1:nentities(ir, e)
+        gk = retrieve(ir, e, k)
+        for i in 1:ndpt
+            d[p] = fl.dofvals[gk][i]
+            p = p + 1
+        end
+    end
+    return p
+end
+
 function _update!(it::FEIterator, state)
     copyto!(it._nodes, retrieve(it._bir, state))
     p = 1
@@ -175,6 +189,19 @@ function _update!(it::FEIterator, state)
     it._irs2 != nothing && (p = _storedofs!(it._dofs, p, state, it._irs2, it._fld2))
     it._irs3 != nothing && (p = _storedofs!(it._dofs, p, state, it._irs3, it._fld3))
     return it
+end
+
+"""
+    eldofvals(it::FEIterator)
+
+Provide access to vector of element degrees of freedom.
+"""
+function eldofvals(it::FEIterator)
+    p = 1
+    it._irs0 != nothing && (p = _storedofvals!(it._dofvals, p, state, it._irs0, it._fld0))
+    it._irs1 != nothing && (p = _storedofvals!(it._dofvals, p, state, it._irs1, it._fld1))
+    it._irs2 != nothing && (p = _storedofvals!(it._dofvals, p, state, it._irs2, it._fld2))
+    it._irs3 != nothing && (p = _storedofvals!(it._dofvals, p, state, it._irs3, it._fld3))
 end
 
 """
