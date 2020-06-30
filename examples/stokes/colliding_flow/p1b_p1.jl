@@ -22,8 +22,8 @@ using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
 using Elfel.FESpaces: numberfreedofs!, numberdatadofs!, numberdofs!
 using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!, edofcompnt
 using Elfel.FESpaces: highestfreedofnum, highestdatadofnum
-using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
-using Elfel.FEIterators: jacjac
+using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs, eldofvals
+using Elfel.FEIterators: jacjac, location
 using Elfel.QPIterators: QPIterator, bfun, bfungrad, weight
 using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
 using Elfel.Assemblers: SysvecAssembler
@@ -112,24 +112,64 @@ function solve!(U, K, F, nu)
     U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
-function evaluate_pressure_error(uxfesp, uyfesp, pfesp)
-    geom = geometry(pfesp.mesh)
-    ir = baseincrel(pfesp.mesh)
-    p = attribute(ir.right, "p")
-    pt = [truep(geom[i]...) for i in 1:length(geom)] 
-    return norm(p - pt) / norm(pt)
+function evaluate_pressure_error(pfesp)
+    function integrate!(elit, qpit, truep)
+        pnedof = ndofsperel(elit)
+        E = 0.0
+        for el in elit
+            dofvals = eldofvals(el)
+            for qp in qpit
+                Jac, J = jacjac(el, qp)
+                JxW = J * weight(qp)
+                Np = bfun(qp)
+                pt = truep(location(el, qp)...)
+                pa = 0.0
+                for j in 1:pnedof
+                    pa += (dofvals[j] * Np[j])
+                end
+                E += (JxW) * (pa - pt)^2
+            end
+        end
+        return sqrt(E)
+    end
+
+    elit = FEIterator(pfesp)
+    qargs = (kind = :default, npts = 3,)
+    qpit = QPIterator(pfesp, qargs)
+    return integrate!(elit, qpit, truep)
 end
 
-function evaluate_velocity_error(uxfesp, uyfesp, pfesp)
-    geom = geometry(uxfesp.mesh)
-    ir = baseincrel(uxfesp.mesh)
-    ux = attribute(ir.right, "ux")
-    uy = attribute(ir.right, "uy")
-    uxa = [ux[i][1] for i in 1:length(ux)]
-    uya = [uy[i][1] for i in 1:length(uy)]
-    uxt = [trueux(geom[i]...) for i in 1:length(geom)] 
-    uyt = [trueuy(geom[i]...) for i in 1:length(geom)] 
-    return sqrt(sum(vec(uxt .- uxa).^2 + vec(uyt .- uya).^2)) / sqrt(sum((uxt).^2 + (uyt).^2))
+function evaluate_velocity_error(uxfesp, uyfesp)
+    function integrate!(elits, qpits, trueux, trueuy)
+        uxnedof, uynedof = ndofsperel.(elits)
+        E = 0.0
+        for el in zip(elits...)
+            uxel, uyel = el
+            uxdofvals = eldofvals(uxel)
+            uydofvals = eldofvals(uyel)
+            for qp in zip(qpits...)
+                uxqp, uyqp = qp
+                Jac, J = jacjac(uxel, uxqp)
+                JxW = J * weight(uxqp)
+                Np = bfun(uxqp)
+                uxt = trueux(location(uxel, uxqp)...)
+                uyt = trueuy(location(uyel, uyqp)...)
+                uxa = 0.0
+                uya = 0.0
+                for j in 1:uxnedof
+                    uxa += (uxdofvals[j] * Np[j])
+                    uya += (uydofvals[j] * Np[j])
+                end
+                E += (JxW) * ((uxa - uxt)^2 + (uya - uyt)^2)
+            end
+        end
+        return sqrt(E)
+    end
+
+    elits = (FEIterator(uxfesp), FEIterator(uyfesp),)
+    qargs = (kind = :default, npts = 3,)
+    qpits = (QPIterator(uxfesp, qargs), QPIterator(uyfesp, qargs),)
+    return integrate!(elits, qpits, trueux, trueuy)
 end
 
 function run(N)
@@ -154,8 +194,8 @@ function run(N)
     setebc!(pfesp, 0, atcenter[1], 1, 0.0)
     # Number the degrees of freedom
     numberdofs!(uxfesp, uyfesp, pfesp)
-    @show tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
-    @show tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
+    tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
+    tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix
     K = assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
     # p = spy(K, canvas = DotCanvas)
@@ -170,11 +210,11 @@ function run(N)
     makeattribute(pfesp, "p", 1)
     makeattribute(uxfesp, "ux", 1)
     makeattribute(uyfesp, "uy", 1)
-    @show evaluate_pressure_error(uxfesp, uyfesp, pfesp)
-    @show evaluate_velocity_error(uxfesp, uyfesp, pfesp)
+    ep = evaluate_pressure_error(pfesp)
+        ev = evaluate_velocity_error(uxfesp, uyfesp)
     vtkwrite("p1b_p1-p", baseincrel(mesh), [(name = "p",), ])
     vtkwrite("p1b_p1-v", baseincrel(mesh), [(name = "ux",), (name = "uy",)])
-    true
+    return (ep, ev)
 end
 
 end
@@ -183,7 +223,8 @@ end
 let
     N = 4
     for loop in 1:5
-        p1b_p1.run(N)
+        ep, ev = p1b_p1.run(N)
+        @show N, ep, ev
         N = N * 2
     end
 end
