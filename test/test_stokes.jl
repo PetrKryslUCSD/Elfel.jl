@@ -554,7 +554,7 @@ function test()
     N = 4
     for loop in 1:3
         ep, ev = th_p2_p1.run(N)
-        @test (ep, ev) == ref[loop]
+        @test isapprox(vec([ep, ev]), vec([ref[loop]...]))
         N = N * 2
     end
 end

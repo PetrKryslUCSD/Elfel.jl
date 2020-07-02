@@ -8,7 +8,7 @@ using ..FElements: nfeatofdim, ndofperfeat, manifdim
 using ..FEFields: FEField, nterms
 import ..FEFields: ndofs, setebc!, scattersysvec!, gathersysvec!
 import ..FEFields: numberfreedofs!, numberdatadofs!, freedofnums, datadofnums
-import ..FEFields: highestfreedofnum, highestdatadofnum
+import ..FEFields: highestfreedofnum, highestdatadofnum, dofnums
 import ..FElements: ndofsperel
 
 """
@@ -109,6 +109,21 @@ Essentially a product of the number of the degrees of freedom the scalar
 finite element and the number of copies of this element in the space.
 """
 ndofsperel(fesp::FES)  where {FES<:FESpace} = ndofsperel(fesp.fe) * fesp.nfecopies
+
+"""
+    dofnum(fesp::FES, m, eid)  where {FES<:FESpace}
+
+Provide degree of freedom number for entity `eid` of manifold dimension `m` and
+component `comp`.
+"""
+function dofnum(fesp::FES, m, eid, comp)  where {FES<:FESpace}
+    n = zero(typeof(eid))
+    if ndofperfeat(fesp.fe, m) > 0
+        f = fesp._irsfields[m][2]
+        n = dofnums(f, eid)[comp]
+    end
+    return n
+end
 
 """
     numberfreedofs!(fesp::FES, firstnum = 1)  where {FES<:FESpace}
@@ -240,19 +255,19 @@ function numberdofs!(fesp...)
 end
 
 """
-    setebc!(fesp::FESpace, mid, eid, comp, val::T) where {T}
+    setebc!(fesp::FESpace, m, eid, comp, val::T) where {T}
 
 Set the EBCs (essential boundary conditions).
 
-- `mid`  = manifold dimension of the entity,
+- `m`  = manifold dimension of the entity,
 - `eid`  = serial number of the entity (term identifier),
 - `comp` = which  degree of freedom in the term,
 - `val`  = value of type T
 
-For instance, `mid = 0` means set  the degree of freedom at the vertex `eid`.
+For instance, `m = 0` means set  the degree of freedom at the vertex `eid`.
 """
-function setebc!(fesp::FESpace, mid, eid, comp, val::T) where {T}
-    v = fesp._irsfields[mid]
+function setebc!(fesp::FESpace, m, eid, comp, val::T) where {T}
+    v = fesp._irsfields[m]
     setebc!(v[2], eid, comp, val)
     return  fesp
 end

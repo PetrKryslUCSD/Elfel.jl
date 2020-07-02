@@ -67,6 +67,20 @@ Total number of degrees of freedom in the field.
 ndofs(fef::FEField) = nterms(fef) * ndofsperterm(fef)
 
 """
+    dofnums(fef::FEField, n)
+
+Provide degree of freedom numbers for given entity.
+"""
+dofnums(fef::FEField, n) = fef.dofnums[n]
+
+"""
+    dofvals(fef::FEField, n)
+
+Provide degree of freedom values for given entity.
+"""
+dofvals(fef::FEField, n) = fef.dofvals[n]
+
+"""
     setebc!(self::FEField, tid, comp, val::T) where {T}
 
 Set the value of one particular degree of freedom to a given number.

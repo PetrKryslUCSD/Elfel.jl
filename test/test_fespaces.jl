@@ -90,7 +90,7 @@ using Elfel.FElements: FEH1_T3_BUBBLE
 using Elfel.FElements: bfun, bfungradpar
 using Elfel.FElements: nfeatofdim, ndofperfeat, ndofsperel
 using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype, nunknowns
-using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
+using Elfel.FESpaces: numberfreedofs!, numberdatadofs!, dofnum
 using Elfel.FESpaces: edofmdim, edofbfnum, edofcompnt
 using Elfel.FEIterators: FEIterator
 using MeshCore: identty
@@ -165,6 +165,8 @@ function test()
     @test edofmdim(fesp) == emdim
     @test edofbfnum(fesp) == bfnum
     @test edofcompnt(fesp) == compnt
+
+    @test dofnum(fesp, 0, 1, 1) == 0
 
     true
 end
