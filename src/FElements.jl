@@ -404,4 +404,56 @@ function bfungradpar(self::FEL2_Q4_TYPE,  param_coords)
     return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
 end
 
+
+# T3 ==================================================================
+# Triangular element. Only interior basis functions.
+struct FEL2_T3_Type{RS, SD} <: FE{RS, SD}
+    data::FEData{SD}
+end
+FEL2_T3_TYPE = FEL2_T3_Type{RefShapeTriangle, typeof(MeshCore.T3)}
+
+"""
+    FEL2_T3()
+
+Construct an L2 finite element of the type T3.
+
+T3 is 3-node linear triangle element.
+"""
+FEL2_T3() = FEL2_T3_TYPE(FEData(MeshCore.T3, SVector{4}([0, 0, 1, 0])))
+
+function bfun(self::FEL2_T3_TYPE,  param_coords) 
+   return SVector{1}(1.0)
+end
+
+function bfungradpar(self::FEL2_T3_TYPE,  param_coords)
+    g =   [0.0 0.0];
+    return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
+end
+
+
+# T4 ==================================================================
+# Tetrahedral element. Only interior basis functions.
+struct FEL2_T4_Type{RS, SD} <: FE{RS, SD}
+    data::FEData{SD}
+end
+FEL2_T4_TYPE = FEL2_T4_Type{RefShapeTriangle, typeof(MeshCore.T4)}
+
+"""
+    FEL2_T4()
+
+Construct an L2 finite element of the type T4.
+
+T4 is tetrahedral element with only internal degrees of freedom.
+"""
+FEL2_T4() = FEL2_T4_TYPE(FEData(MeshCore.T4, SVector{4}([0, 0, 0, 1])))
+
+function bfun(self::FEL2_T4_TYPE,  param_coords) 
+   return SVector{1}(1.0)
+end
+
+function bfungradpar(self::FEL2_T4_TYPE,  param_coords)
+    g =   [0.0 0.0 0.0];
+    return [SVector{3}(g[idx, :])' for idx in 1:size(g, 1)]
+end
+
 end # module
