@@ -436,7 +436,7 @@ end
 struct FEL2_T4_Type{RS, SD} <: FE{RS, SD}
     data::FEData{SD}
 end
-FEL2_T4_TYPE = FEL2_T4_Type{RefShapeTriangle, typeof(MeshCore.T4)}
+FEL2_T4_TYPE = FEL2_T4_Type{RefShapeTetrahedron, typeof(MeshCore.T4)}
 
 """
     FEL2_T4()
