@@ -33,7 +33,7 @@ using UnicodePlots
 
 mu = 0.25 # dynamic viscosity
 A = 1.0 # length of the side of the square
-N = 29;# number of subdivisions along the sides of the square domain
+N = 35;# number of subdivisions along the sides of the square domain
 
 function genmesh()
     # This mesh will be both for the velocities and for the pressure
