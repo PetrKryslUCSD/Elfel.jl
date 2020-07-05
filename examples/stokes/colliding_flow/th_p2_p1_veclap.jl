@@ -196,8 +196,8 @@ function run(N)
     tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix
     K = assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
-    p = spy(K, canvas = DotCanvas)
-    display(p)
+    # p = spy(K, canvas = DotCanvas)
+    # display(p)
     # Solve the system
     U = fill(0.0, tndof)
     gathersysvec!(U, [uxfesp, uyfesp, pfesp])

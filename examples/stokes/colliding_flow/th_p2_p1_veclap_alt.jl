@@ -6,7 +6,7 @@ Taylor-Hood formulation with quadratic triangles for the velocity and continuous
 pressure on linear triangles.
 
 This implementation is an alternative: for the velocity, a single finite element
-space with multiple components is used instead of multiple finite element
+space with multiple components (2) is used instead of multiple finite element
 spaces.
 
 The formulation is the one derived in Donea, Huerta, Introduction to the finite element
@@ -186,8 +186,8 @@ function run(N)
     tnunk = nunknowns(ufesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix
     K = assembleK(ufesp, pfesp, tndof, mu)
-    p = spy(K, canvas = DotCanvas)
-    display(p)
+    # p = spy(K, canvas = DotCanvas)
+    # display(p)
     # Solve the system
     U = fill(0.0, tndof)
     gathersysvec!(U, [ufesp, pfesp])
