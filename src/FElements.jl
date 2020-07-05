@@ -378,6 +378,10 @@ end
 
 # Q4 ==================================================================
 # Quadrilateral element. Only interior basis functions.
+
+# To do: Provide more than the constant basis function only. Perhaps by
+# additional parameters to the constructor?
+
 struct FEL2_Q4_Type{RS, SD} <: FE{RS, SD}
     data::FEData{SD}
 end
@@ -389,9 +393,6 @@ FEL2_Q4_TYPE = FEL2_Q4_Type{RefShapeSquare, typeof(MeshCore.Q4)}
 Construct an L2 finite element of the type Q4.
 
 Q4 is 4-node linear quadrilateral element.
-
-To do: Enable multiple basis functions in the interior of the element; perhaps
-linear.
 """
 FEL2_Q4() = FEL2_Q4_TYPE(FEData(MeshCore.Q4, SVector{4}([0, 0, 1, 0])))
 
@@ -433,6 +434,10 @@ end
 
 # T4 ==================================================================
 # Tetrahedral element. Only interior basis functions.
+
+# To do: Provide more than the constant basis function only. Perhaps by
+# additional parameters to the constructor?
+
 struct FEL2_T4_Type{RS, SD} <: FE{RS, SD}
     data::FEData{SD}
 end
