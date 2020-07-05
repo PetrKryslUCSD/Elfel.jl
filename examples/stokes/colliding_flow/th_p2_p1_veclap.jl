@@ -74,10 +74,10 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
                 gradNuy = bfungrad(uyqp, Jac)
                 Np = bfun(pqp)
                 for j in 1:uxnedof, i in 1:uxnedof
-                    kuxux[i, j] += (mu * JxW) * (2 * gradNux[i][1] * gradNux[j][1] + gradNux[i][2] * gradNux[j][2])
+                    kuxux[i, j] += (mu * JxW) * (gradNux[i][1] * gradNux[j][1] + gradNux[i][2] * gradNux[j][2])
                 end
                 for j in 1:uynedof, i in 1:uynedof
-                    kuyuy[i, j] += (mu * JxW) * (gradNuy[i][1] * gradNuy[j][1] + 2 * gradNuy[i][2] * gradNuy[j][2])
+                    kuyuy[i, j] += (mu * JxW) * (gradNuy[i][1] * gradNuy[j][1] + gradNuy[i][2] * gradNuy[j][2])
                 end
                 for j in 1:pnedof, i in 1:uxnedof
                     kuxp[i, j] += (-JxW) * (gradNux[i][1] * Np[j])
