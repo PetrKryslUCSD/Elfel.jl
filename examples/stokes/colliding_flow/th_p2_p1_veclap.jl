@@ -53,7 +53,7 @@ function genmesh(N)
 end
 
 function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
-    function integrateK!(ass, elits, qpits, mu)
+    function integrate!(ass, elits, qpits, mu)
         uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuxux = LocalMatrixAssembler(uxnedof, uxnedof, 0.0)
         kuyuy = LocalMatrixAssembler(uynedof, uynedof, 0.0)
@@ -74,10 +74,10 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
                 gradNuy = bfungrad(uyqp, Jac)
                 Np = bfun(pqp)
                 for j in 1:uxnedof, i in 1:uxnedof
-                    kuxux[i, j] += (mu * JxW) * (gradNux[i][1] * gradNux[j][1] + gradNux[i][2] * gradNux[j][2])
+                    kuxux[i, j] += (mu * JxW) * dot(gradNux[i], gradNux[j])
                 end
                 for j in 1:uynedof, i in 1:uynedof
-                    kuyuy[i, j] += (mu * JxW) * (gradNuy[i][1] * gradNuy[j][1] + gradNuy[i][2] * gradNuy[j][2])
+                    kuyuy[i, j] += (mu * JxW) * dot(gradNuy[i], gradNuy[j])
                 end
                 for j in 1:pnedof, i in 1:uxnedof
                     kuxp[i, j] += (-JxW) * (gradNux[i][1] * Np[j])
@@ -101,7 +101,7 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
     qpits = (QPIterator(uxfesp, qargs), QPIterator(uyfesp, qargs), QPIterator(pfesp, qargs))
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, tndof, tndof)
-    @time integrateK!(ass, elits, qpits, mu)
+    @time integrate!(ass, elits, qpits, mu)
     return finish!(ass)
 end
 
