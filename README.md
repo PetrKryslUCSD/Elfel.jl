@@ -22,6 +22,7 @@ github.com/PetrKryslUCSD/MeshSteward.jl
 
 ## News
 
+- 07/05/2020: Vector finite element spaces tested.
 - 06/26/2020: L2 elements  implemented, Stokes problem example.
 - 06/19/2020: Example of a mixed method for the discrete Stokes problem added.
 - 05/25/2020: Firmed up the concept of iterators for access to element and quadrature point data.
