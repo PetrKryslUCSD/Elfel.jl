@@ -583,6 +583,7 @@ iterative solvers, p. 132. In other words, it is the vector Laplacian version.
 """
 module m_th_p2_p1_veclap_alt
 
+using Test
 using LinearAlgebra
 using StaticArrays
 using MeshCore: retrieve, nrelations, nentities, identty, attribute, VecAttrib
@@ -768,8 +769,8 @@ function run(N)
     makeattribute(ufesp, "uy", 2)
     ep = evaluate_pressure_error(pfesp)
     ev = evaluate_velocity_error(ufesp)
-    vtkwrite("m_th_p2_p1_veclap_alt-p", baseincrel(pmesh), [(name = "p",), ])
-    vtkwrite("m_th_p2_p1_veclap_alt-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
+    # vtkwrite("m_th_p2_p1_veclap_alt-p", baseincrel(pmesh), [(name = "p",), ])
+    # vtkwrite("m_th_p2_p1_veclap_alt-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
     return (ep, ev)
 end
 
