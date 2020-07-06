@@ -843,7 +843,7 @@ function assembleK(ufesp, pfesp, tndof, mu)
             end
             assemble!(ass, kuu)
             assemble!(ass, kup)
-            assemble!(ass, LinearAlgebra.transpose(kup))
+            assemble!(ass, transpose(kup))
         end
         return ass
     end
