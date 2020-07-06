@@ -5,11 +5,15 @@ using MeshCore
 using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, IncRel, VecAttrib
 using MeshSteward: Mesh, baseincrel, increl
 using ..FElements: nfeatofdim, ndofperfeat, manifdim
-using ..FEFields: FEField, nterms
-import ..FEFields: ndofs, setebc!, scattersysvec!, gathersysvec!
-import ..FEFields: numberfreedofs!, numberdatadofs!, freedofnums, datadofnums
-import ..FEFields: highestfreedofnum, highestdatadofnum, dofnums
 import ..FElements: ndofsperel
+
+include("FEFields.jl")
+
+using .FEFields: FEField, nterms
+import .FEFields: ndofs, setebc!, scattersysvec!, gathersysvec!
+import .FEFields: numberfreedofs!, numberdatadofs!, freedofnums, datadofnums
+import .FEFields: highestfreedofnum, highestdatadofnum, dofnums
+
 
 """
     FESpace{FET, T}

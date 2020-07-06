@@ -5,8 +5,8 @@ using Elfel.FElements: FE, refshape
 using Elfel.FElements: bfun, bfungradpar, FEH1_T3
 using MeshSteward: Mesh, load, increl, baseincrel
 using MeshCore: nshapes
-using Elfel.FEFields: FEField, nterms, ndofsperterm, doftype, setebc!, gathersysvec!, ndofs
-using Elfel.FEFields: numberfreedofs!, freedofnums, numberdatadofs!, datadofnums, highestfreedofnum, highestdatadofnum
+using Elfel.FESpaces.FEFields: FEField, nterms, ndofsperterm, doftype, setebc!, gathersysvec!, ndofs
+using Elfel.FESpaces.FEFields: numberfreedofs!, freedofnums, numberdatadofs!, datadofnums, highestfreedofnum, highestdatadofnum
 using Test
 function test()
 

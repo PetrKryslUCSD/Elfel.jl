@@ -7,7 +7,7 @@ using MeshSteward: Mesh, baseincrel, increl
 using ..RefShapes: manifdim, manifdimv
 using ..FElements: refshape, nfeatofdim
 import ..FElements: jacjac
-using ..FEFields: FEField, ndofsperterm
+using ..FESpaces.FEFields: FEField, ndofsperterm
 using ..FESpaces: FESpace, doftype
 import ..FESpaces: ndofsperel
 using ..QPIterators: QPIterator, bfungradpar
