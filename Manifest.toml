@@ -79,7 +79,7 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MeshCore]]
 deps = ["StaticArrays", "Test"]
-git-tree-sha1 = "cbbd6569a8ef820d138f434ae2f155824a106e67"
+git-tree-sha1 = "6a1550c87cd4360b622a17e1fcac1f72446420d2"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/MeshCore.jl.git"
 uuid = "43a99bba-f459-4d0e-8139-f3df11d847d4"
@@ -87,7 +87,7 @@ version = "0.8.6"
 
 [[MeshSteward]]
 deps = ["DelimitedFiles", "LinearAlgebra", "MeshCore", "StaticArrays", "Statistics", "Test", "WriteVTK"]
-git-tree-sha1 = "b029d1549c6b2e59eee3a37da5eae617064fa276"
+git-tree-sha1 = "f876206d876fd3125dff6e477936354e601d12fe"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/MeshSteward.jl.git"
 uuid = "ffa89bc3-d1bd-4aea-b9f7-e9902d9f56ab"
