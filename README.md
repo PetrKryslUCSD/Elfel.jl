@@ -14,14 +14,11 @@ This package provides support for the development of Finite Element Method appli
 
 ## Dependencies
 
-The library relies on mesh support from the following suite of small mesh-management packages:
-```
-github.com/PetrKryslUCSD/MeshCore.jl
-github.com/PetrKryslUCSD/MeshSteward.jl     
-```
+The library relies on mesh support from the following suite of small mesh-management packages: [`MeshCore`](https://github.com/PetrKryslUCSD/MeshCore.jl), [`MeshSteward`](https://github.com/PetrKryslUCSD/MeshSteward.jl).
 
 ## News
 
+- 07/06/2020: Exports have been added to facilitate use of the library.
 - 07/05/2020: Vector finite element spaces tested.
 - 06/26/2020: L2 elements  implemented, Stokes problem example.
 - 06/19/2020: Example of a mixed method for the discrete Stokes problem added.
@@ -36,4 +33,14 @@ using Pkg; Pkg.activate("."); Pkg.instantiate()
 ```
 in the `Elfel` folder.
 
-The `examples` folder can be explored by simply running the files with `include`.
+The user can either use/import individual functions from `Elfel` like so:
+```
+using Elfel.FElements: FEH1_T6, FEH1_T3, refshape, Jacobian
+```
+or all exported symbols maybe made available in the user's context as
+```
+using Elfel.Exports
+```
+
+The `examples` folder can be explored by simply running the files with `include()`.
+
