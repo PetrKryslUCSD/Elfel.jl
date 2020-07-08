@@ -4,7 +4,7 @@ using Test
 using LinearAlgebra
 using MeshCore: retrieve, nrelations, nentities, @_check, attribute
 using MeshSteward: T3block
-using MeshSteward: Mesh, insert!, baseincrel, boundary
+using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: connectedv, geometry
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
@@ -28,7 +28,7 @@ N = 4;# number of subdivisions along the sides of the square domain
 function genmesh()
     conn = T3block(A, A, N, N)
     mesh = Mesh()
-    insert!(mesh, conn)
+    attach!(mesh, conn)
     return mesh
 end
 
@@ -119,7 +119,7 @@ using Test
 using LinearAlgebra
 using MeshCore: retrieve, nrelations, nentities, attribute, @_check
 using MeshSteward: Q4block
-using MeshSteward: Mesh, insert!, baseincrel, boundary
+using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: connectedv, geometry
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
@@ -143,7 +143,7 @@ N = 100;# number of subdivisions along the sides of the square domain
 function genmesh()
     conn = Q4block(A, A, N, N)
     mesh = Mesh()
-    insert!(mesh, conn)
+    attach!(mesh, conn)
     return mesh
 end
 

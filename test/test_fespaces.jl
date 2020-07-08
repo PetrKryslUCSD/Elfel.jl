@@ -94,7 +94,7 @@ using Elfel.FESpaces: numberfreedofs!, numberdatadofs!, dofnum
 using Elfel.FESpaces: edofmdim, edofbfnum, edofcompnt
 using Elfel.FEIterators: FEIterator
 using MeshCore: identty
-using MeshSteward: Mesh, load, nspacedims, baseincrel, insert!
+using MeshSteward: Mesh, load, nspacedims, baseincrel, attach!
 using Test
 function test()
     fe = FEH1_T3()
@@ -113,7 +113,7 @@ function test()
 
     @test isapprox(bfun(fesp.fe, [1/3, 1/3]), [0.3333333333333334, 0.3333333333333333, 0.3333333333333333])
 
-    insert!(mesh, identty(baseincrel(mesh)))
+    attach!(mesh, identty(baseincrel(mesh)))
     fesp = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 1)
 
     @test nfeatofdim(fesp.fe, 0) == 3

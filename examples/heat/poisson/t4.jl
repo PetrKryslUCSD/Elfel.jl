@@ -10,7 +10,7 @@ module t4
 using LinearAlgebra
 using MeshCore: retrieve, nrelations, nentities, attribute, @_check
 using MeshSteward: T4block
-using MeshSteward: Mesh, insert!, baseincrel, boundary
+using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: connectedv, geometry
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: RefShapeTetrahedron, manifdim, manifdimv
@@ -34,7 +34,7 @@ N = 10;# number of subdivisions along the sides of the square domain
 function genmesh()
     conn = T4block(A, A, A, N, N, N)
     mesh = Mesh()
-    insert!(mesh, conn)
+    attach!(mesh, conn)
     return mesh
 end
 

@@ -13,7 +13,7 @@ using LinearAlgebra
 using StaticArrays
 using MeshCore: retrieve, nrelations, nentities
 using MeshSteward: T6block, T6toT3
-using MeshSteward: Mesh, insert!, baseincrel, boundary
+using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: manifdim, manifdimv
@@ -38,12 +38,12 @@ function genmesh()
     # Taylor-Hood pair of meshes is needed
     # This mesh will be for the velocities
     vmesh = Mesh()
-    insert!(vmesh, T6block(A, A, N, N), "velocity")
+    attach!(vmesh, T6block(A, A, N, N), "velocity")
     # This mesh will be used for the pressures. Notice that it needs to be
         # "compatible" with the velocity mesh in the sense that they need to share
         # the nodes at the corners of the triangles.
         pmesh = Mesh()
-    insert!(pmesh, T6toT3(baseincrel(vmesh, "velocity")), "pressure")
+    attach!(pmesh, T6toT3(baseincrel(vmesh, "velocity")), "pressure")
     return vmesh, pmesh
 end
 

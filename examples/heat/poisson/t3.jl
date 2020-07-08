@@ -9,7 +9,7 @@ module t3
 using LinearAlgebra
 using MeshCore: retrieve, nrelations, nentities, attribute, @_check
 using MeshSteward: T3block
-using MeshSteward: Mesh, insert!, baseincrel, boundary
+using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: connectedv, geometry
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
@@ -33,7 +33,7 @@ N = 1000;# number of subdivisions along the sides of the square domain
 function genmesh()
     conn = T3block(A, A, N, N)
     mesh = Mesh()
-    insert!(mesh, conn)
+    attach!(mesh, conn)
     return mesh
 end
 

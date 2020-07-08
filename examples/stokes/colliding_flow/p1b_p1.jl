@@ -13,7 +13,7 @@ using LinearAlgebra
 using StaticArrays
 using MeshCore: retrieve, nrelations, nentities, identty, attribute
 using MeshSteward: T3block
-using MeshSteward: Mesh, insert!, baseincrel, boundary
+using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary, transform
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: manifdim, manifdimv
@@ -39,11 +39,11 @@ truep = (x, y) -> 60 * x ^ 2 * y - 20 * y ^ 3
 function genmesh(N)
     # This mesh will be both for the velocities and for the pressure
     mesh = Mesh()
-    insert!(mesh, T3block(2 * A, 2 * A, N, N), "velocity+pressure")
+    attach!(mesh, T3block(2 * A, 2 * A, N, N), "velocity+pressure")
     ir = baseincrel(mesh)
     transform(ir, x -> x .- A)
     eidir = identty(ir)
-    insert!(mesh, eidir)
+    attach!(mesh, eidir)
     return mesh
 end
 

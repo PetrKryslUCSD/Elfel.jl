@@ -14,7 +14,7 @@ using LinearAlgebra
 using StaticArrays
 using MeshCore: retrieve, nrelations, nentities, identty
 using MeshSteward: T3block
-using MeshSteward: Mesh, insert!, baseincrel, boundary
+using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: manifdim, manifdimv
@@ -38,10 +38,10 @@ N = 100;# number of subdivisions along the sides of the square domain
 function genmesh()
     # This mesh will be both for the velocities and for the pressure
     mesh = Mesh()
-    insert!(mesh, T3block(A, A, N, N), "velocity+pressure")
+    attach!(mesh, T3block(A, A, N, N), "velocity+pressure")
     ir = baseincrel(mesh)
     eidir = identty(ir)
-    insert!(mesh, eidir)
+    attach!(mesh, eidir)
     return mesh
 end
 

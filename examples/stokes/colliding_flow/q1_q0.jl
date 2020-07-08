@@ -15,7 +15,7 @@ using StaticArrays
 using MeshCore
 using MeshCore: retrieve, nrelations, nentities, identty, attribute
 using MeshSteward: Q4block
-using MeshSteward: Mesh, insert!, baseincrel, boundary, increl
+using MeshSteward: Mesh, attach!, baseincrel, boundary, increl
 using MeshSteward: vselect, geometry, summary, transform
 using MeshSteward: vtkwrite
 using Elfel.RefShapes: manifdim, manifdimv
@@ -41,11 +41,11 @@ truep = (x, y) -> 60 * x ^ 2 * y - 20 * y ^ 3
 function genmesh(N)
     # This mesh will be both for the velocities and for the pressure
     mesh = Mesh()
-    insert!(mesh, Q4block(2 * A, 2 * A, N, N), "velocity+pressure")
+    attach!(mesh, Q4block(2 * A, 2 * A, N, N), "velocity+pressure")
     ir = baseincrel(mesh)
     transform(ir, x -> x .- A)
     eidir = identty(ir)
-    insert!(mesh, eidir)
+    attach!(mesh, eidir)
     return mesh
 end
 
