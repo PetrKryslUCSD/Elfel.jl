@@ -1,14 +1,14 @@
 """
-    th_p2_p1_veclap
+    ht_p2_p1
 
 The manufactured-solution colliding flow example from Elman et al 2014. The
-Taylor-Hood formulation with quadratic triangles for the velocity and continuous
+Hood-Taylor formulation with quadratic triangles for the velocity and continuous
 pressure on linear triangles.
 
-The formulation is the one derived in Elman, et al., Finite elements and fast
-iterative solvers, p. 132. In other words, it is the vector Laplacian version.
+The formulation is the one derived in Reddy, Introduction to the finite element
+method, 1993. Page 486 ff.
 """
-module th_p2_p1_veclap
+module ht_p2_p1
 
 using LinearAlgebra
 using StaticArrays
@@ -53,16 +53,18 @@ function genmesh(N)
 end
 
 function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
-    function integrate!(ass, elits, qpits, mu)
+    function integrateK!(ass, elits, qpits, mu)
         uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuxux = LocalMatrixAssembler(uxnedof, uxnedof, 0.0)
         kuyuy = LocalMatrixAssembler(uynedof, uynedof, 0.0)
+        kuxuy = LocalMatrixAssembler(uxnedof, uynedof, 0.0)
         kuxp = LocalMatrixAssembler(uxnedof, pnedof, 0.0)
         kuyp = LocalMatrixAssembler(uynedof, pnedof, 0.0)
         for el in zip(elits...)
             uxel, uyel, pel = el
             init!(kuxux, eldofs(uxel), eldofs(uxel))
             init!(kuyuy, eldofs(uyel), eldofs(uyel))
+            init!(kuxuy, eldofs(uxel), eldofs(uyel))
             init!(kuxp, eldofs(uxel), eldofs(pel))
             init!(kuyp, eldofs(uyel), eldofs(pel))
             for qp in zip(qpits...)
@@ -74,10 +76,13 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
                 gradNuy = bfungrad(uyqp, Jac)
                 Np = bfun(pqp)
                 for j in 1:uxnedof, i in 1:uxnedof
-                    kuxux[i, j] += (mu * JxW) * dot(gradNux[i], gradNux[j])
+                    kuxux[i, j] += (mu * JxW) * (2 * gradNux[i][1] * gradNux[j][1] + gradNux[i][2] * gradNux[j][2])
                 end
                 for j in 1:uynedof, i in 1:uynedof
-                    kuyuy[i, j] += (mu * JxW) * dot(gradNuy[i], gradNuy[j])
+                    kuyuy[i, j] += (mu * JxW) * (gradNuy[i][1] * gradNuy[j][1] + 2 * gradNuy[i][2] * gradNuy[j][2])
+                end
+                for j in 1:uynedof, i in 1:uxnedof
+                    kuxuy[i, j] += (mu * JxW) * (gradNux[i][1] * gradNuy[j][2])
                 end
                 for j in 1:pnedof, i in 1:uxnedof
                     kuxp[i, j] += (-JxW) * (gradNux[i][1] * Np[j])
@@ -87,6 +92,8 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
                 end
             end
             assemble!(ass, kuxux)
+            assemble!(ass, kuxuy)
+            assemble!(ass, transpose(kuxuy))
             assemble!(ass, kuyuy)
             assemble!(ass, kuxp)
             assemble!(ass, transpose(kuxp))
@@ -101,7 +108,7 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
     qpits = (QPIterator(uxfesp, qargs), QPIterator(uyfesp, qargs), QPIterator(pfesp, qargs))
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, tndof, tndof)
-    @time integrate!(ass, elits, qpits, mu)
+    integrateK!(ass, elits, qpits, mu)
     return finish!(ass)
 end
 
@@ -210,22 +217,23 @@ function run(N)
     makeattribute(uyfesp, "uy", 1)
     ep = evaluate_pressure_error(pfesp)
     ev = evaluate_velocity_error(uxfesp, uyfesp)
-    vtkwrite("th_p2_p1_veclap-p", baseincrel(pmesh), [(name = "p",), ])
-    vtkwrite("th_p2_p1_veclap-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
+    vtkwrite("ht_p2_p1-p", baseincrel(pmesh), [(name = "p",), ])
+    vtkwrite("ht_p2_p1-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
     geom = geometry(pfesp.mesh)
     ir = baseincrel(pfesp.mesh)
     pt = VecAttrib([truep(geom[i]...) for i in 1:length(geom)])
     ir.right.attributes["pt"] = pt
-    vtkwrite("th_p2_p1_veclap-pt", baseincrel(pmesh), [(name = "pt",), ])
+    vtkwrite("ht_p2_p1-pt", baseincrel(pmesh), [(name = "pt",), ])
     return (ep, ev)
 end
 
 end
 
+using .ht_p2_p1
 let
-    N = 2
+    N = 4
     for loop in 1:5
-        ep, ev = th_p2_p1_veclap.run(N)
+        ep, ev = ht_p2_p1.run(N)
         @show N, ep, ev
         N = N * 2
     end

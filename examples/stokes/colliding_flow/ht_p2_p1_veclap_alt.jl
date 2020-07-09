@@ -1,8 +1,8 @@
 """
-    th_p2_p1_veclap_alt
+    ht_p2_p1_veclap_alt
 
 The manufactured-solution colliding flow example from Elman et al 2014. The
-Taylor-Hood formulation with quadratic triangles for the velocity and continuous
+Hood-Taylor formulation with quadratic triangles for the velocity and continuous
 pressure on linear triangles.
 
 This implementation is an alternative: for the velocity, a single finite element
@@ -13,7 +13,7 @@ The formulation is the one derived in Donea, Huerta, Introduction to the finite 
 method, 1993. Page 486 ff, and Elman, et al., Finite elements and fast
 iterative solvers, p. 132. In other words, it is the vector Laplacian version.
 """
-module th_p2_p1_veclap_alt
+module ht_p2_p1_veclap_alt
 
 using LinearAlgebra
 using StaticArrays
@@ -200,17 +200,18 @@ function run(N)
     makeattribute(ufesp, "uy", 2)
     ep = evaluate_pressure_error(pfesp)
     ev = evaluate_velocity_error(ufesp)
-    vtkwrite("th_p2_p1_veclap_alt-p", baseincrel(pmesh), [(name = "p",), ])
-    vtkwrite("th_p2_p1_veclap_alt-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
+    vtkwrite("ht_p2_p1_veclap_alt-p", baseincrel(pmesh), [(name = "p",), ])
+    vtkwrite("ht_p2_p1_veclap_alt-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
     return (ep, ev)
 end
 
 end
 
+using .ht_p2_p1_veclap_alt
 let
     N = 2
     for loop in 1:5
-        ep, ev = th_p2_p1_veclap_alt.run(N)
+        ep, ev = ht_p2_p1_veclap_alt.run(N)
         @show N, ep, ev
         N = N * 2
     end

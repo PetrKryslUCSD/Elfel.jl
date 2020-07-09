@@ -1,13 +1,13 @@
 """
-    th_p2_p1_veclap
+    ht_p2_p1_veclap
 
-The famous driven-cavity benchmark is solved here with Taylor-Hood combination
+The famous driven-cavity benchmark is solved here with Hood-Taylor combination
 of quadratic and linear triangles.
 
 The formulation is the one derived in Elman, et al., Finite elements and fast
 iterative solvers, p. 132. In other words, it is the vector Laplacian version.
 """
-module th_p2_p1_veclap
+module ht_p2_p1_veclap
 
 using LinearAlgebra
 using StaticArrays
@@ -150,10 +150,10 @@ function run()
     makeattribute(pfesp, "p", 1)
     makeattribute(uxfesp, "ux", 1)
     makeattribute(uyfesp, "uy", 1)
-    vtkwrite("th_p2_p1_veclap-p", baseincrel(pmesh), [(name = "p",), ])
-    vtkwrite("th_p2_p1_veclap-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
+    vtkwrite("ht_p2_p1_veclap-p", baseincrel(pmesh), [(name = "p",), ])
+    vtkwrite("ht_p2_p1_veclap-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
 end
 
 end
 
-th_p2_p1_veclap.run()
+ht_p2_p1_veclap.run()
