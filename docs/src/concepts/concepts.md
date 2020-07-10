@@ -1,6 +1,16 @@
 [Table of contents](https://petrkryslucsd.github.io/Elfel.jl/latest/index.html)
 
-# Concepts about the design and operation
+# Design and operation concepts
 
 Needs to be written.
+
+## Why a library of components
+
+## Basic types
+
+## Meshes
+
+
+
+
 
