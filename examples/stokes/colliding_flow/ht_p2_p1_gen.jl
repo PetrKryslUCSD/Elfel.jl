@@ -44,8 +44,18 @@ function genmesh(N)
 end
 
 function assembleK(ufesp, pfesp, tndof, D)
+    elits = (FEIterator(ufesp), FEIterator(pfesp))
+    qargs = (kind = :default, npts = 3,)
+    qpits = (QPIterator(ufesp, qargs), QPIterator(pfesp, qargs))
+    ass = SysmatAssemblerSparse(0.0)
+    start!(ass, tndof, tndof)
+    integrateK!(ass, elits, qpits, D)
+    return finish!(ass)
+    
     function integrateK!(ass, elits, qpits, D)
-        B = (g, k) -> k == 1 ? SVector{3}((g[1], 0, g[2])) : SVector{3}((0, g[2], g[1]))
+        B = (g, k) -> (k == 1 ? 
+            SVector{3}((g[1], 0, g[2])) : 
+            SVector{3}((0, g[2], g[1])))
         c = edofcompnt(ufesp)
         unedof, pnedof = ndofsperel.((ufesp, pfesp))
         kuu = LocalMatrixAssembler(unedof, unedof, 0.0)
@@ -78,13 +88,6 @@ function assembleK(ufesp, pfesp, tndof, D)
         return ass
     end
 
-    elits = (FEIterator(ufesp), FEIterator(pfesp))
-    qargs = (kind = :default, npts = 3,)
-    qpits = (QPIterator(ufesp, qargs), QPIterator(pfesp, qargs))
-    ass = SysmatAssemblerSparse(0.0)
-    start!(ass, tndof, tndof)
-    integrateK!(ass, elits, qpits, D)
-    return finish!(ass)
 end
 
 function solve!(U, K, F, nu)
