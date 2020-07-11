@@ -33,25 +33,6 @@ FElements.FEH1_T6
 FElements.FEH1_T3_BUBBLE
 ```
 
-## Fields
-
-```@docs
-FEFields.doftype
-FEFields.dofnumtype
-FEFields.nterms
-FEFields.ndofsperterm
-FEFields.ndofs
-FEFields.setebc!
-FEFields.numberfreedofs!
-FEFields.numberdatadofs!
-FEFields.freedofnums
-FEFields.datadofnums
-FEFields.highestfreedofnum
-FEFields.highestdatadofnum
-FEFields.gathersysvec!
-FEFields.scattersysvec!
-```
-
 ## Spaces
 
 ```@docs
@@ -73,6 +54,25 @@ FESpaces.gathersysvec!(v, fesp::AbstractVector)
 FESpaces.scattersysvec!(fesp::FESpaces.FESpace, v)
 FESpaces.scattersysvec!(fesp::AbstractVector, v) 
 FESpaces.makeattribute
+```
+
+### Spaces/Fields
+
+```@docs
+FESpaces.FEFields.doftype
+FESpaces.FEFields.dofnumtype
+FESpaces.FEFields.nterms
+FESpaces.FEFields.ndofsperterm
+FESpaces.FEFields.ndofs
+FESpaces.FEFields.setebc!
+FESpaces.FEFields.numberfreedofs!
+FESpaces.FEFields.numberdatadofs!
+FESpaces.FEFields.freedofnums
+FESpaces.FEFields.datadofnums
+FESpaces.FEFields.highestfreedofnum
+FESpaces.FEFields.highestdatadofnum
+FESpaces.FEFields.gathersysvec!
+FESpaces.FEFields.scattersysvec!
 ```
 
 ## Finite element iterators

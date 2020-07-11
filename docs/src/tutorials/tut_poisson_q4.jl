@@ -6,7 +6,7 @@
 # The solution will be defined  within a module in order to eliminate conflicts
 # with data or functions defined elsewhere.
 
-# The complete code is in the file [tut_poisson_q4.jl](tut_poisson_q4.jl).
+# The complete code is in the file [`tut_poisson_q4.jl`](tut_poisson_q4.jl).
 
 module tut_poisson_q4
 
