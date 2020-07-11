@@ -40,19 +40,19 @@ FESpaces.doftype
 FESpaces.edofmdim
 FESpaces.edofbfnum
 FESpaces.edofcompnt
-FESpaces.ndofsperel(fesp::FESpaces.FESpace)
-FESpaces.numberfreedofs!(fesp::FESpaces.FESpace, firstnum = 1)
-FESpaces.numberdatadofs!(fesp::FESpaces.FESpace, firstnum = 0)
-FESpaces.ndofs(fesp::FESpaces.FESpace)
+FESpaces.ndofsperel
+FESpaces.numberfreedofs!
+FESpaces.numberdatadofs!
+FESpaces.ndofs
 FESpaces.nunknowns
-FESpaces.highestfreedofnum(fesp::FESpaces.FESpace)
-FESpaces.highestdatadofnum(fesp::FESpaces.FESpace)
+FESpaces.highestfreedofnum
+FESpaces.highestdatadofnum
 FESpaces.numberdofs!
-FESpaces.setebc!(fesp::FESpaces.FESpace, mid, eid, comp, val)
-FESpaces.gathersysvec!(v, fesp::FESpaces.FESpace)
-FESpaces.gathersysvec!(v, fesp::AbstractVector) 
-FESpaces.scattersysvec!(fesp::FESpaces.FESpace, v)
-FESpaces.scattersysvec!(fesp::AbstractVector, v) 
+FESpaces.setebc!
+FESpaces.gathersysvec!
+FESpaces.gathersysvec!
+FESpaces.scattersysvec!
+FESpaces.scattersysvec!
 FESpaces.makeattribute
 ```
 
@@ -79,7 +79,7 @@ FESpaces.FEFields.scattersysvec!
 
 ```@docs
 Base.iterate
-FEIterators.ndofsperel(it::FEIterators.FEIterator)
+FEIterators.ndofsperel
 FEIterators.eldofs
 FEIterators.elnodes
 FEIterators.eldofentmdims
@@ -89,9 +89,13 @@ FEIterators.jacjac(it::FEIterators.FEIterator, qpit::QPIterators.QPIterator)
 
 ## Quadrature-point iterators
 
-```@autodocs
-Modules = [Elfel.QPIterators]
-Pages   = ["QPIterators.jl"]
+```@docs
+QPIterators.QPIterator
+Base.iterate
+QPIterators.bfun
+QPIterators.bfungradpar
+QPIterators.bfungrad
+QPIterators.weight
 ```
 
 ## Assemblers
