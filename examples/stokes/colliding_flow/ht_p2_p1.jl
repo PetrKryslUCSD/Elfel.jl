@@ -12,7 +12,7 @@ module ht_p2_p1
 
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities, identty, attribute, VecAttrib
+using MeshCore: retrieve, nrelations, nentities, ir_identity, attribute, VecAttrib
 using MeshSteward: T6block, T6toT3
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary, transform

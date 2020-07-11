@@ -11,7 +11,7 @@ module p1b_p1
 
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities, identty, attribute
+using MeshCore: retrieve, nrelations, nentities, ir_identity, attribute
 using MeshSteward: T3block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary, transform
@@ -42,7 +42,7 @@ function genmesh(N)
     attach!(mesh, T3block(2 * A, 2 * A, N, N), "velocity+pressure")
     ir = baseincrel(mesh)
     transform(ir, x -> x .- A)
-    eidir = identty(ir)
+    eidir = ir_identity(ir)
     attach!(mesh, eidir)
     return mesh
 end

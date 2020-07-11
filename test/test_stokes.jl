@@ -157,7 +157,7 @@ module m_stokes_driven_t3b
 
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities, identty
+using MeshCore: retrieve, nrelations, nentities, ir_identity
 using MeshSteward: T3block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary
@@ -185,7 +185,7 @@ function genmesh()
     mesh = Mesh()
     attach!(mesh, T3block(A, A, N, N), "velocity+pressure")
     ir = baseincrel(mesh)
-    eidir = identty(ir)
+    eidir = ir_identity(ir)
     attach!(mesh, eidir)
     return mesh
 end
@@ -330,7 +330,7 @@ module th_p2_p1
 using Test
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities, identty, attribute, VecAttrib
+using MeshCore: retrieve, nrelations, nentities, ir_identity, attribute, VecAttrib
 using MeshSteward: T6block, T6toT3
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary, transform
@@ -586,7 +586,7 @@ module m_th_p2_p1_veclap_alt
 using Test
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities, identty, attribute, VecAttrib
+using MeshCore: retrieve, nrelations, nentities, ir_identity, attribute, VecAttrib
 using MeshSteward: T6block, T6toT3
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary, transform

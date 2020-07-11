@@ -13,7 +13,7 @@ module q1_q0
 using LinearAlgebra
 using StaticArrays
 using MeshCore
-using MeshCore: retrieve, nrelations, nentities, identty, attribute
+using MeshCore: retrieve, nrelations, nentities, ir_identity, attribute
 using MeshSteward: Q4block
 using MeshSteward: Mesh, attach!, baseincrel, boundary, increl
 using MeshSteward: vselect, geometry, summary, transform
@@ -44,7 +44,7 @@ function genmesh(N)
     attach!(mesh, Q4block(2 * A, 2 * A, N, N), "velocity+pressure")
     ir = baseincrel(mesh)
     transform(ir, x -> x .- A)
-    eidir = identty(ir)
+    eidir = ir_identity(ir)
     attach!(mesh, eidir)
     return mesh
 end
