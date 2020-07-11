@@ -5,6 +5,7 @@ version = "0.5.0"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
 MeshCore = "43a99bba-f459-4d0e-8139-f3df11d847d4"
 MeshSteward = "ffa89bc3-d1bd-4aea-b9f7-e9902d9f56ab"
 Profile = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
