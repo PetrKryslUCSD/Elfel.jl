@@ -2,6 +2,18 @@
 
 Elfel provides support for the development of Finite Element Method applications, especially in the area of continuum mechanics. Mixed methods with cooperating finite element spaces are supported. High performance is one of the focus points.
 
+
+## Tutorials
+
+Tutorials showing application of the library to some common PDE problems.
+
+```@contents
+Pages = [
+    "tutorials/tutorials.md",
+]
+Depth = 1
+```
+
 ## How to guide
 
 The recipes.

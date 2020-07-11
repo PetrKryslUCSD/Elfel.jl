@@ -8,6 +8,7 @@ makedocs(
 	sitename = "Elfel.jl",
 	pages = Any[
 			"Home" => "index.md",
+			"Tutorials" => "tutorials/tutorials.md",
 			"How to guide" => "guide/guide.md",
 			"Reference" => "man/reference.md",
 			"Concepts" => "concepts/concepts.md"	
