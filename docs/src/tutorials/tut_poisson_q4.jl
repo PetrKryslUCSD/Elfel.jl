@@ -29,13 +29,21 @@ function run()
     # Generate the computational mesh.
     mesh = genmesh(A, N)
 
-    # Create the finite element space to represent the temperature solution.
+    # Create the finite element space to represent the temperature solution. The
+    # degrees of freedom are real numbers (`Float64`), the quadrilaterals are
+    # defined by the mesh, and each of the elements has the continuity ``H
+    # ^1``, i. e. both the function values and the derivatives are square
+    # integrable.
     Uh = FESpace(Float64, mesh, FEH1_Q4())
 
     # Apply the essential boundary conditions at the circumference of the square
-    # domain.
-    bir = boundary(mesh);
-    vl = connectedv(bir);
+    # domain. We find the boundary incidence relation (`boundary(mesh)`), and
+    # then the list of all vertices connected by the boundary cells. The
+    # function `tempf` defines the analytical temperature variation, and hence
+    # for each of the vertices `i` on the boundary (they are of manifold
+    # dimension  `0`), we set the component of the field (1) to the exact value
+    # of the temperature at that location.
+    vl = connectedv(boundary(mesh));
     locs = geometry(mesh)
     for i in vl
         setebc!(Uh, 0, i, 1, tempf(locs[i]...))
@@ -46,7 +54,8 @@ function run()
     numberdofs!(Uh)
     @show ndofs(Uh), nunknowns(Uh)
 
-    # Assemble the conductivity matrix and the vector of the heat loads.
+    # Assemble the conductivity matrix and the vector of the heat loads. Refer
+    # to the definitional this function below.
     K, F = assembleKF(Uh, kappa, Q)
 
     # This is a vector to hold all degrees of freedom in the system.
@@ -61,8 +70,8 @@ function run()
     # finite element space.
     scattersysvec!(Uh, T)
 
-    # Here we associate the values of the finite element with the entities of
-    # the mesh as an attribute.
+    # Here we associate the values of the finite element space with the entities
+    # of the mesh as an attribute.
     makeattribute(Uh, "T", 1)
 
     # The correctness of the solution is checked by comparing the values at the
@@ -75,25 +84,39 @@ function run()
     true # return success
 end
 
-# The domain is a square, meshed with quadrilateral elements.
+# The domain is a square, meshed with quadrilateral elements. The function
+# `Q4block` creates an incidence relation that defines the quadrilateral
+# element shapes by the vertices connected into the shapes. This incidence
+# relation is then attached to the mesh and the mesh is returned.
 function genmesh(A, N)
     conn = Q4block(A, A, N, N)
     return attach!(Mesh(), conn)
 end
 
+# This function constructs the left-hand side coefficient matrix, conductivity
+# matrix, as a sparse matrix, and a vector of the heat loads due to the
+# internal heat generation rate `Q`.
 function assembleKF(Uh, kappa, Q)
+    # This function evaluates the integrals. The key to making this calculation
+    # efficient is type stability. All the arguments coming in must have
+    # concrete types. This is why this function is a subfunction: the function
+    # barrier allows for all arguments to be resolved to concrete types.
     function integrate!(am, av, elit, qpit, kappa, Q)
         nedof = ndofsperel(elit)
-        ke = LocalMatrixAssembler(nedof, nedof, 0.0)
+        # The local assemblers are just like matrices or vectors
+        ke = LocalMatrixAssembler(nedof, nedof, 0.0) 
         fe = LocalVectorAssembler(nedof, 0.0)
-        for el in elit
-            init!(ke, eldofs(el), eldofs(el))
-            init!(fe, eldofs(el))
-            for qp in qpit
-                Jac, J = jacjac(el, qp)
-                gradN = bfungrad(qp, Jac)
-                JxW = J * weight(qp)
-                N = bfun(qp)
+        for el in elit # Loop over all elements
+            init!(ke, eldofs(el), eldofs(el)) # zero out elementwise matrix
+            init!(fe, eldofs(el)) # and vector
+            for qp in qpit # Now loop over the quadrature points
+                Jac, J = jacjac(el, qp) # Calculate the Jacobian matrix, Jacobian
+                gradN = bfungrad(qp, Jac) # Evaluate the spatial gradients
+                JxW = J * weight(qp) # elementary volume
+                N = bfun(qp) # Basis function values at the quadrature point
+                # This double loop evaluates the element wise conductivity
+                # matrix and the heat load vector precisely as the formula in
+                # the weak form  dictates.
                 for j in 1:nedof
                     for i in 1:nedof
                         ke[i, j] += dot(gradN[i], gradN[j]) * (kappa * JxW)
@@ -101,19 +124,31 @@ function assembleKF(Uh, kappa, Q)
                     fe[j] += N[j] * Q * JxW
                 end
             end
+            # Assemble the calculated contributions from this element
             assemble!(am, ke)
             assemble!(av, fe)
         end
-        return am, av
+        return am, av # Return the updated assemblers
     end
 
+    # First we create the element iterator. We can go through all the elements that
+    # define the domain of integration using this iterator. Each time a new element
+    # is accessed, some data are precomputed such as the element degrees of
+    # freedom.
     elit = FEIterator(Uh)
+    # This is the quadrature point iterator. We know that the elements are
+    # quadrilateral, which makes the Gauss integration rule the obvious choice.
+    # We also select order 2 for accuracy.
     qpit = QPIterator(Uh, (kind = :Gauss, order = 2))
+    # Next we create assemblers, one for the sparse system matrix and one for
+    # the system vector.
     am = start!(SysmatAssemblerSparse(0.0), ndofs(Uh), ndofs(Uh))
     av = start!(SysvecAssembler(0.0), ndofs(Uh))
-
+    # Now we call the integration function. The assemblers are modified inside
+    # this function...
     @time integrate!(am, av, elit, qpit, kappa, Q)
-
+    # ...so that when the integration is done, we can materialize the sparse
+    #    matrix and the vector and return them.
     return finish!(am), finish!(av)
 end
 
@@ -130,6 +165,9 @@ function solve!(T, K, F, nu)
     @time T[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
+# The correctness can be checked in various ways. Here we calculate the mean
+# deviation of the calculated temperatures at the nodes relative to the exact
+# values of the temperature.
 function checkcorrectness(Uh, tempf)
     geom = geometry(Uh.mesh)
     ir = baseincrel(Uh.mesh)
@@ -143,5 +181,6 @@ end
 
 end # module
 
+# The module can now be used. 
 using .tut_poisson_q4
 tut_poisson_q4.run()
