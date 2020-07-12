@@ -127,8 +127,9 @@ function assembleKF(Uh, kappa, Q)
     # At the top of the `assembleKF` we look at the function `integrate!` to
     # evaluate the weak-form integrals. The key to making this calculation
     # efficient is type stability. All the arguments coming in must have
-    # concrete types. This is why this function is a subfunction: the function
-    # barrier allows for all arguments to be resolved to concrete types.
+    # concrete types. This is why the `integrate!` function is an inner
+    # function: the function barrier allows for all arguments to be resolved to
+    # concrete types.
     function integrate!(am, av, elit, qpit, kappa, Q)
         nedof = ndofsperel(elit)
         # The local assemblers are just like matrices or vectors
