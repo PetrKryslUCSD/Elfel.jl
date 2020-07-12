@@ -122,7 +122,7 @@ function assembleKF(Uh, kappa, Q)
                 JxW = J * weight(qp) # elementary volume
                 N = bfun(qp) # Basis function values at the quadrature point
                 # This double loop evaluates the element wise conductivity
-                # matrix and the heat load vector precisely as the formula in
+                # matrix and the heat load vector precisely as the formula of
                 # the weak form  dictates.
                 for j in 1:nedof
                     for i in 1:nedof
