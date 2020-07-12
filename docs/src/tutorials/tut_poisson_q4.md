@@ -85,7 +85,7 @@ Number the degrees of freedom, both the unknowns and the data
 ```
 
 Assemble the conductivity matrix and the vector of the heat loads. Refer
-to the definitional this function below.
+to the definition of this function below.
 
 ```julia
     K, F = assembleKF(Uh, kappa, Q)
@@ -159,7 +159,8 @@ internal heat generation rate `Q`.
 function assembleKF(Uh, kappa, Q)
 ```
 
-This function evaluates the integrals. The key to making this calculation
+At the top of the `assembleKF` we look at the function `integrate!` to
+evaluate the weak-form integrals. The key to making this calculation
 efficient is type stability. All the arguments coming in must have
 concrete types. This is why this function is a subfunction: the function
 barrier allows for all arguments to be resolved to concrete types.
@@ -185,7 +186,7 @@ The local assemblers are just like matrices or vectors
 ```
 
 This double loop evaluates the element wise conductivity
-matrix and the heat load vector precisely as the formula in
+matrix and the heat load vector precisely as the formula of
 the weak form  dictates.
 
 ```julia
@@ -208,10 +209,10 @@ Assemble the calculated contributions from this element
     end
 ```
 
-First we create the element iterator. We can go through all the elements that
-define the domain of integration using this iterator. Each time a new element
-is accessed, some data are precomputed such as the element degrees of
-freedom.
+In the `assembleKF` function we first we create the element iterator. We
+can go through all the elements that define the domain of integration
+using this iterator. Each time a new element is accessed, some data are
+precomputed such as the element degrees of freedom.
 
 ```julia
     elit = FEIterator(Uh)
@@ -219,7 +220,10 @@ freedom.
 
 This is the quadrature point iterator. We know that the elements are
 quadrilateral, which makes the Gauss integration rule the obvious choice.
-We also select order 2 for accuracy.
+We also select order 2 for accuracy. Quadrature-point iterators provide
+access to basis function values and gradients, the Jacobian matrix and
+the Jacobian determinant, the location of the quadrature point and so
+on.
 
 ```julia
     qpit = QPIterator(Uh, (kind = :Gauss, order = 2))
@@ -241,7 +245,7 @@ this function...
 ```
 
 ...so that when the integration is done, we can materialize the sparse
-   matrix and the vector and return them.
+matrix and the vector and return them.
 
 ```julia
     return finish!(am), finish!(av)
