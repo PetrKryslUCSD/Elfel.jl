@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Solve the Stokes equation of colliding flow · Elfel.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">Elfel.jl</span></div><form class="docs-search" action="../search.html"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../index.html">Home</a></li><li><a class="tocitem" href="tutorials.html">Tutorials</a></li><li><a class="tocitem" href="../guide/guide.html">How to guide</a></li><li><a class="tocitem" href="../man/reference.html">Reference</a></li><li><a class="tocitem" href="../concepts/concepts.html">Concepts</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href="tut_stokes_ht_p2_p1_gen.html">Solve the Stokes equation of colliding flow</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href="tut_stokes_ht_p2_p1_gen.html">Solve the Stokes equation of colliding flow</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/PetrKryslUCSD/Elfel.jl/blob/master/docs/src/tutorials/tut_stokes_ht_p2_p1_gen.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Solve-the-Stokes-equation-of-colliding-flow"><a class="docs-heading-anchor" href="#Solve-the-Stokes-equation-of-colliding-flow">Solve the Stokes equation of colliding flow</a><a id="Solve-the-Stokes-equation-of-colliding-flow-1"></a><a class="docs-heading-anchor-permalink" href="#Solve-the-Stokes-equation-of-colliding-flow" title="Permalink"></a></h1><p>Synopsis: Compute the solution of the Stokes equation of incompressible viscous flow for a manufactured problem of colliding flow. Hood-Taylor triangular elements are used.</p><p>The manufactured-solution colliding flow example from Elman et al 2014. The Hood-Taylor formulation with quadratic triangles for the velocity and continuous pressure on linear triangles.</p><p>The formulation is the general elasticity-like scheme with strain-rate-displacement matrices. It can be manipulated into the one derived in Reddy, Introduction to the finite element method, 1993. Page 486 ff.</p><p>The complete code is in the file <a href="tut_stokes_ht_p2_p1_gen.jl"><code>tut_stokes_ht_p2_p1_gen.jl</code></a>.</p><p>The solution will be defined  within a module in order to eliminate conflicts with data or functions defined elsewhere.</p><pre><code class="language-julia">module tut_stokes_ht_p2_p1_gen</code></pre><p>We&#39;ll need some functionality from linear algebra, static arrays, and the mesh libraries. Some plotting will be produced to visualize structure of the stiffness matrix. Finally we will need the <code>Elfel</code> functionality.</p><pre><code class="language-julia">using LinearAlgebra
+using StaticArrays
+using MeshCore.Exports
+using MeshSteward.Exports
+using Elfel.Exports
+using UnicodePlots</code></pre><p>The boundary value problem is expressed in this weak form</p><div>\[ \int_{V}\underline{\underline{\varepsilon}}(\underline{\delta v})\;
+ \underline{\underline{D}}\; \underline{\underline{\varepsilon}}(\underline{u})\; \mathrm{d} V
+-\int_{V} \mathrm{div}(\underline{\delta v}) p\; \mathrm{d} V = 0,\quad \forall \underline{\delta v}\]</div><pre><code class="language-julia">mu = 1.0 # dynamic viscosity
+D = SMatrix{3, 3}(
+    [2*mu 0 0
+     0 2*mu 0
+     0 0 mu])
+A = 1.0 # half of the length of the side of the square
+trueux = (x, y) -&gt; 20 * x * y ^ 3
+trueuy = (x, y) -&gt; 5 * x ^ 4 - 5 * y ^ 4
+truep = (x, y) -&gt; 60 * x ^ 2 * y - 20 * y ^ 3
+
+function genmesh(N)</code></pre><p>Taylor-Hood pair of meshes is needed This mesh will be for the velocities</p><pre><code class="language-julia">    vmesh = Mesh()
+    attach!(vmesh, T6block(2 * A, 2 * A, N, N), &quot;velocity&quot;)
+    ir = baseincrel(vmesh)
+    transform(ir, x -&gt; x .- A)</code></pre><p>This mesh will be used for the pressures. Notice that it needs to be &quot;compatible&quot; with the velocity mesh in the sense that they need to share the nodes at the corners of the triangles.</p><pre><code class="language-julia">    pmesh = Mesh()
+    attach!(pmesh, T6toT3(baseincrel(vmesh, &quot;velocity&quot;)), &quot;pressure&quot;)
+    return vmesh, pmesh
+end
+
+function assembleK(ufesp, pfesp, tndof, D)
+    function integrateK!(ass, elits, qpits, D)
+        B = (g, k) -&gt; (k == 1 ?
+            SVector{3}((g[1], 0, g[2])) :
+            SVector{3}((0, g[2], g[1])))
+        c = edofcompnt(ufesp)
+        unedof, pnedof = ndofsperel.((ufesp, pfesp))
+        kuu = LocalMatrixAssembler(unedof, unedof, 0.0)
+        kup = LocalMatrixAssembler(unedof, pnedof, 0.0)
+        for el in zip(elits...)
+            uel, pel = el
+            init!(kuu, eldofs(uel), eldofs(uel))
+            init!(kup, eldofs(uel), eldofs(pel))
+            for qp in zip(qpits...)
+                uqp, pqp = qp
+                Jac, J = jacjac(uel, uqp)
+                JxW = J * weight(uqp)
+                gradNu = bfungrad(uqp, Jac)
+                Np = bfun(pqp)
+                for j in 1:unedof
+                    DBj = D * B(gradNu[j], c[j])
+                    for i in 1:unedof
+                        Bi = B(gradNu[i], c[i])
+                        kuu[i, j] += dot(Bi, DBj) * (JxW)
+                    end
+                end
+                for j in 1:pnedof, i in 1:unedof
+                    kup[i, j] += (-JxW * Np[j]) * gradNu[i][c[i]]
+                end
+            end
+            assemble!(ass, kuu)
+            assemble!(ass, kup)
+            assemble!(ass, transpose(kup))
+        end
+        return ass
+    end
+
+    elits = (FEIterator(ufesp), FEIterator(pfesp))
+    qargs = (kind = :default, npts = 3,)
+    qpits = (QPIterator(ufesp, qargs), QPIterator(pfesp, qargs))
+    ass = SysmatAssemblerSparse(0.0)
+    start!(ass, tndof, tndof)
+    integrateK!(ass, elits, qpits, D)
+    return finish!(ass)
+end
+
+function solve!(U, K, F, nu)
+    KT = K * U
+    U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
+end
+
+function evaluate_pressure_error(pfesp)
+    function integrate!(elit, qpit, truep)
+        pnedof = ndofsperel(elit)
+        E = 0.0
+        for el in elit
+            dofvals = eldofvals(el)
+            for qp in qpit
+                Jac, J = jacjac(el, qp)
+                JxW = J * weight(qp)
+                Np = bfun(qp)
+                pt = truep(location(el, qp)...)
+                pa = 0.0
+                for j in 1:pnedof
+                    pa += (dofvals[j] * Np[j])
+                end
+                E += (JxW) * (pa - pt)^2
+            end
+        end
+        return sqrt(E)
+    end
+
+    elit = FEIterator(pfesp)
+    qargs = (kind = :default, npts = 3,)
+    qpit = QPIterator(pfesp, qargs)
+    return integrate!(elit, qpit, truep)
+end
+
+function evaluate_velocity_error(ufesp)
+    function integrate!(elit, qpit, trueux, trueuy)
+        unedof = ndofsperel(elit)
+        uedofcomp = edofcompnt(ufesp)
+        E = 0.0
+        for el in elit
+            udofvals = eldofvals(el)
+            for qp in qpit
+                Jac, J = jacjac(el, qp)
+                JxW = J * weight(qp)
+                Nu = bfun(qp)
+                uxt = trueux(location(el, qp)...)
+                uyt = trueuy(location(el, qp)...)
+                uxa = 0.0
+                uya = 0.0
+                for j in 1:unedof
+                    (uedofcomp[j] == 1) &amp;&amp; (uxa += (udofvals[j] * Nu[j]))
+                    (uedofcomp[j] == 2) &amp;&amp; (uya += (udofvals[j] * Nu[j]))
+                end
+                E += (JxW) * ((uxa - uxt)^2 + (uya - uyt)^2)
+            end
+        end
+        return sqrt(E)
+    end
+
+    elit = FEIterator(ufesp)
+    qargs = (kind = :default, npts = 3,)
+    qpit = QPIterator(ufesp, qargs)
+    return integrate!(elit, qpit, trueux, trueuy)
+end
+
+function run(N)
+    vmesh, pmesh = genmesh(N)</code></pre><p>Velocity space: space with two components</p><pre><code class="language-julia">    ufesp = FESpace(Float64, vmesh, FEH1_T6(), 2)
+    locs = geometry(vmesh)
+    inflate = A / N / 100</code></pre><p>The entire boundary</p><pre><code class="language-julia">    boxes = [[-A A -A -A], [-A -A -A A], [A A -A A], [-A A A A]]
+    for box in boxes
+        vl = vselect(locs; box = box, inflate = inflate)
+        for i in vl
+            setebc!(ufesp, 0, i, 1, trueux(locs[i]...))
+            setebc!(ufesp, 0, i, 2, trueuy(locs[i]...))
+        end
+    end</code></pre><p>Pressure space</p><pre><code class="language-julia">    pfesp = FESpace(Float64, pmesh, FEH1_T3(), 1)
+    atcenter = vselect(geometry(pmesh); nearestto = [0.0, 0.0])
+    setebc!(pfesp, 0, atcenter[1], 1, 0.0)</code></pre><p>Number the degrees of freedom</p><pre><code class="language-julia">    numberdofs!(ufesp, pfesp)
+    tndof = ndofs(ufesp) + ndofs(pfesp)
+    tnunk = nunknowns(ufesp) + nunknowns(pfesp)</code></pre><p>Assemble the coefficient matrix</p><pre><code class="language-julia">    K = assembleK(ufesp, pfesp, tndof, D)</code></pre><p>p = spy(K, canvas = DotCanvas) display(p) Solve the system</p><pre><code class="language-julia">    U = fill(0.0, tndof)
+    gathersysvec!(U, [ufesp, pfesp])
+    F = fill(0.0, tndof)
+    solve!(U, K, F, tnunk)
+    scattersysvec!([ufesp, pfesp], U)</code></pre><p>Postprocessing</p><pre><code class="language-julia">    makeattribute(pfesp, &quot;p&quot;, 1)
+    makeattribute(ufesp, &quot;ux&quot;, 1)
+    makeattribute(ufesp, &quot;uy&quot;, 2)
+    ep = evaluate_pressure_error(pfesp)
+    ev = evaluate_velocity_error(ufesp)
+    vtkwrite(&quot;tut_stokes_ht_p2_p1_gen-p&quot;, baseincrel(pmesh), [(name = &quot;p&quot;,), ])
+    vtkwrite(&quot;tut_stokes_ht_p2_p1_gen-v&quot;, baseincrel(vmesh), [(name = &quot;ux&quot;,), (name = &quot;uy&quot;,)])</code></pre><p>geom = geometry(pfesp.mesh) ir = baseincrel(pfesp.mesh) pt = VecAttrib([truep(geom[i]...) for i in 1:length(geom)]) ir.right.attributes[&quot;pt&quot;] = pt vtkwrite(&quot;tut<em>stokes</em>ht<em>p2</em>p1_gen-pt&quot;, baseincrel(pmesh), [(name = &quot;pt&quot;,), ])</p><pre><code class="language-julia">    return (ep, ev)
+end
+
+end
+
+using .tut_stokes_ht_p2_p1_gen
+let
+    N = 4
+    for loop in 1:5
+        ep, ev = tut_stokes_ht_p2_p1_gen.run(N)
+        @show N, ep, ev
+        N = N * 2
+    end
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Sunday 12 July 2020 20:45">Sunday 12 July 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
