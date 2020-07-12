@@ -6,12 +6,18 @@
 # The solution will be defined  within a module in order to eliminate conflicts
 # with data or functions defined elsewhere.
 
-# The complete code is in the file [`tut_poisson_q4.jl`](tut_poisson_q4.jl).
+# The problem is linear heat conduction equation posed on a bi-the unit square,
+# solved with Dirichlet boundary conditions around the circumference. Uniform
+# nonzero heat generation rate is present. The exact solution is in this way
+# manufactured and hence known. That gives us an opportunity to calculate the
+# true error.
+
+# The complete code is in the file [`tut\_poisson\_q4.jl`](tut_poisson_q4.jl).
 
 module tut_poisson_q4
 
 # We'll need some functionality from linear algebra, and the mesh libraries.
-
+# Finally we will need the `Elfel` functionality.
 using LinearAlgebra
 using MeshCore.Exports
 using MeshSteward.Exports
