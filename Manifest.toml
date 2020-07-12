@@ -99,11 +99,11 @@ version = "0.9.1"
 
 [[MeshSteward]]
 deps = ["DelimitedFiles", "LinearAlgebra", "MeshCore", "StaticArrays", "Statistics", "Test", "WriteVTK"]
-git-tree-sha1 = "9581a88eb645c647ce0db74c47a726271d3fe30d"
+git-tree-sha1 = "8151cc79092be4736e2fc615abe93c5213b18d7a"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/MeshSteward.jl.git"
 uuid = "ffa89bc3-d1bd-4aea-b9f7-e9902d9f56ab"
-version = "0.6.1"
+version = "0.6.0"
 
 [[Missings]]
 deps = ["DataAPI"]
