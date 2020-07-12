@@ -3,16 +3,16 @@
 # Synopsis: Compute the solution of the Poisson equation of heat conduction with a
 # nonzero heat source. Quadrilateral four-node elements are used.
 
-# The solution will be defined  within a module in order to eliminate conflicts
-# with data or functions defined elsewhere.
-
-# The problem is linear heat conduction equation posed on a bi-the unit square,
+# The problem is linear heat conduction equation posed on a bi-unit square,
 # solved with Dirichlet boundary conditions around the circumference. Uniform
 # nonzero heat generation rate is present. The exact solution is in this way
 # manufactured and hence known. That gives us an opportunity to calculate the
 # true error.
 
-# The complete code is in the file [`tut\_poisson\_q4.jl`](tut_poisson_q4.jl).
+# The complete code is in the file [`tut_poisson_q4.jl`](tut_poisson_q4.jl).
+
+# The solution will be defined  within a module in order to eliminate conflicts
+# with data or functions defined elsewhere.
 
 module tut_poisson_q4
 
@@ -61,7 +61,7 @@ function run()
     @show ndofs(Uh), nunknowns(Uh)
 
     # Assemble the conductivity matrix and the vector of the heat loads. Refer
-    # to the definitional this function below.
+    # to the definition of this function below.
     K, F = assembleKF(Uh, kappa, Q)
 
     # This is a vector to hold all degrees of freedom in the system.
@@ -99,14 +99,37 @@ function genmesh(A, N)
     return attach!(Mesh(), conn)
 end
 
-# This function constructs the left-hand side coefficient matrix, conductivity
-# matrix, as a sparse matrix, and a vector of the heat loads due to the
-# internal heat generation rate `Q`.
+# The `assembleKF` function constructs the left-hand side coefficient matrix,
+# conductivity matrix, as a sparse matrix, and a vector of the heat loads due
+# to the internal heat generation rate `Q`.
+
+# The boundary value problem is expressed in this weak form
+# ```math
+# \int_{V}(\mathrm{grad}\vartheta)\; \kappa (\mathrm{grad}T
+#             )^T\; \mathrm{d} V
+#             -\int_{V}  \vartheta Q \; \mathrm{d} V  
+#              = 0
+# ```    
+# where the test function vanishes on the boundary where the temperature is 
+# prescribed, ``\vartheta(x) =0``  for  ``x \in{S_1}`` 
+# Substituting ``\vartheta = N_j `` and ``T = \sum_i N_i T_i`` we obtain the 
+# linear algebraic equations   
+# ```math
+# \sum_i T_i \int_{V}(\mathrm{grad}N_j)\; \kappa (N_i)^T\; \mathrm{d} V
+#             -\int_{V}  N_j Q \; \mathrm{d} V  
+#              = 0 \mbox{ for }\forall j.
+# ```   
+# The volume element is ``\mathrm{d} V``, which in our case 
+# becomes ``1.0\times\mathrm{d} S``, since the thickness of the two 
+# dimensional domain is assumed to be 1.0.
+
 function assembleKF(Uh, kappa, Q)
-    # This function evaluates the integrals. The key to making this calculation
+    # At the top of the `assembleKF` we look at the function `integrate!` to
+    # evaluate the weak-form integrals. The key to making this calculation
     # efficient is type stability. All the arguments coming in must have
-    # concrete types. This is why this function is a subfunction: the function
-    # barrier allows for all arguments to be resolved to concrete types.
+    # concrete types. This is why the `integrate!` function is an inner
+    # function: the function barrier allows for all arguments to be resolved to
+    # concrete types.
     function integrate!(am, av, elit, qpit, kappa, Q)
         nedof = ndofsperel(elit)
         # The local assemblers are just like matrices or vectors
@@ -120,12 +143,12 @@ function assembleKF(Uh, kappa, Q)
                 gradN = bfungrad(qp, Jac) # Evaluate the spatial gradients
                 JxW = J * weight(qp) # elementary volume
                 N = bfun(qp) # Basis function values at the quadrature point
-                # This double loop evaluates the element wise conductivity
-                # matrix and the heat load vector precisely as the formula in
-                # the weak form  dictates.
-                for j in 1:nedof
-                    for i in 1:nedof
-                        ke[i, j] += dot(gradN[i], gradN[j]) * (kappa * JxW)
+                # This double loop evaluates the elementwise conductivity
+                # matrix and the heat load vector precisely as the formula of
+                # the weak form  dictates; see above.
+                for i in 1:nedof
+                    for j in 1:nedof
+                        ke[j, i] += dot(gradN[j], gradN[i]) * (kappa * JxW)
                     end
                     fe[j] += N[j] * Q * JxW
                 end
@@ -137,14 +160,17 @@ function assembleKF(Uh, kappa, Q)
         return am, av # Return the updated assemblers
     end
 
-    # First we create the element iterator. We can go through all the elements that
-    # define the domain of integration using this iterator. Each time a new element
-    # is accessed, some data are precomputed such as the element degrees of
-    # freedom.
+    # In the `assembleKF` function we first we create the element iterator. We
+    # can go through all the elements that define the domain of integration
+    # using this iterator. Each time a new element is accessed, some data are
+    # precomputed such as the element degrees of freedom.
     elit = FEIterator(Uh)
     # This is the quadrature point iterator. We know that the elements are
     # quadrilateral, which makes the Gauss integration rule the obvious choice.
-    # We also select order 2 for accuracy.
+    # We also select order 2 for accuracy. Quadrature-point iterators provide
+    # access to basis function values and gradients, the Jacobian matrix and
+    # the Jacobian determinant, the location of the quadrature point and so
+    # on.
     qpit = QPIterator(Uh, (kind = :Gauss, order = 2))
     # Next we create assemblers, one for the sparse system matrix and one for
     # the system vector.
@@ -154,7 +180,7 @@ function assembleKF(Uh, kappa, Q)
     # this function...
     @time integrate!(am, av, elit, qpit, kappa, Q)
     # ...so that when the integration is done, we can materialize the sparse
-    #    matrix and the vector and return them.
+    # matrix and the vector and return them.
     return finish!(am), finish!(av)
 end
 
