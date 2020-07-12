@@ -31,8 +31,8 @@ using UnicodePlots
 
 # The boundary value problem is expressed in this weak form
 # ```math
-#  \int_{V}\underline{\underline{\varepsilon}}(\underline{\delta v})\; 
-#  \underline{\underline{D}}\; \underline{\underline{\varepsilon}}(\underline{u})\; \mathrm{d} V
+#  \int_{V}{\underline{\varepsilon}}(\underline{\delta v})^T\; 
+#  \underline{\underline{D}}\; {\underline{\varepsilon}}(\underline{u})\; \mathrm{d} V
 # - \int_{V} \mathrm{div}(\underline{\delta v})\; p\; \mathrm{d} V = 0,\quad \forall \underline{\delta v}
 # ```
 # ```math
