@@ -14,18 +14,18 @@ Modules = [Elfel.FElements]
 Pages   = ["FElements.jl"]
 ```
 
-## Fields
-
-```@autodocs
-Modules = [Elfel.FEFields]
-Pages   = ["FEFields.jl"]
-```
-
 ## Spaces
 
 ```@autodocs
 Modules = [Elfel.FESpaces]
 Pages   = ["FESpaces.jl"]
+```
+
+## Fields
+
+```@autodocs
+Modules = [Elfel.FESpaces.FEFields]
+Pages   = ["FEFields.jl"]
 ```
 
 ## Finite element iterators

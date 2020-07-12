@@ -56,25 +56,6 @@ FESpaces.scattersysvec!
 FESpaces.makeattribute
 ```
 
-### Spaces/Fields
-
-```@docs
-FESpaces.FEFields.doftype
-FESpaces.FEFields.dofnumtype
-FESpaces.FEFields.nterms
-FESpaces.FEFields.ndofsperterm
-FESpaces.FEFields.ndofs
-FESpaces.FEFields.setebc!
-FESpaces.FEFields.numberfreedofs!
-FESpaces.FEFields.numberdatadofs!
-FESpaces.FEFields.freedofnums
-FESpaces.FEFields.datadofnums
-FESpaces.FEFields.highestfreedofnum
-FESpaces.FEFields.highestdatadofnum
-FESpaces.FEFields.gathersysvec!
-FESpaces.FEFields.scattersysvec!
-```
-
 ## Finite element iterators
 
 ```@docs
@@ -101,18 +82,18 @@ QPIterators.weight
 ## Assemblers
 
 ```@docs
-Assemblers.SysmatAssemblerSparse(zero::T=0.0) where {T<:Number}
+Assemblers.SysmatAssemblerSparse
 Assemblers.start!
 Assemblers.assemble!
 Assemblers.finish!
-Assemblers.SysvecAssembler(zero::T=0.0) where {T<:Number}
+Assemblers.SysvecAssembler
 ```
 
 ## Local Assemblers
 
 ```@docs
-LocalAssemblers.LocalMatrixAssembler(nrow::IT, ncol::IT, z::T) where {IT, T}
-LocalAssemblers.LocalVectorAssembler(nrow::IT, z::T) where {IT, T}
+LocalAssemblers.LocalMatrixAssembler
+LocalAssemblers.LocalVectorAssembler
 Base.size
 Base.getindex
 Base.setindex!

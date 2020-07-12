@@ -109,16 +109,15 @@ end
 #             )^T\; \mathrm{d} V
 #             -\int_{V}  \vartheta Q \; \mathrm{d} V  
 #              = 0
-# ```    
+# ```
 # where the test function vanishes on the boundary where the temperature is 
 # prescribed, ``\vartheta(x) =0``  for  ``x \in{S_1}`` 
 # Substituting ``\vartheta = N_j `` and ``T = \sum_i N_i T_i`` we obtain the 
 # linear algebraic equations   
 # ```math
-# \sum_i T_i \int_{V}(\mathrm{grad}N_j)\; \kappa (N_i)^T\; \mathrm{d} V
-#             -\int_{V}  N_j Q \; \mathrm{d} V  
-#              = 0 \mbox{ for }\forall j.
-# ```   
+# \sum_i T_i \int_{V} \mathrm{grad}N_j \; \kappa (\mathrm{grad}N_i)^T\; \mathrm{d} V
+#  -\int_{V}  N_j Q \; \mathrm{d} V  = 0 , \quad \forall j.
+# ```
 # The volume element is ``\mathrm{d} V``, which in our case 
 # becomes ``1.0\times\mathrm{d} S``, since the thickness of the two 
 # dimensional domain is assumed to be 1.0.
