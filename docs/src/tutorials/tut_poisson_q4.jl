@@ -99,9 +99,9 @@ function genmesh(A, N)
     return attach!(Mesh(), conn)
 end
 
-# This function constructs the left-hand side coefficient matrix, conductivity
-# matrix, as a sparse matrix, and a vector of the heat loads due to the
-# internal heat generation rate `Q`.
+# The `assembleKF` function constructs the left-hand side coefficient matrix,
+# conductivity matrix, as a sparse matrix, and a vector of the heat loads due
+# to the internal heat generation rate `Q`.
 
 # The boundary value problem is expressed in this weak form
 # ```math
@@ -122,6 +122,7 @@ end
 # The volume element is ``\mathrm{d} V``, which in our case 
 # becomes ``1.0\times\mathrm{d} S``, since the thickness of the two 
 # dimensional domain is assumed to be 1.0.
+
 function assembleKF(Uh, kappa, Q)
     # At the top of the `assembleKF` we look at the function `integrate!` to
     # evaluate the weak-form integrals. The key to making this calculation
