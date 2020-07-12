@@ -167,9 +167,8 @@ prescribed, ``\vartheta(x) =0``  for  ``x \in{S_1}``
 Substituting ``\vartheta = N_j `` and ``T = \sum_i N_i T_i`` we obtain the
 linear algebraic equations
 ```math
-\sum_i T_i \int_{V}(\mathrm{grad}N_j)\; \kappa (N_i)^T\; \mathrm{d} V
-            -\int_{V}  N_j Q \; \mathrm{d} V
-             = 0 \mbox{ for }\forall j.
+\sum_i T_i \int_{V} \mathrm{grad}N_j \; \kappa (\mathrm{grad}N_i)^T\; \mathrm{d} V
+ -\int_{V}  N_j Q \; \mathrm{d} V  = 0 , \quad \forall j.
 ```
 The volume element is ``\mathrm{d} V``, which in our case
 becomes ``1.0\times\mathrm{d} S``, since the thickness of the two
@@ -182,8 +181,9 @@ function assembleKF(Uh, kappa, Q)
 At the top of the `assembleKF` we look at the function `integrate!` to
 evaluate the weak-form integrals. The key to making this calculation
 efficient is type stability. All the arguments coming in must have
-concrete types. This is why this function is a subfunction: the function
-barrier allows for all arguments to be resolved to concrete types.
+concrete types. This is why the `integrate!` function is an inner
+function: the function barrier allows for all arguments to be resolved to
+concrete types.
 
 ```julia
     function integrate!(am, av, elit, qpit, kappa, Q)
