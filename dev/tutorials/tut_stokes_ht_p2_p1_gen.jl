@@ -33,10 +33,10 @@ using UnicodePlots
 # ```math
 #  \int_{V}\underline{\underline{\varepsilon}}(\underline{\delta v})\; 
 #  \underline{\underline{D}}\; \underline{\underline{\varepsilon}}(\underline{u})\; \mathrm{d} V
-# - \int_{V} \mathrm{div}(\underline{\delta v}) p\; \mathrm{d} V = 0,\quad \forall \underline{\delta v}
+# - \int_{V} \mathrm{div}(\underline{\delta v})\; p\; \mathrm{d} V = 0,\quad \forall \underline{\delta v}
 # ```
 # ```math
-#  - \int_{V} \delta q\; \mathrm{div}(\underline{u}) p\; \mathrm{d} V = 0,\quad \forall \delta q
+#  - \int_{V} \delta q\; \mathrm{div}(\underline{u}) \; \mathrm{d} V = 0,\quad \forall \delta q
 # ```
 # Here ``\underline{\delta v}`` are the test functions in the velocity space, 
 # and ``\delta q`` are the pressure test functions.
@@ -66,7 +66,7 @@ function run()
     # function values and the derivatives are square integrable. Each node
     # carries 2 degrees of freedom, hence there are two velocity components per
     # node.
-    ufesp = FESpace(Float64, vmesh, FEH1_T6(), 2)
+    Uh = FESpace(Float64, vmesh, FEH1_T6(), 2)
 
     # Now we apply the boundary conditions at the nodes around the
     # circumference. 
@@ -83,55 +83,77 @@ function run()
         for i in vl
             # Remember that all  components of the velocity are known at the
             # boundary.
-            setebc!(ufesp, 0, i, 1, trueux(locs[i]...))
-            setebc!(ufesp, 0, i, 2, trueuy(locs[i]...))
+            setebc!(Uh, 0, i, 1, trueux(locs[i]...))
+            setebc!(Uh, 0, i, 2, trueuy(locs[i]...))
         end
     end
 
     # No we construct the pressure space. It is a continuous, piecewise linear
     # space supported on a mesh of three-node triangles.
-    pfesp = FESpace(Float64, pmesh, FEH1_T3(), 1)
+    Ph = FESpace(Float64, pmesh, FEH1_T3(), 1)
 
     # The pressure in this "enclosed" flow example is only known up to a constant.
     # By setting  pressure degree of freedom at one node will make the solution
     # unique.
     atcenter = vselect(geometry(pmesh); nearestto = [0.0, 0.0])
-    setebc!(pfesp, 0, atcenter[1], 1, 0.0)
+    setebc!(Ph, 0, atcenter[1], 1, 0.0)
 
     # Number the degrees of freedom. First all the free degrees of freedom are
     # numbered, both velocities and pressures. Next all the data degrees of
     # freedom are numbered, again both for the velocities and for the
     # pressures.
-    numberdofs!(ufesp, pfesp)
+    numberdofs!(Uh, Ph)
     # The total number of degrees of freedom is now calculated.
-    tndof = ndofs(ufesp) + ndofs(pfesp)
+    tndof = ndofs(Uh) + ndofs(Ph)
     # As is the total number of unknowns.
-    tnunk = nunknowns(ufesp) + nunknowns(pfesp)
+    tnunk = nunknowns(Uh) + nunknowns(Ph)
 
-    # Assemble the coefficient matrix
-    K = assembleK(ufesp, pfesp, tndof, D)
-    # p = spy(K, canvas = DotCanvas)
-    # display(p)
-    # Solve the system
+    # Assemble the coefficient matrix.
+    K = assembleK(Uh, Ph, tndof, D)
+
+    # Display the structure of the indefinite stiffness matrix. Note that this is the complete matrix, including rows and columns for all the degrees of freedom, unknown and known.
+    p = spy(K, canvas = DotCanvas)
+    display(p)
+
+    # Solve the linear algebraic system. First construct system vector of all
+    # the degrees of freedom, in the first `tnunk` rows that corresponds to the
+    # unknowns, and the subsequent rows are for the data degrees of freedom.
     U = fill(0.0, tndof)
-    gathersysvec!(U, [ufesp, pfesp])
+    gathersysvec!(U, [Uh, Ph])
+    # Note that  the vector `U` consists of nonzero numbers in rows are for the
+    # data degrees of freedom. Multiplying the stiffness matrix with this
+    # vector will generate a load vector  on the right-hand side. Otherwise there is no loading, hence the vector `F` consists of all zeros.
     F = fill(0.0, tndof)
     solve!(U, K, F, tnunk)
-    scattersysvec!([ufesp, pfesp], U)
-    # Postprocessing
-    makeattribute(pfesp, "p", 1)
-    makeattribute(ufesp, "ux", 1)
-    makeattribute(ufesp, "uy", 2)
-    ep = evaluate_pressure_error(pfesp, truep)
-    ev = evaluate_velocity_error(ufesp, trueux, trueuy)
+    # Once we have solved the system of linear equations, we can distribute the
+    # solution from the vector `U` into the finite element spaces.
+    scattersysvec!([Uh, Ph], U)
+
+    # Given that the solution is manufactured, that is exactly known, we can
+    # calculate the true errors.
+    @show ep = evaluate_pressure_error(Ph, truep)
+    @show ev = evaluate_velocity_error(Uh, trueux, trueuy)
+
+    # Postprocessing. First we make attributes, scalar nodal attributes,
+    # associated with the meshes for the pressures and the velocity.
+    makeattribute(Ph, "p", 1)
+    makeattribute(Uh, "ux", 1)
+    makeattribute(Uh, "uy", 2)
+    # The pressure and the velocity components are then written out into two VTK
+    # files.
     vtkwrite("tut_stokes_ht_p2_p1_gen-p", baseincrel(pmesh), [(name = "p",), ])
     vtkwrite("tut_stokes_ht_p2_p1_gen-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
-    # geom = geometry(pfesp.mesh)
-    # ir = baseincrel(pfesp.mesh)
-    # pt = VecAttrib([truep(geom[i]...) for i in 1:length(geom)])
-    # ir.right.attributes["pt"] = pt
-    # vtkwrite("tut_stokes_ht_p2_p1_gen-pt", baseincrel(pmesh), [(name = "pt",), ])
-    return (ep, ev)
+    
+    # The  method converges very well, but, why not, here is the true pressure
+    # written out into a VTK file as well. We create a synthetic attribute by
+    # evaluating the true pressure at the locations of the nodes  of the
+    # pressure mesh.
+    geom = geometry(Ph.mesh)
+    ir = baseincrel(Ph.mesh)
+    ir.right.attributes["pt"] = VecAttrib([truep(geom[i]...) for i in 1:length(geom)])
+    vtkwrite("tut_stokes_ht_p2_p1_gen-pt", baseincrel(pmesh), [(name = "pt",), ])
+    
+    return true
 end
 
 function genmesh(A, N)
@@ -150,13 +172,13 @@ function genmesh(A, N)
     return vmesh, pmesh
 end
 
-function assembleK(ufesp, pfesp, tndof, D)
+function assembleK(Uh, Ph, tndof, D)
     function integrate!(ass, elits, qpits, D)
         B = (g, k) -> (k == 1 ? 
             SVector{3}((g[1], 0, g[2])) : 
             SVector{3}((0, g[2], g[1])))
-        c = edofcompnt(ufesp)
-        unedof, pnedof = ndofsperel.((ufesp, pfesp))
+        c = edofcompnt(Uh)
+        unedof, pnedof = ndofsperel.((Uh, Ph))
         kuu = LocalMatrixAssembler(unedof, unedof, 0.0)
         kup = LocalMatrixAssembler(unedof, pnedof, 0.0)
         for el in zip(elits...)
@@ -187,9 +209,9 @@ function assembleK(ufesp, pfesp, tndof, D)
         return ass
     end
 
-    elits = (FEIterator(ufesp), FEIterator(pfesp))
+    elits = (FEIterator(Uh), FEIterator(Ph))
     qargs = (kind = :default, npts = 3,)
-    qpits = (QPIterator(ufesp, qargs), QPIterator(pfesp, qargs))
+    qpits = (QPIterator(Uh, qargs), QPIterator(Ph, qargs))
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, tndof, tndof)
     integrate!(ass, elits, qpits, D)
@@ -201,7 +223,7 @@ function solve!(U, K, F, nu)
     U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
-function evaluate_pressure_error(pfesp, truep)
+function evaluate_pressure_error(Ph, truep)
     function integrate!(elit, qpit, truep)
         pnedof = ndofsperel(elit)
         E = 0.0
@@ -222,16 +244,16 @@ function evaluate_pressure_error(pfesp, truep)
         return sqrt(E)
     end
 
-    elit = FEIterator(pfesp)
+    elit = FEIterator(Ph)
     qargs = (kind = :default, npts = 3,)
-    qpit = QPIterator(pfesp, qargs)
+    qpit = QPIterator(Ph, qargs)
     return integrate!(elit, qpit, truep)
 end
 
-function evaluate_velocity_error(ufesp, trueux, trueuy)
+function evaluate_velocity_error(Uh, trueux, trueuy)
     function integrate!(elit, qpit, trueux, trueuy)
         unedof = ndofsperel(elit)
-        uedofcomp = edofcompnt(ufesp)
+        uedofcomp = edofcompnt(Uh)
         E = 0.0
         for el in elit
             udofvals = eldofvals(el)
@@ -253,9 +275,9 @@ function evaluate_velocity_error(ufesp, trueux, trueuy)
         return sqrt(E)
     end
 
-    elit = FEIterator(ufesp)
+    elit = FEIterator(Uh)
     qargs = (kind = :default, npts = 3,)
-    qpit = QPIterator(ufesp, qargs)
+    qpit = QPIterator(Uh, qargs)
     return integrate!(elit, qpit, trueux, trueuy)
 end
 
