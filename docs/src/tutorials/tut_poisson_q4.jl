@@ -3,16 +3,16 @@
 # Synopsis: Compute the solution of the Poisson equation of heat conduction with a
 # nonzero heat source. Quadrilateral four-node elements are used.
 
-# The solution will be defined  within a module in order to eliminate conflicts
-# with data or functions defined elsewhere.
-
-# The problem is linear heat conduction equation posed on a bi-the unit square,
+# The problem is linear heat conduction equation posed on a bi-unit square,
 # solved with Dirichlet boundary conditions around the circumference. Uniform
 # nonzero heat generation rate is present. The exact solution is in this way
 # manufactured and hence known. That gives us an opportunity to calculate the
 # true error.
 
-# The complete code is in the file [`tut\_poisson\_q4.jl`](tut_poisson_q4.jl).
+# The complete code is in the file [`tut_poisson_q4.jl`](tut_poisson_q4.jl).
+
+# The solution will be defined  within a module in order to eliminate conflicts
+# with data or functions defined elsewhere.
 
 module tut_poisson_q4
 
@@ -102,6 +102,26 @@ end
 # This function constructs the left-hand side coefficient matrix, conductivity
 # matrix, as a sparse matrix, and a vector of the heat loads due to the
 # internal heat generation rate `Q`.
+
+# The boundary value problem is expressed in this weak form
+# ```math
+# \int_{V}(\mathrm{grad}\vartheta)\; \kappa (\mathrm{grad}T
+#             )^T\; \mathrm{d} V
+#             -\int_{V}  \vartheta Q \; \mathrm{d} V  
+#              = 0
+# ```    
+# where the test function vanishes on the boundary where the temperature is 
+# prescribed, ``\vartheta(x) =0``  for  ``x \in{S_1}`` 
+# Substituting ``\vartheta = N_j `` and ``T = \sum_i N_i T_i`` we obtain the 
+# linear algebraic equations   
+# ```math
+# \sum_i T_i \int_{V}(\mathrm{grad}N_j)\; \kappa (N_i)^T\; \mathrm{d} V
+#             -\int_{V}  N_j Q \; \mathrm{d} V  
+#              = 0 \mbox{ for }\forall j.
+# ```   
+# The volume element is ``\mathrm{d} V``, which in our case 
+# becomes ``1.0\times\mathrm{d} S``, since the thickness of the two 
+# dimensional domain is assumed to be 1.0.
 function assembleKF(Uh, kappa, Q)
     # At the top of the `assembleKF` we look at the function `integrate!` to
     # evaluate the weak-form integrals. The key to making this calculation
@@ -121,12 +141,12 @@ function assembleKF(Uh, kappa, Q)
                 gradN = bfungrad(qp, Jac) # Evaluate the spatial gradients
                 JxW = J * weight(qp) # elementary volume
                 N = bfun(qp) # Basis function values at the quadrature point
-                # This double loop evaluates the element wise conductivity
+                # This double loop evaluates the elementwise conductivity
                 # matrix and the heat load vector precisely as the formula of
-                # the weak form  dictates.
-                for j in 1:nedof
-                    for i in 1:nedof
-                        ke[i, j] += dot(gradN[i], gradN[j]) * (kappa * JxW)
+                # the weak form  dictates; see above.
+                for i in 1:nedof
+                    for j in 1:nedof
+                        ke[j, i] += dot(gradN[j], gradN[i]) * (kappa * JxW)
                     end
                     fe[j] += N[j] * Q * JxW
                 end
