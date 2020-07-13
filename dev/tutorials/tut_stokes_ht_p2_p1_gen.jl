@@ -203,34 +203,51 @@ function assembleK(Uh, Ph, tndof, D)
         B = (g, k) -> (k == 1 ? 
             SVector{3}((g[1], 0, g[2])) : 
             SVector{3}((0, g[2], g[1])))
+        # This array defines the components for the element degrees of freedom,
+        # as defined above as ``c(i)``.
         c = edofcompnt(Uh)
+        # These are the totals of the velocity and pressure degrees of freedom
+        # per element.
         unedof, pnedof = ndofsperel.((Uh, Ph))
+        # The local matrix assemblers are used as if they were ordinary
+        # elementwise dense matrices. Here they are defined.
         kuu = LocalMatrixAssembler(unedof, unedof, 0.0)
         kup = LocalMatrixAssembler(unedof, pnedof, 0.0)
         for el in zip(elits...)
             uel, pel = el
+            # The local matrix assemblers are initialized with zeros for the
+            # values, and with the element degree of freedom vectors to be used
+            # in the assembly. The assembler `kuu` is used for the velocity
+            # degrees of freedom, and the assembler `kup` collect the coupling
+            # coefficients between the velocity and the pressure.
             init!(kuu, eldofs(uel), eldofs(uel))
             init!(kup, eldofs(uel), eldofs(pel))
             for qp in zip(qpits...)
                 uqp, pqp = qp
+                # The integration is performed using the velocity quadrature points.
                 Jac, J = jacjac(uel, uqp)
                 JxW = J * weight(uqp)
-                gradNu = bfungrad(uqp, Jac)
-                Np = bfun(pqp)
-                for j in 1:unedof
-                    DBj = D * B(gradNu[j], c[j])
-                    for i in 1:unedof
-                        Bi = B(gradNu[i], c[i])
-                        kuu[i, j] += dot(Bi, DBj) * (JxW)
+                gradNu = bfungrad(uqp, Jac) # gradients of the velocity basis functions
+                Np = bfun(pqp) # pressure basis functions
+                # This double loop corresponds precisely to the integrals of the
+                # weak form. This is the  matrix in the upper left corner.
+                for i in 1:unedof
+                    DBi = D * B(gradNu[i], c[i])
+                    for j in 1:unedof
+                        Bj = B(gradNu[j], c[j])
+                        kuu[j, i] += dot(Bj, DBi) * (JxW)
                     end
                 end
-                for j in 1:pnedof, i in 1:unedof
-                    kup[i, j] += (-JxW * Np[j]) * gradNu[i][c[i]]
+                # And this is the coupling matrix in the top right corner.
+                for i in 1:pnedof, j in 1:unedof
+                    kup[j, i] += gradNu[j][c[j]] * (-JxW * Np[i])
                 end
             end
+            # Assemble the matrices. The submatrix off the diagonal is assembled
+            # twice, once as itself, and once as its transpose.
             assemble!(ass, kuu)
-            assemble!(ass, kup)
-            assemble!(ass, transpose(kup))
+            assemble!(ass, kup) # top right corner
+            assemble!(ass, transpose(kup)) # bottom left corner
         end
         return ass
     end
