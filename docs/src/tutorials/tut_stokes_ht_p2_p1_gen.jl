@@ -175,7 +175,9 @@ end
 
 function assembleK(Uh, Ph, tndof, D)
     function integrate!(ass, elits, qpits, D)
-        # The test strain rate vector is calculated as
+        # Consider the elementwise definition of the test strain rate. It is
+        # calculated from the elementwise degrees of freedom and the associated
+        # basis functions  as
         # ```math
         # {\underline{\varepsilon}}(\underline{\delta v}) =
         #  \sum_i{\delta V}_i {\underline{B}_{c(i)}(N_i)}
