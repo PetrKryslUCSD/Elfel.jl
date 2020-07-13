@@ -1,4 +1,4 @@
-# # Solve the Stokes equation of colliding flow
+# # Solve the Stokes equation of colliding flow: vector Laplacian version
 
 # Synopsis: Compute the solution of the Stokes equation of two-dimensional
 # incompressible viscous flow for a manufactured problem of colliding flow.
@@ -12,16 +12,17 @@
 # arrows at random points.
 # ![Pressure and velocity](colliding.png)
 
-# The formulation is the general elasticity-like scheme with
-# strain-rate/velocity matrices. It can be manipulated into the one derived
-# in Reddy, Introduction to the finite element method, 1993. Page 486 ff.
+# The formulation is the one derived in Donea, Huerta, Introduction to the
+# finite element method, 1993. Page 486 ff, and Elman, et al., Finite elements
+# and fast iterative solvers, p. 132. In brief, it is the vector
+# Laplacian version.
 
-# The complete code is in the file [`tut_stokes_ht_p2_p1_gen.jl`](tut_stokes_ht_p2_p1_gen.jl).
+# The complete code is in the file [`tut_stokes_ht_p2_p1_veclap.jl`](tut_stokes_ht_p2_p1_veclap.jl).
 
 # The solution will be defined  within a module in order to eliminate conflicts
 # with data or functions defined elsewhere.
 
-module tut_stokes_ht_p2_p1_gen
+module tut_stokes_ht_p2_p1_veclap
 
 # We'll need some functionality from linear algebra, static arrays, and the mesh
 # libraries. Some plotting will be produced to visualize structure of the
@@ -35,8 +36,8 @@ using UnicodePlots
 
 # The boundary value problem is expressed in this weak form
 # ```math
-#  \int_{V}{\underline{\varepsilon}}(\underline{\delta v})^T\; 
-#  \underline{\underline{D}}\; {\underline{\varepsilon}}(\underline{u})\; \mathrm{d} V
+#  \int_{V}\mu {\underline{\nabla}}\;\underline{\delta v}\; :\;
+# {\underline{\nabla}}\;\underline{u}\; \mathrm{d} V
 # - \int_{V} \mathrm{div}(\underline{\delta v})\; p\; \mathrm{d} V = 0,\quad \forall \underline{\delta v}
 # ```
 # ```math
@@ -44,15 +45,12 @@ using UnicodePlots
 # ```
 # Here ``\underline{\delta v}`` are the test functions in the velocity space,
 # and ``\delta q`` are the pressure test functions. Further ``\underline
-# {u}`` is the trial velocity, and ``p`` is the trial pressure.
+# {u}`` is the trial velocity, and ``p`` is the trial pressure. The operator
+# ``:`` produces the componentwise scaler product of the gradients, ``A\; :\;B
+# = A_{ij}B_{ij}``.
 
 function run()
     mu = 1.0 # dynamic viscosity
-    # This is the material-property matrix ``\underline{\underline{D}}``:
-    D = SMatrix{3, 3}(
-        [2*mu  0   0
-          0  2*mu  0
-          0    0   mu])
     A = 1.0 # half of the length of the side of the square
     N = 100 # number of element edges per side of the square
     # These three functions define the true velocity components and the true
@@ -114,7 +112,7 @@ function run()
     tnunk = nunknowns(Uh) + nunknowns(Ph)
 
     # Assemble the coefficient matrix.
-    K = assembleK(Uh, Ph, tndof, D)
+    K = assembleK(Uh, Ph, tndof, mu)
 
     # Display the structure of the indefinite stiffness matrix. Note that this
     # is the complete matrix, including rows and columns for all the degrees of
@@ -149,8 +147,8 @@ function run()
     makeattribute(Uh, "uy", 2)
     # The pressure and the velocity components are then written out into two VTK
     # files.
-    vtkwrite("tut_stokes_ht_p2_p1_gen-p", baseincrel(pmesh), [(name = "p",), ])
-    vtkwrite("tut_stokes_ht_p2_p1_gen-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
+    vtkwrite("tut_stokes_ht_p2_p1_veclap-p", baseincrel(pmesh), [(name = "p",), ])
+    vtkwrite("tut_stokes_ht_p2_p1_veclap-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
     
     # The  method converges very well, but, why not, here is the true pressure
     # written out into a VTK file as well. We create a synthetic attribute by
@@ -159,7 +157,7 @@ function run()
     geom = geometry(Ph.mesh)
     ir = baseincrel(Ph.mesh)
     ir.right.attributes["pt"] = VecAttrib([truep(geom[i]...) for i in 1:length(geom)])
-    vtkwrite("tut_stokes_ht_p2_p1_gen-pt", baseincrel(pmesh), [(name = "pt",), ])
+    vtkwrite("tut_stokes_ht_p2_p1_veclap-pt", baseincrel(pmesh), [(name = "pt",), ])
     
     return true
 end
@@ -180,8 +178,8 @@ function genmesh(A, N)
     return vmesh, pmesh
 end
 
-function assembleK(Uh, Ph, tndof, D)
-    function integrate!(ass, elits, qpits, D)
+function assembleK(Uh, Ph, tndof, mu)
+    function integrate!(ass, elits, qpits, mu)
         # Consider the elementwise definition of the test strain rate, ``
         # {\underline{\varepsilon}}(\underline{\delta v})``. It is calculated
         # from the elementwise degrees of freedom and the associated basis
@@ -252,11 +250,9 @@ function assembleK(Uh, Ph, tndof, D)
                 Np = bfun(pqp) # pressure basis functions
                 # This double loop corresponds precisely to the integrals of the
                 # weak form. This is the  matrix in the upper left corner.
-                for i in 1:n_du
-                    DBi = D * B(gradNu[i], c[i])
-                    for j in 1:n_du
-                        Bj = B(gradNu[j], c[j])
-                        kuu[j, i] += dot(Bj, DBi) * (JxW)
+                for i in 1:n_du, j in 1:n_du
+                    if c[i] == c[j]
+                        kuu[j, i] += (mu * JxW) * (dot(gradNu[j], gradNu[i]))
                     end
                 end
                 # And this is the coupling matrix in the top right corner.
@@ -272,6 +268,36 @@ function assembleK(Uh, Ph, tndof, D)
         end
         return ass # return the updated assembler of the global matrix
     end
+    # function integrate!(ass, elits, qpits, mu)
+    #     unedof, pnedof = ndofsperel.(elits)
+    #     uedofcomp = edofcompnt(ufesp)
+    #     kuu = LocalMatrixAssembler(unedof, unedof, 0.0)
+    #     kup = LocalMatrixAssembler(unedof, pnedof, 0.0)
+    #     for el in zip(elits...)
+    #         uel, pel = el
+    #         init!(kuu, eldofs(uel), eldofs(uel))
+    #         init!(kup, eldofs(uel), eldofs(pel))
+    #         for qp in zip(qpits...)
+    #             uqp, pqp = qp
+    #             Jac, J = jacjac(uel, uqp)
+    #             JxW = J * weight(uqp)
+    #             gradNu = bfungrad(uqp, Jac)
+    #             Np = bfun(pqp)
+    #             for j in 1:unedof, i in 1:unedof
+    #                 if uedofcomp[i] == uedofcomp[j]
+    #                     kuu[i, j] += (mu * JxW) * (dot(gradNu[i], gradNu[j]))
+    #                 end
+    #             end
+    #             for j in 1:pnedof, i in 1:unedof
+    #                 kup[i, j] += (-JxW * Np[j]) * gradNu[i][uedofcomp[i]]
+    #             end
+    #         end
+    #         assemble!(ass, kuu)
+    #         assemble!(ass, kup)
+    #         assemble!(ass, transpose(kup))
+    #     end
+    #     return ass
+    # end
 
     # In the `assembleK` function we first we create the element iterators. We
     # can go through all the elements, both in the velocity finite element
@@ -296,7 +322,7 @@ function assembleK(Uh, Ph, tndof, D)
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, tndof, tndof)
     # The integration is carried out, and then...
-    integrate!(ass, elits, qpits, D)
+    integrate!(ass, elits, qpits, mu)
     # ...we materialize the sparse stiffness matrix and return it.
     return finish!(ass)
 end
@@ -382,7 +408,7 @@ end
 end
 
 # To run the example, evaluate this file which will  compile the module
-# `.tut_stokes_ht_p2_p1_gen`.
-using .tut_stokes_ht_p2_p1_gen
-tut_stokes_ht_p2_p1_gen.run()
+# `.tut_stokes_ht_p2_p1_veclap`.
+using .tut_stokes_ht_p2_p1_veclap
+tut_stokes_ht_p2_p1_veclap.run()
 
