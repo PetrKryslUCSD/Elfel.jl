@@ -281,51 +281,8 @@ function assembleK(Uh, Ph, tndof, mu)
     function integrate!(ass, elits, qpits, mu)
 ```
 
-Consider the elementwise definition of the test strain rate, ``
-{\underline{\varepsilon}}(\underline{\delta v})``. It is calculated
-from the elementwise degrees of freedom and the associated basis
-functions  as
-```math
-{\underline{\varepsilon}}(\underline{\delta v}) =
- \sum_i{\delta V}_i {\underline{B}_{c(i)}(N_i)}
-```
-where ``i = 1, \ldots, n_{du}``, and ``n_{du}`` is the number of
-velocity degrees of freedom per element, ``c(i)`` is the number of
-the component corresponding to the degree of freedom ``i``. This is
-either 1 when degree of freedom ``i`` is the ``x``-component of the
-velocity, 2 otherwise(for the ``y``-component of the velocity).
-Analogously for the trial strain rate.
-
-The strain-rate/velocity matrices are defined as
-```math
-{\underline{B}_{1}(N_i)} =
-\left[\begin{array}{c}
-     \partial{N_i}/\partial{x}  \\
-     0 \\
-     \partial{N_i}/\partial{y}
-\end{array}\right],
-```
-and
-```math
-{\underline{B}_{2}(N_i)} =
-\left[\begin{array}{c}
-     0 \\
-     \partial{N_i}/\partial{y}  \\
-     \partial{N_i}/\partial{x}
-\end{array}\right].
-```
-This tiny function evaluates the strain-rate/velocity matrices defined above
-from the gradient of a basis function and the given number of the
-component corresponding to the current degree of freedom.
-
-```julia
-        B = (g, k) -> (k == 1 ?
-            SVector{3}((g[1], 0, g[2])) :
-            SVector{3}((0, g[2], g[1])))
-```
-
-This array defines the components for the element degrees of freedom,
-as defined above as ``c(i)``.
+This array defines the components for the element degrees of freedom:
+``c(i)`` is 1 or 2.
 
 ```julia
         c = edofcompnt(Uh)
@@ -374,7 +331,8 @@ The integration is performed using the velocity quadrature points.
 ```
 
 This double loop corresponds precisely to the integrals of the
-weak form. This is the  matrix in the upper left corner.
+weak form: dot product of the gradients of the basis
+functions. This is the  matrix in the upper left corner.
 
 ```julia
                 for i in 1:n_du, j in 1:n_du
@@ -404,37 +362,6 @@ twice, once as itself, and once as its transpose.
         return ass # return the updated assembler of the global matrix
     end
 ```
-
-function integrate!(ass, elits, qpits, mu)
-    unedof, pnedof = ndofsperel.(elits)
-    uedofcomp = edofcompnt(ufesp)
-    kuu = LocalMatrixAssembler(unedof, unedof, 0.0)
-    kup = LocalMatrixAssembler(unedof, pnedof, 0.0)
-    for el in zip(elits...)
-        uel, pel = el
-        init!(kuu, eldofs(uel), eldofs(uel))
-        init!(kup, eldofs(uel), eldofs(pel))
-        for qp in zip(qpits...)
-            uqp, pqp = qp
-            Jac, J = jacjac(uel, uqp)
-            JxW = J * weight(uqp)
-            gradNu = bfungrad(uqp, Jac)
-            Np = bfun(pqp)
-            for j in 1:unedof, i in 1:unedof
-                if uedofcomp[i] == uedofcomp[j]
-                    kuu[i, j] += (mu * JxW) * (dot(gradNu[i], gradNu[j]))
-                end
-            end
-            for j in 1:pnedof, i in 1:unedof
-                kup[i, j] += (-JxW * Np[j]) * gradNu[i][uedofcomp[i]]
-            end
-        end
-        assemble!(ass, kuu)
-        assemble!(ass, kup)
-        assemble!(ass, transpose(kup))
-    end
-    return ass
-end
 
 In the `assembleK` function we first we create the element iterators. We
 can go through all the elements, both in the velocity finite element
