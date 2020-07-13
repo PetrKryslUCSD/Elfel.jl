@@ -44,7 +44,8 @@ The boundary value problem is expressed in this weak form
  - \int_{V} \delta q\; \mathrm{div}(\underline{u}) \; \mathrm{d} V = 0,\quad \forall \delta q
 ```
 Here ``\underline{\delta v}`` are the test functions in the velocity space,
-and ``\delta q`` are the pressure test functions.
+and ``\delta q`` are the pressure test functions. Further ``\underline
+{u}`` is the trial velocity, and ``p`` is the trial pressure.
 
 ```julia
 function run()
@@ -270,15 +271,17 @@ function assembleK(Uh, Ph, tndof, D)
     function integrate!(ass, elits, qpits, D)
 ```
 
-The strain rate vector is calculated as
+The test strain rate vector is calculated as
 ```math
 {\underline{\varepsilon}}(\underline{\delta v}) =
- \sum_i{\underline{B}_{c(i)}(N_i)}({\delta V}_i)
+ \sum_i{\delta V}_i {\underline{B}_{c(i)}(N_i)}
 ```
-where ``c(i)`` is the number of the component corresponding
-```math    # to the degree of freedom ``i``. This is either 1 when degree of
-freedom ``i`` is the ``x``-component of the velocity, 2 otherwise
-(for the ``y``-component of the velocity).
+where ``c(i)`` is the number of the component corresponding to the
+degree of freedom ``i``. This is either 1 when degree of freedom
+``i`` is the ``x``-component of the velocity, 2 otherwise(for the
+``y``-component of the velocity). Analogously for the trial strain
+rate.
+
 The strain-rate matrices are defined as
 {\underline{B}_{1}(N_i)} =
 \left[\begin{array}{c}
