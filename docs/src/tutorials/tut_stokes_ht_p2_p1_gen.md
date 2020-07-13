@@ -7,9 +7,10 @@ triangular elements are used.
 The manufactured-solution colliding flow example from Elman et al 2014. The
 Hood-Taylor formulation with quadratic triangles for the velocity and
 continuous pressure on linear triangles.
+![Pressure and velocity](colliding.png)
 
 The formulation is the general elasticity-like scheme with
-strain-rate-displacement matrices. It can be manipulated into the one derived
+strain-rate/velocity matrices. It can be manipulated into the one derived
 in Reddy, Introduction to the finite element method, 1993. Page 486 ff.
 
 The complete code is in the file [`tut_stokes_ht_p2_p1_gen.jl`](tut_stokes_ht_p2_p1_gen.jl).
@@ -347,8 +348,8 @@ in the assembly. The assembler `kuu` is used for the velocity
 degrees of freedom, and the assembler `kup` collect the coupling
 coefficients between the velocity and the pressure. The function
 `eldofs` collects the global numbers of the degrees of freedom
-either for the velocity space, or for the pressure space (`eldofs
-(pel)`).
+either for the velocity space, or for the pressure space
+(`eldofs(pel)`).
 
 ```julia
             init!(kuu, eldofs(uel), eldofs(uel))
