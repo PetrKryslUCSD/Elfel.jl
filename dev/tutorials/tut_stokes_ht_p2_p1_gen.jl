@@ -258,7 +258,7 @@ function assembleK(Uh, Ph, tndof, D)
             assemble!(ass, kup) # top right corner
             assemble!(ass, transpose(kup)) # bottom left corner
         end
-        return ass
+        return ass # return the updated assembler of the global matrix
     end
 
     # In the `assembleK` function we first we create the element iterators. We
