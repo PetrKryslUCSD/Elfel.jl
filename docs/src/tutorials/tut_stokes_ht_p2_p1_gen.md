@@ -300,6 +300,9 @@ and
      \partial{N_i}/\partial{x}
 \end{array}\right].
 ```
+This tiny function evaluates the strain rate matrices defined above
+from the gradient of a basis function and the given number of the
+component corresponding to the current degree of freedom.
 
 ```julia
         B = (g, k) -> (k == 1 ?

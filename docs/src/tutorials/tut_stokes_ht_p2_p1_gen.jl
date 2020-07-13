@@ -204,6 +204,9 @@ function assembleK(Uh, Ph, tndof, D)
         #      \partial{N_i}/\partial{x}
         # \end{array}\right].
         # ```
+        # This tiny function evaluates the strain rate matrices defined above
+        # from the gradient of a basis function and the given number of the
+        # component corresponding to the current degree of freedom.
         B = (g, k) -> (k == 1 ? 
             SVector{3}((g[1], 0, g[2])) : 
             SVector{3}((0, g[2], g[1])))
