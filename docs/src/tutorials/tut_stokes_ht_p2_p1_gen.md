@@ -1,12 +1,15 @@
 # Solve the Stokes equation of colliding flow
 
-Synopsis: Compute the solution of the Stokes equation of incompressible
-viscous flow for a manufactured problem of colliding flow. Hood-Taylor
-triangular elements are used.
+Synopsis: Compute the solution of the Stokes equation of two-dimensional
+incompressible viscous flow for a manufactured problem of colliding flow.
+Hood-Taylor triangular elements are used.
 
-The manufactured-solution colliding flow example from Elman et al 2014. The
+The "manufactured" colliding flow example from Elman et al 2014. The
 Hood-Taylor formulation with quadratic triangles for the velocity and
 continuous pressure on linear triangles.
+
+The pressure is shown here with contours, and the velocities visualized with
+arrows at random points.
 ![Pressure and velocity](colliding.png)
 
 The formulation is the general elasticity-like scheme with
