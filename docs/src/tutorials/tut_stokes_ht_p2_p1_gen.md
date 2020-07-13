@@ -36,8 +36,8 @@ using UnicodePlots
 
 The boundary value problem is expressed in this weak form
 ```math
- \int_{V}\underline{\underline{\varepsilon}}(\underline{\delta v})\;
- \underline{\underline{D}}\; \underline{\underline{\varepsilon}}(\underline{u})\; \mathrm{d} V
+ \int_{V}{\underline{\varepsilon}}(\underline{\delta v})^T\;
+ \underline{\underline{D}}\; {\underline{\varepsilon}}(\underline{u})\; \mathrm{d} V
 - \int_{V} \mathrm{div}(\underline{\delta v})\; p\; \mathrm{d} V = 0,\quad \forall \underline{\delta v}
 ```
 ```math
@@ -268,6 +268,36 @@ end
 
 function assembleK(Uh, Ph, tndof, D)
     function integrate!(ass, elits, qpits, D)
+```
+
+The strain rate vector is calculated as
+```math
+{\underline{\varepsilon}}(\underline{\delta v}) =
+ \sum_i{\underline{B}_{c(i)}(N_i)}({\delta V}_i)
+```
+where ``c(i)`` is the number of the component corresponding
+```math    # to the degree of freedom ``i``. This is either 1 when degree of
+freedom ``i`` is the ``x``-component of the velocity, 2 otherwise
+(for the ``y``-component of the velocity).
+The strain-rate matrices are defined as
+{\underline{B}_{1}(N_i)} =
+\left[\begin{array}{c}
+     \partial{N_i}/\partial{x}  \\
+     0 \\
+     \partial{N_i}/\partial{y}
+\end{array}\right],
+```
+and
+```math
+{\underline{B}_{2}(N_i)} =
+\left[\begin{array}{c}
+     0 \\
+     \partial{N_i}/\partial{y}  \\
+     \partial{N_i}/\partial{x}
+\end{array}\right].
+```
+
+```julia
         B = (g, k) -> (k == 1 ?
             SVector{3}((g[1], 0, g[2])) :
             SVector{3}((0, g[2], g[1])))
@@ -302,16 +332,64 @@ function assembleK(Uh, Ph, tndof, D)
         end
         return ass
     end
+```
 
+In the `assembleK` function we first we create the element iterators. We
+can go through all the elements, both in the velocity finite element
+space and in the pressure finite element space, that define the domain of
+integration using this iterator. Each time a new element is accessed,
+some data are precomputed such as the element degrees of freedom,
+components of the degree of freedom, etc. Note that we need to iterate
+two finite element spaces, hence we create a tuple of iterators.
+
+```julia
     elits = (FEIterator(Uh), FEIterator(Ph))
+```
+
+These are the quadrature point iterators. We know that the elements are
+triangular. We choose the three-point rule, to capture the quadratic
+component in the velocity space. Quadrature-point iterators provide
+access to basis function values and gradients, the Jacobian matrix and
+the Jacobian determinant, the location of the quadrature point and so
+on. Note that we need to iterate the quadrature rules of
+two finite element spaces, hence we create a tuple of iterators.
+
+```julia
     qargs = (kind = :default, npts = 3,)
     qpits = (QPIterator(Uh, qargs), QPIterator(Ph, qargs))
+```
+
+The matrix will be assembled into this assembler. Which is initialized
+with the total number of degrees of freedom (dimension of the coefficient
+matrix before partitioning into unknowns and data degrees of freedom).
+
+```julia
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, tndof, tndof)
+```
+
+The integration is carried out, and then...
+
+```julia
     integrate!(ass, elits, qpits, D)
+```
+
+...we materialize the sparse stiffness matrix and return it.
+
+```julia
     return finish!(ass)
 end
+```
 
+The linear algebraic system is solved by partitioning. The vector `U` is
+initially all zero, except in the degrees of freedom which are prescribed as
+nonzero. Therefore the product of the stiffness matrix and the vector `U`
+are the loads due to nonzero essential boundary conditions.  The
+submatrix of the stiffness conduction matrix corresponding to the free degrees of
+freedom (unknowns), `K[1:nu, 1:nu]` is then used to solve for the unknowns `U
+[1:nu]`.
+
+```julia
 function solve!(U, K, F, nu)
     KT = K * U
     U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
