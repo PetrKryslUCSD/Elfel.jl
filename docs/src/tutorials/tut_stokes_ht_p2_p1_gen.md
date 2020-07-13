@@ -79,7 +79,7 @@ velocity and pressure spaces.
     vmesh, pmesh = genmesh(A, N)
 ```
 
-Constructive velocity space: it is a vector space with two components. The
+Construct the velocity space: it is a vector space with two components. The
 degrees of freedom are real numbers (`Float64`). The velocity mesh
 carries the finite elements of  the continuity ``H ^1``, i. e. both the
 function values and the derivatives are square integrable. Each node
@@ -164,7 +164,9 @@ Assemble the coefficient matrix.
     K = assembleK(Uh, Ph, tndof, D)
 ```
 
-Display the structure of the indefinite stiffness matrix. Note that this is the complete matrix, including rows and columns for all the degrees of freedom, unknown and known.
+Display the structure of the indefinite stiffness matrix. Note that this
+is the complete matrix, including rows and columns for all the degrees of
+freedom, unknown and known.
 
 ```julia
     p = spy(K, canvas = DotCanvas)
@@ -182,7 +184,8 @@ unknowns, and the subsequent rows are for the data degrees of freedom.
 
 Note that  the vector `U` consists of nonzero numbers in rows are for the
 data degrees of freedom. Multiplying the stiffness matrix with this
-vector will generate a load vector  on the right-hand side. Otherwise there is no loading, hence the vector `F` consists of all zeros.
+vector will generate a load vector  on the right-hand side. Otherwise
+there is no loading, hence the vector `F` consists of all zeros.
 
 ```julia
     F = fill(0.0, tndof)
@@ -196,7 +199,7 @@ solution from the vector `U` into the finite element spaces.
     scattersysvec!([Uh, Ph], U)
 ```
 
-Given that the solution is manufactured, that is exactly known, we can
+Given that the solution is manufactured, i. e. exactly known, we can
 calculate the true errors.
 
 ```julia
@@ -271,20 +274,22 @@ function assembleK(Uh, Ph, tndof, D)
     function integrate!(ass, elits, qpits, D)
 ```
 
-Consider the elementwise definition of the test strain rate. It is
-calculated from the elementwise degrees of freedom and the associated
-basis functions  as
+Consider the elementwise definition of the test strain rate, ``
+{\underline{\varepsilon}}(\underline{\delta v})``. It is calculated
+from the elementwise degrees of freedom and the associated basis
+functions  as
 ```math
 {\underline{\varepsilon}}(\underline{\delta v}) =
  \sum_i{\delta V}_i {\underline{B}_{c(i)}(N_i)}
 ```
-where ``c(i)`` is the number of the component corresponding to the
-degree of freedom ``i``. This is either 1 when degree of freedom
-``i`` is the ``x``-component of the velocity, 2 otherwise(for the
-``y``-component of the velocity). Analogously for the trial strain
-rate.
+where ``i = 1, \ldots, n_{du}``, and ``n_{du}`` is the number of
+velocity degrees of freedom per element, ``c(i)`` is the number of
+the component corresponding to the degree of freedom ``i``. This is
+either 1 when degree of freedom ``i`` is the ``x``-component of the
+velocity, 2 otherwise(for the ``y``-component of the velocity).
+Analogously for the trial strain rate.
 
-The strain-rate matrices are defined as
+The strain-rate/velocity matrices are defined as
 ```math
 {\underline{B}_{1}(N_i)} =
 \left[\begin{array}{c}
@@ -302,7 +307,7 @@ and
      \partial{N_i}/\partial{x}
 \end{array}\right].
 ```
-This tiny function evaluates the strain rate matrices defined above
+This tiny function evaluates the strain-rate/velocity matrices defined above
 from the gradient of a basis function and the given number of the
 component corresponding to the current degree of freedom.
 
@@ -323,15 +328,15 @@ These are the totals of the velocity and pressure degrees of freedom
 per element.
 
 ```julia
-        unedof, pnedof = ndofsperel.((Uh, Ph))
+        n_du, n_dp = ndofsperel.((Uh, Ph))
 ```
 
 The local matrix assemblers are used as if they were ordinary
 elementwise dense matrices. Here they are defined.
 
 ```julia
-        kuu = LocalMatrixAssembler(unedof, unedof, 0.0)
-        kup = LocalMatrixAssembler(unedof, pnedof, 0.0)
+        kuu = LocalMatrixAssembler(n_du, n_du, 0.0)
+        kup = LocalMatrixAssembler(n_du, n_dp, 0.0)
         for el in zip(elits...)
             uel, pel = el
 ```
@@ -340,7 +345,10 @@ The local matrix assemblers are initialized with zeros for the
 values, and with the element degree of freedom vectors to be used
 in the assembly. The assembler `kuu` is used for the velocity
 degrees of freedom, and the assembler `kup` collect the coupling
-coefficients between the velocity and the pressure.
+coefficients between the velocity and the pressure. The function
+`eldofs` collects the global numbers of the degrees of freedom
+either for the velocity space, or for the pressure space (`eldofs
+(pel)`).
 
 ```julia
             init!(kuu, eldofs(uel), eldofs(uel))
@@ -362,9 +370,9 @@ This double loop corresponds precisely to the integrals of the
 weak form. This is the  matrix in the upper left corner.
 
 ```julia
-                for i in 1:unedof
+                for i in 1:n_du
                     DBi = D * B(gradNu[i], c[i])
-                    for j in 1:unedof
+                    for j in 1:n_du
                         Bj = B(gradNu[j], c[j])
                         kuu[j, i] += dot(Bj, DBi) * (JxW)
                     end
@@ -374,7 +382,7 @@ weak form. This is the  matrix in the upper left corner.
 And this is the coupling matrix in the top right corner.
 
 ```julia
-                for i in 1:pnedof, j in 1:unedof
+                for i in 1:n_dp, j in 1:n_du
                     kup[j, i] += gradNu[j][c[j]] * (-JxW * Np[i])
                 end
             end
@@ -455,7 +463,7 @@ end
 
 function evaluate_pressure_error(Ph, truep)
     function integrate!(elit, qpit, truep)
-        pnedof = ndofsperel(elit)
+        n_dp = ndofsperel(elit)
         E = 0.0
         for el in elit
             dofvals = eldofvals(el)
@@ -465,7 +473,7 @@ function evaluate_pressure_error(Ph, truep)
                 Np = bfun(qp)
                 pt = truep(location(el, qp)...)
                 pa = 0.0
-                for j in 1:pnedof
+                for j in 1:n_dp
                     pa += (dofvals[j] * Np[j])
                 end
                 E += (JxW) * (pa - pt)^2
@@ -482,7 +490,7 @@ end
 
 function evaluate_velocity_error(Uh, trueux, trueuy)
     function integrate!(elit, qpit, trueux, trueuy)
-        unedof = ndofsperel(elit)
+        n_du = ndofsperel(elit)
         uedofcomp = edofcompnt(Uh)
         E = 0.0
         for el in elit
@@ -495,7 +503,7 @@ function evaluate_velocity_error(Uh, trueux, trueuy)
                 uyt = trueuy(location(el, qp)...)
                 uxa = 0.0
                 uya = 0.0
-                for j in 1:unedof
+                for j in 1:n_du
                     (uedofcomp[j] == 1) && (uxa += (udofvals[j] * Nu[j]))
                     (uedofcomp[j] == 2) && (uya += (udofvals[j] * Nu[j]))
                 end
