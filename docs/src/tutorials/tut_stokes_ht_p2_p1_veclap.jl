@@ -46,8 +46,18 @@ using UnicodePlots
 # Here ``\underline{\delta v}`` are the test functions in the velocity space,
 # and ``\delta q`` are the pressure test functions. Further ``\underline
 # {u}`` is the trial velocity, and ``p`` is the trial pressure. The operator
-# ``:`` produces the componentwise scaler product of the gradients, ``A\; :\;B
-# = A_{ij}B_{ij}``.
+# ``:`` produces the componentwise scalar product of the gradients, 
+# ```math
+# A\; :\;B = A_{ij}B_{ij}``.
+# ```
+# Then the first term may be rewritten as
+# ```math
+# {\underline{\nabla}}\;\underline{\delta v}\; :\;
+# {\underline{\nabla}}\;\underline{u} = 
+# (\underline{\nabla}\delta v_x)^T \underline{\nabla}u_x + 
+# (\underline{\nabla}\delta v_y)^T \underline{\nabla}u_y
+# ```
+
 
 function run()
     mu = 1.0 # dynamic viscosity
