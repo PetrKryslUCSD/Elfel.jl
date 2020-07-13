@@ -187,6 +187,7 @@ function assembleK(Uh, Ph, tndof, D)
         # rate.
 
         # The strain-rate matrices are defined as
+        # ```math
         # {\underline{B}_{1}(N_i)} = 
         # \left[\begin{array}{c}
         #      \partial{N_i}/\partial{x}  \\
