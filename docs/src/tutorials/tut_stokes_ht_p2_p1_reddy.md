@@ -1,4 +1,4 @@
-# Solve the Stokes equation of colliding flow: vector Laplacian version
+# Solve the Stokes equation of colliding flow: Reddy formulation
 
 Synopsis: Compute the solution of the Stokes equation of two-dimensional
 incompressible viscous flow for a manufactured problem of colliding flow.

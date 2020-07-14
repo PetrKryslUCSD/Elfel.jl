@@ -1,12 +1,12 @@
-# Solve the Stokes equation of colliding flow: Hood-Taylor, general formulation
+# Solve the Stokes equation of colliding flow: MINI element, general formulation
 
 Synopsis: Compute the solution of the Stokes equation of two-dimensional
 incompressible viscous flow for a manufactured problem of colliding flow.
-Hood-Taylor triangular elements are used.
+Bubble-function triangular elements are used.
 
-The "manufactured" colliding flow example from Elman et al 2014. The
-Hood-Taylor formulation with quadratic triangles for the velocity and
-continuous pressure on linear triangles.
+The "manufactured" colliding flow example from Elman et al 2014. The MINI
+formulation with linear triangles with a cubic bubble function for the
+velocity and continuous pressure on linear triangles.
 
 The pressure is shown here with contours, and the velocities visualized with
 arrows at random points.
@@ -16,13 +16,13 @@ The formulation is the general elasticity-like scheme with
 strain-rate/velocity matrices. It can be manipulated into the one derived
 in Reddy, Introduction to the finite element method, 1993. Page 486 ff.
 
-The complete code is in the file [`tut_stokes_ht_p2_p1_gen.jl`](tut_stokes_ht_p2_p1_gen.jl).
+The complete code is in the file [`tut_stokes_ht_p1b_p1_gen.jl`](tut_stokes_ht_p1b_p1_gen.jl).
 
 The solution will be defined  within a module in order to eliminate conflicts
 with data or functions defined elsewhere.
 
 ```julia
-module tut_stokes_ht_p2_p1_gen
+module tut_stokes_ht_p1b_p1_gen
 ```
 
 We'll need some functionality from linear algebra, static arrays, and the mesh
@@ -80,7 +80,7 @@ Construct the two meshes for the mixed method. They need to support the
 velocity and pressure spaces.
 
 ```julia
-    vmesh, pmesh = genmesh(A, N)
+    mesh = genmesh(A, N)
 ```
 
 Construct the velocity space: it is a vector space with two components. The
@@ -91,14 +91,14 @@ carries 2 degrees of freedom, hence there are two velocity components per
 node.
 
 ```julia
-    Uh = FESpace(Float64, vmesh, FEH1_T6(), 2)
+    Uh = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 2)
 ```
 
 Now we apply the boundary conditions at the nodes around the
 circumference.
 
 ```julia
-    locs = geometry(vmesh)
+    locs = geometry(mesh)
 ```
 
 We use searching based on the presence of the node within a box. The
@@ -129,7 +129,7 @@ No we construct the pressure space. It is a continuous, piecewise linear
 space supported on a mesh of three-node triangles.
 
 ```julia
-    Ph = FESpace(Float64, pmesh, FEH1_T3(), 1)
+    Ph = FESpace(Float64, mesh, FEH1_T3(), 1)
 ```
 
 The pressure in this "enclosed" flow example is only known up to a constant.
@@ -137,7 +137,7 @@ By setting  pressure degree of freedom at one node will make the solution
 unique.
 
 ```julia
-    atcenter = vselect(geometry(pmesh); nearestto = [0.0, 0.0])
+    atcenter = vselect(geometry(mesh); nearestto = [0.0, 0.0])
     setebc!(Ph, 0, atcenter[1], 1, 0.0)
 ```
 
@@ -224,20 +224,8 @@ The pressure and the velocity components are then written out into two VTK
 files.
 
 ```julia
-    vtkwrite("tut_stokes_ht_p2_p1_gen-p", baseincrel(pmesh), [(name = "p",), ])
-    vtkwrite("tut_stokes_ht_p2_p1_gen-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
-```
-
-The  method converges very well, but, why not, here is the true pressure
-written out into a VTK file as well. We create a synthetic attribute by
-evaluating the true pressure at the locations of the nodes  of the
-pressure mesh.
-
-```julia
-    geom = geometry(Ph.mesh)
-    ir = baseincrel(Ph.mesh)
-    ir.right.attributes["pt"] = VecAttrib([truep(geom[i]...) for i in 1:length(geom)])
-    vtkwrite("tut_stokes_ht_p2_p1_gen-pt", baseincrel(pmesh), [(name = "pt",), ])
+    vtkwrite("tut_stokes_ht_p1b_p1_gen-p", baseincrel(mesh), [(name = "p",), ])
+    vtkwrite("tut_stokes_ht_p1b_p1_gen-v", baseincrel(mesh), [(name = "ux",), (name = "uy",)])
 
     return true
 end
@@ -245,33 +233,32 @@ end
 function genmesh(A, N)
 ```
 
-Hood-Taylor pair of meshes is needed. The first mesh is for the
-velocities, composed of six-node triangles.
+Linear triangle mesh is used for both the velocity space and the pressure
+space.
 
 ```julia
-    vmesh = attach!(Mesh(), T6block(2 * A, 2 * A, N, N), "velocity")
+    mesh = attach!(Mesh(), T3block(2 * A, 2 * A, N, N), "velocity")
 ```
 
 Now translate so that the center of the square is at the origin of the
 coordinates.
 
 ```julia
-    ir = baseincrel(vmesh)
+    ir = baseincrel(mesh)
     transform(ir, x -> x .- A)
 ```
 
-The second mesh is used for the pressures, and it is composed of
-three-node triangles such that the corner nodes are shared between the
-first and the second mesh.
+The bubble degree of freedom is associated with the element itself. The
+mesh will therefore be equipped with the incidence relation ``(2, 2)``.
+The finite element space for the velocity will therefore have degrees of
+freedom associated with the vertices and with the faces
+(elements themselves). The finite element space does that by associating
+fields with incidence relations, hence the need for this one.
 
 ```julia
-    pmesh = attach!(Mesh(), T6toT3(baseincrel(vmesh, "velocity")), "pressure")
-```
-
-Return the pair of meshes
-
-```julia
-    return vmesh, pmesh
+    eidir = ir_identity(ir)
+    attach!(mesh, eidir)
+    return mesh
 end
 
 function assembleK(Uh, Ph, tndof, D)
@@ -541,11 +528,11 @@ end
 ```
 
 To run the example, evaluate this file which will  compile the module
-`.tut_stokes_ht_p2_p1_gen`.
+`.tut_stokes_ht_p1b_p1_gen`.
 
 ```julia
-using .tut_stokes_ht_p2_p1_gen
-tut_stokes_ht_p2_p1_gen.run()
+using .tut_stokes_ht_p1b_p1_gen
+tut_stokes_ht_p1b_p1_gen.run()
 ```
 
 ---
