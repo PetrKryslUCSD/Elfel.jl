@@ -10,7 +10,7 @@ G. *adjective*. different, like something else, unique, unparalled
 
 ## Introduction
 
-This package provides support for the development of Finite Element Method applications, especially in continuum mechanics. Mixed methods with cooperating finite element spaces are supported. High performance is one of the focus points. Check out the [tutorials](https://petrkryslucsd.github.io/Elfel.jl/dev/#Tutorials) to get a feel for the functionality of this package.
+This package provides support for the development of Finite Element Method applications, especially in continuum mechanics. Mixed methods with cooperating finite element spaces are supported. High performance is one of the focus points. Check out the [tutorials](https://petrkryslucsd.github.io/Elfel.jl/dev/tutorials/tutorials.html#Tutorials) to get a feel for the functionality of this package.
 
 ## Dependencies
 
