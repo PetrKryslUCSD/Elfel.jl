@@ -124,7 +124,7 @@ function test()
     pfesp = FESpace(Float64, pmesh, FEH1_T3(), 1)
     setebc!(pfesp, 0, 1, 1, 0.0)
     # Number the degrees of freedom
-    numberdofs!(uxfesp, uyfesp, pfesp)
+    numberdofs!([uxfesp, uyfesp, pfesp])
     tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
     tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
     @test (tndof, tnunk) == (91003, 89402)                    
@@ -283,7 +283,7 @@ function test()
     pfesp = FESpace(Float64, mesh, FEH1_T3(), 1)
     setebc!(pfesp, 0, 1, 1, 0.0)
     # Number the degrees of freedom
-    numberdofs!(uxfesp, uyfesp, pfesp)
+    numberdofs!([uxfesp, uyfesp, pfesp])
     tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
     tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix
@@ -516,7 +516,7 @@ function run(N)
     atcenter = vselect(geometry(pmesh); nearestto = [0.0, 0.0])
     setebc!(pfesp, 0, atcenter[1], 1, 0.0)
     # Number the degrees of freedom
-    numberdofs!(uxfesp, uyfesp, pfesp)
+    numberdofs!([uxfesp, uyfesp, pfesp])
     tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
     tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix
@@ -750,7 +750,7 @@ function run(N)
     atcenter = vselect(geometry(pmesh); nearestto = [0.0, 0.0])
     setebc!(pfesp, 0, atcenter[1], 1, 0.0)
     # Number the degrees of freedom
-    numberdofs!(ufesp, pfesp)
+    numberdofs!([ufesp, pfesp])
     tndof = ndofs(ufesp) + ndofs(pfesp)
     tnunk = nunknowns(ufesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix
@@ -940,7 +940,7 @@ function run(N)
     atcenter = vselect(geometry(pmesh); nearestto = [0.0, 0.0])
     setebc!(pfesp, 0, atcenter[1], 1, 0.0)
     # Number the degrees of freedom
-    numberdofs!(ufesp, pfesp)
+    numberdofs!([ufesp, pfesp])
     tndof = ndofs(ufesp) + ndofs(pfesp)
     tnunk = nunknowns(ufesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix

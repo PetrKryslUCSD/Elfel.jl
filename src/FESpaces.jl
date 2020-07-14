@@ -238,7 +238,7 @@ function highestdatadofnum(fesp::FES)  where {FES<:FESpace}
 end
 
 """
-    numberdofs!(fesp...)
+    numberdofs!(fesp::AbstractVector)
 
 Number the degrees of freedom of a collection of FE spaces.
 
@@ -247,7 +247,7 @@ then the data degrees of freedom (the known values) are numbered.
 
 No effort is made to optimize the numbering in any way. 
 """
-function numberdofs!(fesp...) 
+function numberdofs!(fesp::AbstractVector) 
     numberfreedofs!(fesp[1], 1)
     for i in 2:length(fesp)
         numberfreedofs!(fesp[i], highestfreedofnum(fesp[i-1])+1)
@@ -256,6 +256,20 @@ function numberdofs!(fesp...)
     for i in 2:length(fesp)
         numberdatadofs!(fesp[i], highestdatadofnum(fesp[i-1])+1)
     end
+end
+
+"""
+    numberdofs!(fesp::FESpace) 
+
+Number the degrees of freedom of a single FE space.
+
+The unknown (free) degrees of freedom in the FE space are numbered consecutively, and
+then the data degrees of freedom (the known values) are numbered. 
+
+No effort is made to optimize the numbering in any way. 
+"""
+function numberdofs!(fesp::FESpace) 
+    numberdofs!([fesp]) 
 end
 
 """
