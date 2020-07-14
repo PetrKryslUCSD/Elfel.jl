@@ -45,24 +45,8 @@ using UnicodePlots
 # -\int_{\Omega} q \left(\frac{\partial{u_x}}{\partial{x}} + \frac{\partial{u_y}}{\partial{y}}\right)d\Omega = 0
 # ```
 
-# ```math
-#  - \int_{V} \delta q\; \mathrm{div}(\underline{u}) \; \mathrm{d} V = 0,\quad \forall \delta q
-# ```
-# Here ``\underline{\delta v}`` are the test functions in the velocity space,
-# and ``\delta q`` are the pressure test functions. Further ``\underline
-# {u}`` is the trial velocity, and ``p`` is the trial pressure. The operator
-# ``:`` produces the componentwise scalar product of the gradients, 
-# ```math
-# A\; :\;B = A_{ij}B_{ij}``.
-# ```
-# Then the first term may be rewritten as
-# ```math
-# {\underline{\nabla}}\;\underline{\delta v}\; :\;
-# {\underline{\nabla}}\;\underline{u} = 
-# (\underline{\nabla}\delta v_x)^T \underline{\nabla}u_x + 
-# (\underline{\nabla}\delta v_y)^T \underline{\nabla}u_y
-# ```
-
+# Here ``w_x, w_y`` are the test functions in the velocity space,
+# and ``q`` is the pressure test functions. Further ``u_x, u_y`` is the trial velocity, and ``p`` is the trial pressure. 
 
 function run()
     mu = 1.0 # dynamic viscosity
@@ -84,7 +68,8 @@ function run()
     # function values and the derivatives are square integrable. Each node
     # carries 2 degrees of freedom, hence there are two velocity components per
     # node.
-    Uh = FESpace(Float64, vmesh, FEH1_T6(), 2)
+    Uxh = FESpace(Float64, vmesh, FEH1_T6(), 1)
+    Uyh = FESpace(Float64, vmesh, FEH1_T6(), 1)
 
     # Now we apply the boundary conditions at the nodes around the
     # circumference. 
@@ -101,8 +86,8 @@ function run()
         for i in vl
             # Remember that all  components of the velocity are known at the
             # boundary.
-            setebc!(Uh, 0, i, 1, trueux(locs[i]...))
-            setebc!(Uh, 0, i, 2, trueuy(locs[i]...))
+            setebc!(Uxh, 0, i, 1, trueux(locs[i]...))
+            setebc!(Uyh, 0, i, 1, trueuy(locs[i]...))
         end
     end
 
@@ -120,14 +105,14 @@ function run()
     # numbered, both velocities and pressures. Next all the data degrees of
     # freedom are numbered, again both for the velocities and for the
     # pressures.
-    numberdofs!(Uh, Ph)
+    numberdofs!(Uxh, Uyh, Ph)
     # The total number of degrees of freedom is now calculated.
-    tndof = ndofs(Uh) + ndofs(Ph)
+    tndof = ndofs(Uxh) + ndofs(Uyh) + ndofs(Ph)
     # As is the total number of unknowns.
-    tnunk = nunknowns(Uh) + nunknowns(Ph)
+    tnunk = nunknowns(Uxh) + nunknowns(Uyh) + nunknowns(Ph)
 
     # Assemble the coefficient matrix.
-    K = assembleK(Uh, Ph, tndof, mu)
+    K = assembleK(Uxh, Uyh, Ph, tndof, mu)
 
     # Display the structure of the indefinite stiffness matrix. Note that this
     # is the complete matrix, including rows and columns for all the degrees of
@@ -139,7 +124,7 @@ function run()
     # the degrees of freedom, in the first `tnunk` rows that corresponds to the
     # unknowns, and the subsequent rows are for the data degrees of freedom.
     U = fill(0.0, tndof)
-    gathersysvec!(U, [Uh, Ph])
+    gathersysvec!(U, [Uxh, Uyh, Ph])
     # Note that  the vector `U` consists of nonzero numbers in rows are for the
     # data degrees of freedom. Multiplying the stiffness matrix with this
     # vector will generate a load vector  on the right-hand side. Otherwise
@@ -148,31 +133,22 @@ function run()
     solve!(U, K, F, tnunk)
     # Once we have solved the system of linear equations, we can distribute the
     # solution from the vector `U` into the finite element spaces.
-    scattersysvec!([Uh, Ph], U)
+    scattersysvec!([Uxh, Uyh, Ph], U)
 
     # Given that the solution is manufactured, i. e. exactly known, we can
     # calculate the true errors.
     @show ep = evaluate_pressure_error(Ph, truep)
-    @show ev = evaluate_velocity_error(Uh, trueux, trueuy)
+    @show ev = evaluate_velocity_error(Uxh, Uyh, trueux, trueuy)
 
     # Postprocessing. First we make attributes, scalar nodal attributes,
     # associated with the meshes for the pressures and the velocity.
     makeattribute(Ph, "p", 1)
-    makeattribute(Uh, "ux", 1)
-    makeattribute(Uh, "uy", 2)
+    makeattribute(Uxh, "ux", 1)
+    makeattribute(Uyh, "uy", 2)
     # The pressure and the velocity components are then written out into two VTK
     # files.
     vtkwrite("tut_stokes_ht_p2_p1_reddy-p", baseincrel(pmesh), [(name = "p",), ])
     vtkwrite("tut_stokes_ht_p2_p1_reddy-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
-    
-    # The  method converges very well, but, why not, here is the true pressure
-    # written out into a VTK file as well. We create a synthetic attribute by
-    # evaluating the true pressure at the locations of the nodes  of the
-    # pressure mesh.
-    geom = geometry(Ph.mesh)
-    ir = baseincrel(Ph.mesh)
-    ir.right.attributes["pt"] = VecAttrib([truep(geom[i]...) for i in 1:length(geom)])
-    vtkwrite("tut_stokes_ht_p2_p1_reddy-pt", baseincrel(pmesh), [(name = "pt",), ])
     
     return true
 end
@@ -194,58 +170,108 @@ function genmesh(A, N)
 end
 
 function assembleK(Uh, Ph, tndof, mu)
-    function integrate!(ass, elits, qpits, mu)
-        # This array defines the components for the element degrees of freedom:
-        # ``c(i)`` is 1 or 2.
-        c = edofcompnt(Uh)
-        # These are the totals of the velocity and pressure degrees of freedom
-        # per element.
-        n_du, n_dp = ndofsperel.((Uh, Ph))
-        # The local matrix assemblers are used as if they were ordinary
-        # elementwise dense matrices. Here they are defined.
-        kuu = LocalMatrixAssembler(n_du, n_du, 0.0)
-        kup = LocalMatrixAssembler(n_du, n_dp, 0.0)
+    function integratexx!(ass, elits, qpits, mu)
+        uxnedof, uynedof, pnedof = ndofsperel.(elits)
+        kuxux = LocalMatrixAssembler(uxnedof, uxnedof, 0.0)
         for el in zip(elits...)
-            uel, pel = el
-            # The local matrix assemblers are initialized with zeros for the
-            # values, and with the element degree of freedom vectors to be used
-            # in the assembly. The assembler `kuu` is used for the velocity
-            # degrees of freedom, and the assembler `kup` collect the coupling
-            # coefficients between the velocity and the pressure. The function
-            # `eldofs` collects the global numbers of the degrees of freedom
-            # either for the velocity space, or for the pressure space 
-            # (`eldofs(pel)`).
-            init!(kuu, eldofs(uel), eldofs(uel))
-            init!(kup, eldofs(uel), eldofs(pel))
+            uxel, uyel, pel = el
+            init!(kuxux, eldofs(uxel), eldofs(uxel))
             for qp in zip(qpits...)
-                uqp, pqp = qp
-                # The integration is performed using the velocity quadrature points.
-                Jac, J = jacjac(uel, uqp)
-                JxW = J * weight(uqp)
-                gradNu = bfungrad(uqp, Jac) # gradients of the velocity basis functions
-                Np = bfun(pqp) # pressure basis functions
-                # This double loop corresponds precisely to the integrals of the
-                # weak form: dot product of the gradients of the basis
-                # functions. This is the  matrix in the upper left corner.
-                for i in 1:n_du, j in 1:n_du
-                    if c[i] == c[j]
-                        kuu[j, i] += (mu * JxW) * (dot(gradNu[j], gradNu[i]))
-                    end
-                end
-                # And this is the coupling matrix in the top right corner.
-                for i in 1:n_dp, j in 1:n_du
-                    kup[j, i] += gradNu[j][c[j]] * (-JxW * Np[i])
+                uxqp, uyqp, pqp = qp
+                Jac, J = jacjac(pel, pqp)
+                JxW = J * weight(pqp)
+                gradNux = bfungrad(uxqp, Jac)
+                for j in 1:uxnedof, i in 1:uxnedof
+                    kuxux[i, j] += (mu * JxW) * (2 * gradNux[i][1] * gradNux[j][1] + gradNux[i][2] * gradNux[j][2])
                 end
             end
-            # Assemble the matrices. The submatrix off the diagonal is assembled
-            # twice, once as itself, and once as its transpose.
-            assemble!(ass, kuu)
-            assemble!(ass, kup) # top right corner
-            assemble!(ass, transpose(kup)) # bottom left corner
+            assemble!(ass, kuxux)
         end
-        return ass # return the updated assembler of the global matrix
+        return ass
     end
-
+    function integrateyy!(ass, elits, qpits, mu)
+        uxnedof, uynedof, pnedof = ndofsperel.(elits)
+        kuyuy = LocalMatrixAssembler(uynedof, uynedof, 0.0)
+        for el in zip(elits...)
+            uxel, uyel, pel = el
+            init!(kuyuy, eldofs(uyel), eldofs(uyel))
+            for qp in zip(qpits...)
+                uxqp, uyqp, pqp = qp
+                Jac, J = jacjac(pel, pqp)
+                JxW = J * weight(pqp)
+                gradNuy = bfungrad(uyqp, Jac)
+                for j in 1:uynedof, i in 1:uynedof
+                    kuyuy[i, j] += (mu * JxW) * (gradNuy[i][1] * gradNuy[j][1] + 2 * gradNuy[i][2] * gradNuy[j][2])
+                end
+            end
+            assemble!(ass, kuyuy)
+        end
+        return ass
+    end
+    function integratexy!(ass, elits, qpits, mu)
+        uxnedof, uynedof, pnedof = ndofsperel.(elits)
+        kuxuy = LocalMatrixAssembler(uxnedof, uynedof, 0.0)
+        for el in zip(elits...)
+            uxel, uyel, pel = el
+            init!(kuxuy, eldofs(uxel), eldofs(uyel))
+            for qp in zip(qpits...)
+                uxqp, uyqp, pqp = qp
+                Jac, J = jacjac(pel, pqp)
+                JxW = J * weight(pqp)
+                gradNux = bfungrad(uxqp, Jac)
+                gradNuy = bfungrad(uyqp, Jac)
+                for j in 1:uynedof, i in 1:uxnedof
+                    kuxuy[i, j] += (mu * JxW) * (gradNux[i][1] * gradNuy[j][2])
+                end
+            end
+            assemble!(ass, kuxuy)
+            assemble!(ass, transpose(kuxuy))
+        end
+        return ass
+    end
+    function integratexp!(ass, elits, qpits)
+        uxnedof, uynedof, pnedof = ndofsperel.(elits)
+        kuxp = LocalMatrixAssembler(uxnedof, pnedof, 0.0)
+        for el in zip(elits...)
+            uxel, uyel, pel = el
+            init!(kuxp, eldofs(uxel), eldofs(pel))
+            for qp in zip(qpits...)
+                uxqp, uyqp, pqp = qp
+                Jac, J = jacjac(pel, pqp)
+                JxW = J * weight(pqp)
+                gradNux = bfungrad(uxqp, Jac)
+                Np = bfun(pqp)
+                for j in 1:pnedof, i in 1:uxnedof
+                    kuxp[i, j] += (-JxW) * (gradNux[i][1] * Np[j])
+                end
+            end
+            assemble!(ass, kuxp)
+            assemble!(ass, transpose(kuxp))
+        end
+        return ass
+    end
+    function integrateyp!(ass, elits, qpits)
+        uxnedof, uynedof, pnedof = ndofsperel.(elits)
+        kuyp = LocalMatrixAssembler(uynedof, pnedof, 0.0)
+        for el in zip(elits...)
+            uxel, uyel, pel = el
+            init!(kuyp, eldofs(uyel), eldofs(pel))
+            for qp in zip(qpits...)
+                uxqp, uyqp, pqp = qp
+                Jac, J = jacjac(pel, pqp)
+                JxW = J * weight(pqp)
+                gradNuy = bfungrad(uyqp, Jac)
+                Np = bfun(pqp)
+                for j in 1:pnedof, i in 1:uynedof
+                    kuyp[i, j] += (-JxW) * (gradNuy[i][2] * Np[j])
+                end
+            end
+            assemble!(ass, kuyp)
+            assemble!(ass, transpose(kuyp))
+        end
+        return ass
+    end
+    
     # In the `assembleK` function we first we create the element iterators. We
     # can go through all the elements, both in the velocity finite element
     # space and in the pressure finite element space, that define the domain of
@@ -269,7 +295,11 @@ function assembleK(Uh, Ph, tndof, mu)
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, tndof, tndof)
     # The integration is carried out, and then...
-    integrate!(ass, elits, qpits, mu)
+    integratexx!(ass, elits, qpits, mu)
+    integrateyy!(ass, elits, qpits, mu)
+    integratexy!(ass, elits, qpits, mu)
+    integratexp!(ass, elits, qpits)
+    integrateyp!(ass, elits, qpits)
     # ...we materialize the sparse stiffness matrix and return it.
     return finish!(ass)
 end
