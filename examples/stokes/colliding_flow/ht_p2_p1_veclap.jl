@@ -38,7 +38,7 @@ trueuy = (x, y) -> 5 * x ^ 4 - 5 * y ^ 4
 truep = (x, y) -> 60 * x ^ 2 * y - 20 * y ^ 3
 
 function genmesh(N)
-    # Taylor-Hood pair of meshes is needed
+    # Hood-Taylor pair of meshes is needed
     # This mesh will be for the velocities
     vmesh = Mesh()
     attach!(vmesh, T6block(2 * A, 2 * A, N, N), "velocity")
@@ -191,7 +191,7 @@ function run(N)
     atcenter = vselect(geometry(pmesh); nearestto = [0.0, 0.0])
     setebc!(pfesp, 0, atcenter[1], 1, 0.0)
     # Number the degrees of freedom
-    numberdofs!(uxfesp, uyfesp, pfesp)
+    numberdofs!([uxfesp, uyfesp, pfesp])
     tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
     tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix

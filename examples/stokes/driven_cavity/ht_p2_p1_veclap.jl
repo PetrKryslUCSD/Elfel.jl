@@ -35,7 +35,7 @@ A = 1.0 # length of the side of the square
 N = 100;# number of subdivisions along the sides of the square domain
 
 function genmesh()
-    # Taylor-Hood pair of meshes is needed
+    # Hood-Taylor pair of meshes is needed
     # This mesh will be for the velocities
     vmesh = Mesh()
     attach!(vmesh, T6block(A, A, N, N), "velocity")
@@ -133,7 +133,7 @@ function run()
     pfesp = FESpace(Float64, pmesh, FEH1_T3(), 1)
     setebc!(pfesp, 0, 1, 1, 0.0)
     # Number the degrees of freedom
-    numberdofs!(uxfesp, uyfesp, pfesp)
+    numberdofs!([uxfesp, uyfesp, pfesp])
     @show tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
     @show tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix

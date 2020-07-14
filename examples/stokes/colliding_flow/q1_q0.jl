@@ -149,7 +149,7 @@ function run(N)
     atcenter = vselect(geometry(mesh); nearestto = [0.0, 0.0])
     setebc!(pfesp, 2, atcenter[1], 1, 0.0)
     # Number the degrees of freedom
-    numberdofs!(uxfesp, uyfesp, pfesp)
+    numberdofs!([uxfesp, uyfesp, pfesp])
     @show tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
     @show tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
     # Assemble the coefficient matrix

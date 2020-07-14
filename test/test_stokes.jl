@@ -26,7 +26,7 @@ A = 1.0 # length of the side of the square
 N = 100;# number of subdivisions along the sides of the square domain
 
 function genmesh()
-    # Taylor-Hood pair of meshes is needed
+    # Hood-Taylor pair of meshes is needed
     # This mesh will be for the velocities
     vmesh = Mesh()
     attach!(vmesh, T6block(A, A, N, N), "velocity")
@@ -319,7 +319,7 @@ using Test
     th_p2_p1
 
 The manufactured-solution colliding flow example from Elman et al 2014. The
-Taylor-Hood formulation with quadratic triangles for the velocity and continuous
+Hood-Taylor formulation with quadratic triangles for the velocity and continuous
 pressure on linear triangles.
 
 The formulation is the one derived in Reddy, Introduction to the finite element
@@ -356,7 +356,7 @@ trueuy = (x, y) -> 5 * x ^ 4 - 5 * y ^ 4
 truep = (x, y) -> 60 * x ^ 2 * y - 20 * y ^ 3
 
 function genmesh(N)
-    # Taylor-Hood pair of meshes is needed
+    # Hood-Taylor pair of meshes is needed
     # This mesh will be for the velocities
     vmesh = Mesh()
     attach!(vmesh, T6block(2 * A, 2 * A, N, N), "velocity")
@@ -570,7 +570,7 @@ mstok1.test()
     m_th_p2_p1_veclap_alt
 
 The manufactured-solution colliding flow example from Elman et al 2014. The
-Taylor-Hood formulation with quadratic triangles for the velocity and continuous
+Hood-Taylor formulation with quadratic triangles for the velocity and continuous
 pressure on linear triangles.
 
 This implementation is an alternative: for the velocity, a single finite element
@@ -612,7 +612,7 @@ trueuy = (x, y) -> 5 * x ^ 4 - 5 * y ^ 4
 truep = (x, y) -> 60 * x ^ 2 * y - 20 * y ^ 3
 
 function genmesh(N)
-    # Taylor-Hood pair of meshes is needed
+    # Hood-Taylor pair of meshes is needed
     # This mesh will be for the velocities
     vmesh = Mesh()
     attach!(vmesh, T6block(2 * A, 2 * A, N, N), "velocity")
@@ -802,7 +802,7 @@ trueuy = (x, y) -> 5 * x ^ 4 - 5 * y ^ 4
 truep = (x, y) -> 60 * x ^ 2 * y - 20 * y ^ 3
 
 function genmesh(N)
-    # Taylor-Hood pair of meshes is needed
+    # Hood-Taylor pair of meshes is needed
     # This mesh will be for the velocities
     vmesh = Mesh()
     attach!(vmesh, T6block(2 * A, 2 * A, N, N), "velocity")
