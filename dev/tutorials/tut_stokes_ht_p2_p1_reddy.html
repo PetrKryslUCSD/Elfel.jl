@@ -5,13 +5,13 @@ using MeshCore.Exports
 using MeshSteward.Exports
 using Elfel.Exports
 using UnicodePlots</code></pre><p>The boundary value problem is expressed in this weak form</p><div>\[\int_{\Omega} 2\mu\frac{\partial{w_x}}{\partial{x}}\frac{\partial{u_x}}{\partial{x}}
-+\mu\frac{\partial{w_x}}{\partial{y}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_x}}{\partial{x}} p -w_x f_x d\Omega  = 0\]</div><div>\[\int_{\Omega} 2\mu\frac{\partial{w_y}}{\partial{y}}\frac{\partial{u_y}}{\partial{y}}
-+\mu\frac{\partial{w_y}}{\partial{x}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_y}}{\partial{y}} p -w_y f_y d\Omega  = 0\]</div><div>\[-\int_{\Omega} q \left(\frac{\partial{u_x}}{\partial{x}} + \frac{\partial{u_y}}{\partial{y}}\right)d\Omega = 0\]</div><p>Here <span>$w_x, w_y$</span> are the test functions in the velocity space, and <span>$q$</span> is the pressure test functions. Further <span>$u_x, u_y$</span> is the trial velocity, and <span>$p$</span> is the trial pressure.</p><pre><code class="language-julia">function run()
++\mu\frac{\partial{w_x}}{\partial{y}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_x}}{\partial{x}} p  d\Omega  = 0\]</div><div>\[\int_{\Omega} 2\mu\frac{\partial{w_y}}{\partial{y}}\frac{\partial{u_y}}{\partial{y}}
++\mu\frac{\partial{w_y}}{\partial{x}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_y}}{\partial{y}} p  d\Omega  = 0\]</div><div>\[-\int_{\Omega} q \left(\frac{\partial{u_x}}{\partial{x}} + \frac{\partial{u_y}}{\partial{y}}\right)d\Omega = 0\]</div><p>Here <span>$w_x, w_y$</span> are the test functions in the velocity space, and <span>$q$</span> is the pressure test functions. Further <span>$u_x, u_y$</span> is the trial velocity, and <span>$p$</span> is the trial pressure.</p><pre><code class="language-julia">function run()
     mu = 1.0 # dynamic viscosity
     A = 1.0 # half of the length of the side of the square
     N = 100 # number of element edges per side of the square</code></pre><p>These three functions define the true velocity components and the true pressure.</p><pre><code class="language-julia">    trueux = (x, y) -&gt; 20 * x * y ^ 3
     trueuy = (x, y) -&gt; 5 * x ^ 4 - 5 * y ^ 4
-    truep = (x, y) -&gt; 60 * x ^ 2 * y - 20 * y ^ 3</code></pre><p>Construct the two meshes for the mixed method. They need to support the velocity and pressure spaces.</p><pre><code class="language-julia">    vmesh, pmesh = genmesh(A, N)</code></pre><p>Construct the velocity space: it is a vector space with two components. The degrees of freedom are real numbers (<code>Float64</code>). The velocity mesh carries the finite elements of  the continuity <span>$H ^1$</span>, i. e. both the function values and the derivatives are square integrable. Each node carries 2 degrees of freedom, hence there are two velocity components per node.</p><pre><code class="language-julia">    Uxh = FESpace(Float64, vmesh, FEH1_T6(), 1)
+    truep = (x, y) -&gt; 60 * x ^ 2 * y - 20 * y ^ 3</code></pre><p>Construct the two meshes for the mixed method. They need to support the velocity and pressure spaces.</p><pre><code class="language-julia">    vmesh, pmesh = genmesh(A, N)</code></pre><p>Construct the velocity spaces: As an alternative to a previous treatment with a single vector space for the velocity, here we will use to vector spaces, one for each component of the velocity. The degrees of freedom are real numbers (<code>Float64</code>). The velocity mesh carries the finite elements of  the continuity <span>$H ^1$</span>, i. e. both the function values and the derivatives are square integrable. Each node carries just one degree of freedom (1).</p><pre><code class="language-julia">    Uxh = FESpace(Float64, vmesh, FEH1_T6(), 1)
     Uyh = FESpace(Float64, vmesh, FEH1_T6(), 1)</code></pre><p>Now we apply the boundary conditions at the nodes around the circumference.</p><pre><code class="language-julia">    locs = geometry(vmesh)</code></pre><p>We use searching based on the presence of the node within a box. The entire boundary will be captured within these four boxes, provided we inflate those boxes with a little tolerance (we can&#39;t rely on those nodes to be precisely at the coordinates given, we need to introduce some tolerance).</p><pre><code class="language-julia">    boxes = [[-A A -A -A], [-A -A -A A], [A A -A A], [-A A A A]]
     inflate = A / N / 100
     for box in boxes
@@ -20,13 +20,13 @@ using UnicodePlots</code></pre><p>The boundary value problem is expressed in thi
             setebc!(Uyh, 0, i, 1, trueuy(locs[i]...))
         end
     end</code></pre><p>No we construct the pressure space. It is a continuous, piecewise linear space supported on a mesh of three-node triangles.</p><pre><code class="language-julia">    Ph = FESpace(Float64, pmesh, FEH1_T3(), 1)</code></pre><p>The pressure in this &quot;enclosed&quot; flow example is only known up to a constant. By setting  pressure degree of freedom at one node will make the solution unique.</p><pre><code class="language-julia">    atcenter = vselect(geometry(pmesh); nearestto = [0.0, 0.0])
-    setebc!(Ph, 0, atcenter[1], 1, 0.0)</code></pre><p>Number the degrees of freedom. First all the free degrees of freedom are numbered, both velocities and pressures. Next all the data degrees of freedom are numbered, again both for the velocities and for the pressures.</p><pre><code class="language-julia">    numberdofs!(Uxh, Uyh, Ph)</code></pre><p>The total number of degrees of freedom is now calculated.</p><pre><code class="language-julia">    tndof = ndofs(Uxh) + ndofs(Uyh) + ndofs(Ph)</code></pre><p>As is the total number of unknowns.</p><pre><code class="language-julia">    tnunk = nunknowns(Uxh) + nunknowns(Uyh) + nunknowns(Ph)</code></pre><p>Assemble the coefficient matrix.</p><pre><code class="language-julia">    K = assembleK(Uxh, Uyh, Ph, tndof, mu)</code></pre><p>Display the structure of the indefinite stiffness matrix. Note that this is the complete matrix, including rows and columns for all the degrees of freedom, unknown and known.</p><pre><code class="language-julia">    p = spy(K, canvas = DotCanvas)
+    setebc!(Ph, 0, atcenter[1], 1, 0.0)</code></pre><p>Number the degrees of freedom. First all the free degrees of freedom are numbered, both velocities and pressures. Next all the data degrees of freedom are numbered, again both for the velocities and for the pressures.</p><pre><code class="language-julia">    numberdofs!([Uxh, Uyh, Ph])</code></pre><p>The total number of degrees of freedom is now calculated.</p><pre><code class="language-julia">    tndof = ndofs(Uxh) + ndofs(Uyh) + ndofs(Ph)</code></pre><p>As is the total number of unknowns.</p><pre><code class="language-julia">    tnunk = nunknowns(Uxh) + nunknowns(Uyh) + nunknowns(Ph)</code></pre><p>Assemble the coefficient matrix.</p><pre><code class="language-julia">    K = assembleK(Uxh, Uyh, Ph, tndof, mu)</code></pre><p>Display the structure of the indefinite stiffness matrix. Note that this is the complete matrix, including rows and columns for all the degrees of freedom, unknown and known.</p><pre><code class="language-julia">    p = spy(K, canvas = DotCanvas)
     display(p)</code></pre><p>Solve the linear algebraic system. First construct system vector of all the degrees of freedom, in the first <code>tnunk</code> rows that corresponds to the unknowns, and the subsequent rows are for the data degrees of freedom.</p><pre><code class="language-julia">    U = fill(0.0, tndof)
     gathersysvec!(U, [Uxh, Uyh, Ph])</code></pre><p>Note that  the vector <code>U</code> consists of nonzero numbers in rows are for the data degrees of freedom. Multiplying the stiffness matrix with this vector will generate a load vector  on the right-hand side. Otherwise there is no loading, hence the vector <code>F</code> consists of all zeros.</p><pre><code class="language-julia">    F = fill(0.0, tndof)
     solve!(U, K, F, tnunk)</code></pre><p>Once we have solved the system of linear equations, we can distribute the solution from the vector <code>U</code> into the finite element spaces.</p><pre><code class="language-julia">    scattersysvec!([Uxh, Uyh, Ph], U)</code></pre><p>Given that the solution is manufactured, i. e. exactly known, we can calculate the true errors.</p><pre><code class="language-julia">    @show ep = evaluate_pressure_error(Ph, truep)
     @show ev = evaluate_velocity_error(Uxh, Uyh, trueux, trueuy)</code></pre><p>Postprocessing. First we make attributes, scalar nodal attributes, associated with the meshes for the pressures and the velocity.</p><pre><code class="language-julia">    makeattribute(Ph, &quot;p&quot;, 1)
     makeattribute(Uxh, &quot;ux&quot;, 1)
-    makeattribute(Uyh, &quot;uy&quot;, 2)</code></pre><p>The pressure and the velocity components are then written out into two VTK files.</p><pre><code class="language-julia">    vtkwrite(&quot;tut_stokes_ht_p2_p1_reddy-p&quot;, baseincrel(pmesh), [(name = &quot;p&quot;,), ])
+    makeattribute(Uyh, &quot;uy&quot;, 1)</code></pre><p>The pressure and the velocity components are then written out into two VTK files.</p><pre><code class="language-julia">    vtkwrite(&quot;tut_stokes_ht_p2_p1_reddy-p&quot;, baseincrel(pmesh), [(name = &quot;p&quot;,), ])
     vtkwrite(&quot;tut_stokes_ht_p2_p1_reddy-v&quot;, baseincrel(vmesh), [(name = &quot;ux&quot;,), (name = &quot;uy&quot;,)])
 
     return true
@@ -36,50 +36,19 @@ function genmesh(A, N)</code></pre><p>Hood-Taylor pair of meshes is needed. The 
     transform(ir, x -&gt; x .- A)</code></pre><p>The second mesh is used for the pressures, and it is composed of three-node triangles such that the corner nodes are shared between the first and the second mesh.</p><pre><code class="language-julia">    pmesh = attach!(Mesh(), T6toT3(baseincrel(vmesh, &quot;velocity&quot;)), &quot;pressure&quot;)</code></pre><p>Return the pair of meshes</p><pre><code class="language-julia">    return vmesh, pmesh
 end
 
-function assembleK(Uh, Ph, tndof, mu)
-    function integratexx!(ass, elits, qpits, mu)
+function assembleK(Uxh, Uyh, Ph, tndof, mu)</code></pre><p>Here we demonstrate that the coefficient matrix which is expected to have the structure</p><div>\[K = \left[
+\begin{array}{cc}
+    A &amp; B^T \\
+    B &amp; 0
+\end{array}\right]\]</div><pre><code class="language-julia">    function integrateApart!(ass, elits, qpits, mu)
         uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuxux = LocalMatrixAssembler(uxnedof, uxnedof, 0.0)
-        for el in zip(elits...)
-            uxel, uyel, pel = el
-            init!(kuxux, eldofs(uxel), eldofs(uxel))
-            for qp in zip(qpits...)
-                uxqp, uyqp, pqp = qp
-                Jac, J = jacjac(pel, pqp)
-                JxW = J * weight(pqp)
-                gradNux = bfungrad(uxqp, Jac)
-                for j in 1:uxnedof, i in 1:uxnedof
-                    kuxux[i, j] += (mu * JxW) * (2 * gradNux[i][1] * gradNux[j][1] + gradNux[i][2] * gradNux[j][2])
-                end
-            end
-            assemble!(ass, kuxux)
-        end
-        return ass
-    end
-    function integrateyy!(ass, elits, qpits, mu)
-        uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuyuy = LocalMatrixAssembler(uynedof, uynedof, 0.0)
-        for el in zip(elits...)
-            uxel, uyel, pel = el
-            init!(kuyuy, eldofs(uyel), eldofs(uyel))
-            for qp in zip(qpits...)
-                uxqp, uyqp, pqp = qp
-                Jac, J = jacjac(pel, pqp)
-                JxW = J * weight(pqp)
-                gradNuy = bfungrad(uyqp, Jac)
-                for j in 1:uynedof, i in 1:uynedof
-                    kuyuy[i, j] += (mu * JxW) * (gradNuy[i][1] * gradNuy[j][1] + 2 * gradNuy[i][2] * gradNuy[j][2])
-                end
-            end
-            assemble!(ass, kuyuy)
-        end
-        return ass
-    end
-    function integratexy!(ass, elits, qpits, mu)
-        uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuxuy = LocalMatrixAssembler(uxnedof, uynedof, 0.0)
         for el in zip(elits...)
             uxel, uyel, pel = el
+            init!(kuxux, eldofs(uxel), eldofs(uxel))
+            init!(kuyuy, eldofs(uyel), eldofs(uyel))
             init!(kuxuy, eldofs(uxel), eldofs(uyel))
             for qp in zip(qpits...)
                 uxqp, uyqp, pqp = qp
@@ -87,63 +56,55 @@ function assembleK(Uh, Ph, tndof, mu)
                 JxW = J * weight(pqp)
                 gradNux = bfungrad(uxqp, Jac)
                 gradNuy = bfungrad(uyqp, Jac)
+                for j in 1:uxnedof, i in 1:uxnedof
+                    kuxux[i, j] += (mu * JxW) * (2 * gradNux[i][1] * gradNux[j][1] + gradNux[i][2] * gradNux[j][2])
+                end
+                for j in 1:uynedof, i in 1:uynedof
+                    kuyuy[i, j] += (mu * JxW) * (gradNuy[i][1] * gradNuy[j][1] + 2 * gradNuy[i][2] * gradNuy[j][2])
+                end
                 for j in 1:uynedof, i in 1:uxnedof
                     kuxuy[i, j] += (mu * JxW) * (gradNux[i][1] * gradNuy[j][2])
                 end
             end
+            assemble!(ass, kuxux)
             assemble!(ass, kuxuy)
             assemble!(ass, transpose(kuxuy))
+            assemble!(ass, kuyuy)
         end
         return ass
     end
-    function integratexp!(ass, elits, qpits)
+    function integrateBBTparts!(ass, elits, qpits)
         uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuxp = LocalMatrixAssembler(uxnedof, pnedof, 0.0)
-        for el in zip(elits...)
-            uxel, uyel, pel = el
-            init!(kuxp, eldofs(uxel), eldofs(pel))
-            for qp in zip(qpits...)
-                uxqp, uyqp, pqp = qp
-                Jac, J = jacjac(pel, pqp)
-                JxW = J * weight(pqp)
-                gradNux = bfungrad(uxqp, Jac)
-                Np = bfun(pqp)
-                for j in 1:pnedof, i in 1:uxnedof
-                    kuxp[i, j] += (-JxW) * (gradNux[i][1] * Np[j])
-                end
-            end
-            assemble!(ass, kuxp)
-            assemble!(ass, transpose(kuxp))
-        end
-        return ass
-    end
-    function integrateyp!(ass, elits, qpits)
-        uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuyp = LocalMatrixAssembler(uynedof, pnedof, 0.0)
         for el in zip(elits...)
             uxel, uyel, pel = el
+            init!(kuxp, eldofs(uxel), eldofs(pel))
             init!(kuyp, eldofs(uyel), eldofs(pel))
             for qp in zip(qpits...)
                 uxqp, uyqp, pqp = qp
                 Jac, J = jacjac(pel, pqp)
                 JxW = J * weight(pqp)
+                gradNux = bfungrad(uxqp, Jac)
                 gradNuy = bfungrad(uyqp, Jac)
                 Np = bfun(pqp)
+                for j in 1:pnedof, i in 1:uxnedof
+                    kuxp[i, j] += (-JxW) * (gradNux[i][1] * Np[j])
+                end
                 for j in 1:pnedof, i in 1:uynedof
                     kuyp[i, j] += (-JxW) * (gradNuy[i][2] * Np[j])
                 end
             end
+            assemble!(ass, kuxp)
+            assemble!(ass, transpose(kuxp))
             assemble!(ass, kuyp)
             assemble!(ass, transpose(kuyp))
         end
         return ass
-    end</code></pre><p>In the <code>assembleK</code> function we first we create the element iterators. We can go through all the elements, both in the velocity finite element space and in the pressure finite element space, that define the domain of integration using this iterator. Each time a new element is accessed, some data are precomputed such as the element degrees of freedom, components of the degree of freedom, etc. Note that we need to iterate two finite element spaces, hence we create a tuple of iterators.</p><pre><code class="language-julia">    elits = (FEIterator(Uh), FEIterator(Ph))</code></pre><p>These are the quadrature point iterators. We know that the elements are triangular. We choose the three-point rule, to capture the quadratic component in the velocity space. Quadrature-point iterators provide access to basis function values and gradients, the Jacobian matrix and the Jacobian determinant, the location of the quadrature point and so on. Note that we need to iterate the quadrature rules of two finite element spaces, hence we create a tuple of iterators.</p><pre><code class="language-julia">    qargs = (kind = :default, npts = 3,)
-    qpits = (QPIterator(Uh, qargs), QPIterator(Ph, qargs))</code></pre><p>The matrix will be assembled into this assembler. Which is initialized with the total number of degrees of freedom (dimension of the coefficient matrix before partitioning into unknowns and data degrees of freedom).</p><pre><code class="language-julia">    ass = SysmatAssemblerSparse(0.0)
-    start!(ass, tndof, tndof)</code></pre><p>The integration is carried out, and then...</p><pre><code class="language-julia">    integratexx!(ass, elits, qpits, mu)
-    integrateyy!(ass, elits, qpits, mu)
-    integratexy!(ass, elits, qpits, mu)
-    integratexp!(ass, elits, qpits)
-    integrateyp!(ass, elits, qpits)</code></pre><p>...we materialize the sparse stiffness matrix and return it.</p><pre><code class="language-julia">    return finish!(ass)
+    end</code></pre><p>In the <code>assembleK</code> function we first we create the element iterators. We can go through all the elements, both in the velocity finite element space and in the pressure finite element space, that define the domain of integration using this iterator. Each time a new element is accessed, some data are precomputed such as the element degrees of freedom, components of the degree of freedom, etc. Note that we need to iterate two finite element spaces, hence we create a tuple of iterators.</p><pre><code class="language-julia">    elits = (FEIterator(Uxh), FEIterator(Uyh), FEIterator(Ph))</code></pre><p>These are the quadrature point iterators. We know that the elements are triangular. We choose the three-point rule, to capture the quadratic component in the velocity space. Quadrature-point iterators provide access to basis function values and gradients, the Jacobian matrix and the Jacobian determinant, the location of the quadrature point and so on. Note that we need to iterate the quadrature rules of two finite element spaces, hence we create a tuple of iterators.</p><pre><code class="language-julia">    qargs = (kind = :default, npts = 3,)
+    qpits = (QPIterator(Uxh, qargs), QPIterator(Uyh, qargs), QPIterator(Ph, qargs))</code></pre><p>The matrix will be assembled into this assembler. Which is initialized with the total number of degrees of freedom (dimension of the coefficient matrix before partitioning into unknowns and data degrees of freedom).</p><pre><code class="language-julia">    ass = SysmatAssemblerSparse(0.0)
+    start!(ass, tndof, tndof)</code></pre><p>The integration is carried out, and then...</p><pre><code class="language-julia">    integrateApart!(ass, elits, qpits, mu)
+    integrateBBTparts!(ass, elits, qpits)</code></pre><p>...we materialize the sparse stiffness matrix and return it.</p><pre><code class="language-julia">    return finish!(ass)
 end</code></pre><p>The linear algebraic system is solved by partitioning. The vector <code>U</code> is initially all zero, except in the degrees of freedom which are prescribed as nonzero. Therefore the product of the stiffness matrix and the vector <code>U</code> are the loads due to nonzero essential boundary conditions.  The submatrix of the stiffness conduction matrix corresponding to the free degrees of freedom (unknowns), <code>K[1:nu, 1:nu]</code> is then used to solve for the unknowns <code>U [1:nu]</code>.</p><pre><code class="language-julia">function solve!(U, K, F, nu)
     KT = K * U
     U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
@@ -172,24 +133,26 @@ end</code></pre><p>The function <code>evaluate_pressure_error</code> evaluates t
     qargs = (kind = :default, npts = 3,)
     qpit = QPIterator(Ph, qargs)
     return integrate!(elit, qpit, truep)
-end</code></pre><p>The function <code>evaluate_velocity_error</code> evaluates the true <span>$L^2$</span>  error of the velocity. It does that by integrating the square of the difference between the approximate pressure and the  true velocity, the true velocity being provided by the <code>trueux</code>, <code>trueuy</code> functions.</p><pre><code class="language-julia">function evaluate_velocity_error(Uh, trueux, trueuy)
-    function integrate!(elit, qpit, trueux, trueuy)
-        n_du = ndofsperel(elit)
-        uedofcomp = edofcompnt(Uh)
+end</code></pre><p>The function <code>evaluate_velocity_error</code> evaluates the true <span>$L^2$</span>  error of the velocity. It does that by integrating the square of the difference between the approximate pressure and the  true velocity, the true velocity being provided by the <code>trueux</code>, <code>trueuy</code> functions.</p><pre><code class="language-julia">function evaluate_velocity_error(Uxh, Uyh, trueux, trueuy)
+    function integrate!(elits, qpits, trueux, trueuy)
+        n_du, n_du = ndofsperel.(elits)
         E = 0.0
-        for el in elit
-            udofvals = eldofvals(el)
-            for qp in qpit
-                Jac, J = jacjac(el, qp)
-                JxW = J * weight(qp)
-                Nu = bfun(qp)
-                uxt = trueux(location(el, qp)...)
-                uyt = trueuy(location(el, qp)...)
+        for el in zip(elits...)
+            uxel, uyel = el
+            uxdofvals = eldofvals(uxel)
+            uydofvals = eldofvals(uyel)
+            for qp in zip(qpits...)
+                uxqp, uyqp = qp
+                Jac, J = jacjac(uxel, uxqp)
+                JxW = J * weight(uxqp)
+                Nu = bfun(uxqp)
+                uxt = trueux(location(uxel, uxqp)...)
+                uyt = trueuy(location(uxel, uxqp)...)
                 uxa = 0.0
                 uya = 0.0
                 for j in 1:n_du
-                    (uedofcomp[j] == 1) &amp;&amp; (uxa += (udofvals[j] * Nu[j]))
-                    (uedofcomp[j] == 2) &amp;&amp; (uya += (udofvals[j] * Nu[j]))
+                    uxa += (uxdofvals[j] * Nu[j])
+                    uya += (uydofvals[j] * Nu[j])
                 end
                 E += (JxW) * ((uxa - uxt)^2 + (uya - uyt)^2)
             end
@@ -197,11 +160,11 @@ end</code></pre><p>The function <code>evaluate_velocity_error</code> evaluates t
         return sqrt(E)
     end
 
-    elit = FEIterator(Uh)
+    elits = (FEIterator(Uxh), FEIterator(Uyh),)
     qargs = (kind = :default, npts = 3,)
-    qpit = QPIterator(Uh, qargs)
-    return integrate!(elit, qpit, trueux, trueuy)
+    qpits = (QPIterator(Uxh, qargs), QPIterator(Uyh, qargs),)
+    return integrate!(elits, qpits, trueux, trueuy)
 end
 
 end</code></pre><p>To run the example, evaluate this file which will  compile the module <code>.tut_stokes_ht_p2_p1_reddy</code>.</p><pre><code class="language-julia">using .tut_stokes_ht_p2_p1_reddy
-tut_stokes_ht_p2_p1_reddy.run()</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 14 July 2020 16:40">Tuesday 14 July 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+tut_stokes_ht_p2_p1_reddy.run()</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 14 July 2020 16:47">Tuesday 14 July 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
