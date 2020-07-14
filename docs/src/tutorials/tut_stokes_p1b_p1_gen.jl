@@ -16,12 +16,12 @@
 # strain-rate/velocity matrices. It can be manipulated into the one derived
 # in Reddy, Introduction to the finite element method, 1993. Page 486 ff.
 
-# The complete code is in the file [`tut_stokes_ht_p1b_p1_gen.jl`](tut_stokes_ht_p1b_p1_gen.jl).
+# The complete code is in the file [`tut_stokes_p1b_p1_gen.jl`](tut_stokes_p1b_p1_gen.jl).
 
 # The solution will be defined  within a module in order to eliminate conflicts
 # with data or functions defined elsewhere.
 
-module tut_stokes_ht_p1b_p1_gen
+module tut_stokes_p1b_p1_gen
 
 # We'll need some functionality from linear algebra, static arrays, and the mesh
 # libraries. Some plotting will be produced to visualize structure of the
@@ -149,8 +149,8 @@ function run()
     makeattribute(Uh, "uy", 2)
     # The pressure and the velocity components are then written out into two VTK
     # files.
-    vtkwrite("tut_stokes_ht_p1b_p1_gen-p", baseincrel(mesh), [(name = "p",), ])
-    vtkwrite("tut_stokes_ht_p1b_p1_gen-v", baseincrel(mesh), [(name = "ux",), (name = "uy",)])
+    vtkwrite("tut_stokes_p1b_p1_gen-p", baseincrel(mesh), [(name = "p",), ])
+    vtkwrite("tut_stokes_p1b_p1_gen-v", baseincrel(mesh), [(name = "ux",), (name = "uy",)])
     
     return true
 end
@@ -376,7 +376,7 @@ end
 end
 
 # To run the example, evaluate this file which will  compile the module
-# `.tut_stokes_ht_p1b_p1_gen`.
-using .tut_stokes_ht_p1b_p1_gen
-tut_stokes_ht_p1b_p1_gen.run()
+# `.tut_stokes_p1b_p1_gen`.
+using .tut_stokes_p1b_p1_gen
+tut_stokes_p1b_p1_gen.run()
 
