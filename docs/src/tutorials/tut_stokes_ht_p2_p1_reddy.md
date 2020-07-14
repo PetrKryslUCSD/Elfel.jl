@@ -40,11 +40,11 @@ using UnicodePlots
 The boundary value problem is expressed in this weak form
 ```math
 \int_{\Omega} 2\mu\frac{\partial{w_x}}{\partial{x}}\frac{\partial{u_x}}{\partial{x}}
-+\mu\frac{\partial{w_x}}{\partial{y}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_x}}{\partial{x}} p -w_x f_x d\Omega  = 0
++\mu\frac{\partial{w_x}}{\partial{y}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_x}}{\partial{x}} p  d\Omega  = 0
 ```
 ```math
 \int_{\Omega} 2\mu\frac{\partial{w_y}}{\partial{y}}\frac{\partial{u_y}}{\partial{y}}
-+\mu\frac{\partial{w_y}}{\partial{x}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_y}}{\partial{y}} p -w_y f_y d\Omega  = 0
++\mu\frac{\partial{w_y}}{\partial{x}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_y}}{\partial{y}} p  d\Omega  = 0
 ```
 ```math
 -\int_{\Omega} q \left(\frac{\partial{u_x}}{\partial{x}} + \frac{\partial{u_y}}{\partial{y}}\right)d\Omega = 0
@@ -76,12 +76,13 @@ velocity and pressure spaces.
     vmesh, pmesh = genmesh(A, N)
 ```
 
-Construct the velocity space: it is a vector space with two components. The
-degrees of freedom are real numbers (`Float64`). The velocity mesh
-carries the finite elements of  the continuity ``H ^1``, i. e. both the
-function values and the derivatives are square integrable. Each node
-carries 2 degrees of freedom, hence there are two velocity components per
-node.
+Construct the velocity spaces: As an alternative to a previous treatment
+with a single vector space for the velocity, here we will use to vector
+spaces, one for each component of the velocity. The degrees of freedom
+are real numbers (`Float64`). The velocity mesh carries the finite
+elements of  the continuity ``H ^1``, i. e. both the function values and
+the derivatives are square integrable. Each node carries just one degree of
+freedom (1).
 
 ```julia
     Uxh = FESpace(Float64, vmesh, FEH1_T6(), 1)
@@ -141,7 +142,7 @@ freedom are numbered, again both for the velocities and for the
 pressures.
 
 ```julia
-    numberdofs!(Uxh, Uyh, Ph)
+    numberdofs!([Uxh, Uyh, Ph])
 ```
 
 The total number of degrees of freedom is now calculated.
@@ -211,7 +212,7 @@ associated with the meshes for the pressures and the velocity.
 ```julia
     makeattribute(Ph, "p", 1)
     makeattribute(Uxh, "ux", 1)
-    makeattribute(Uyh, "uy", 2)
+    makeattribute(Uyh, "uy", 1)
 ```
 
 The pressure and the velocity components are then written out into two VTK
@@ -256,50 +257,29 @@ Return the pair of meshes
     return vmesh, pmesh
 end
 
-function assembleK(Uh, Ph, tndof, mu)
-    function integratexx!(ass, elits, qpits, mu)
+function assembleK(Uxh, Uyh, Ph, tndof, mu)
+```
+
+Here we demonstrate that the coefficient matrix which is expected to have
+the structure
+```math
+K = \left[
+\begin{array}{cc}
+    A & B^T \\
+    B & 0
+\end{array}\right]
+```
+
+```julia
+    function integrateApart!(ass, elits, qpits, mu)
         uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuxux = LocalMatrixAssembler(uxnedof, uxnedof, 0.0)
-        for el in zip(elits...)
-            uxel, uyel, pel = el
-            init!(kuxux, eldofs(uxel), eldofs(uxel))
-            for qp in zip(qpits...)
-                uxqp, uyqp, pqp = qp
-                Jac, J = jacjac(pel, pqp)
-                JxW = J * weight(pqp)
-                gradNux = bfungrad(uxqp, Jac)
-                for j in 1:uxnedof, i in 1:uxnedof
-                    kuxux[i, j] += (mu * JxW) * (2 * gradNux[i][1] * gradNux[j][1] + gradNux[i][2] * gradNux[j][2])
-                end
-            end
-            assemble!(ass, kuxux)
-        end
-        return ass
-    end
-    function integrateyy!(ass, elits, qpits, mu)
-        uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuyuy = LocalMatrixAssembler(uynedof, uynedof, 0.0)
-        for el in zip(elits...)
-            uxel, uyel, pel = el
-            init!(kuyuy, eldofs(uyel), eldofs(uyel))
-            for qp in zip(qpits...)
-                uxqp, uyqp, pqp = qp
-                Jac, J = jacjac(pel, pqp)
-                JxW = J * weight(pqp)
-                gradNuy = bfungrad(uyqp, Jac)
-                for j in 1:uynedof, i in 1:uynedof
-                    kuyuy[i, j] += (mu * JxW) * (gradNuy[i][1] * gradNuy[j][1] + 2 * gradNuy[i][2] * gradNuy[j][2])
-                end
-            end
-            assemble!(ass, kuyuy)
-        end
-        return ass
-    end
-    function integratexy!(ass, elits, qpits, mu)
-        uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuxuy = LocalMatrixAssembler(uxnedof, uynedof, 0.0)
         for el in zip(elits...)
             uxel, uyel, pel = el
+            init!(kuxux, eldofs(uxel), eldofs(uxel))
+            init!(kuyuy, eldofs(uyel), eldofs(uyel))
             init!(kuxuy, eldofs(uxel), eldofs(uyel))
             for qp in zip(qpits...)
                 uxqp, uyqp, pqp = qp
@@ -307,52 +287,47 @@ function assembleK(Uh, Ph, tndof, mu)
                 JxW = J * weight(pqp)
                 gradNux = bfungrad(uxqp, Jac)
                 gradNuy = bfungrad(uyqp, Jac)
+                for j in 1:uxnedof, i in 1:uxnedof
+                    kuxux[i, j] += (mu * JxW) * (2 * gradNux[i][1] * gradNux[j][1] + gradNux[i][2] * gradNux[j][2])
+                end
+                for j in 1:uynedof, i in 1:uynedof
+                    kuyuy[i, j] += (mu * JxW) * (gradNuy[i][1] * gradNuy[j][1] + 2 * gradNuy[i][2] * gradNuy[j][2])
+                end
                 for j in 1:uynedof, i in 1:uxnedof
                     kuxuy[i, j] += (mu * JxW) * (gradNux[i][1] * gradNuy[j][2])
                 end
             end
+            assemble!(ass, kuxux)
             assemble!(ass, kuxuy)
             assemble!(ass, transpose(kuxuy))
+            assemble!(ass, kuyuy)
         end
         return ass
     end
-    function integratexp!(ass, elits, qpits)
+    function integrateBBTparts!(ass, elits, qpits)
         uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuxp = LocalMatrixAssembler(uxnedof, pnedof, 0.0)
-        for el in zip(elits...)
-            uxel, uyel, pel = el
-            init!(kuxp, eldofs(uxel), eldofs(pel))
-            for qp in zip(qpits...)
-                uxqp, uyqp, pqp = qp
-                Jac, J = jacjac(pel, pqp)
-                JxW = J * weight(pqp)
-                gradNux = bfungrad(uxqp, Jac)
-                Np = bfun(pqp)
-                for j in 1:pnedof, i in 1:uxnedof
-                    kuxp[i, j] += (-JxW) * (gradNux[i][1] * Np[j])
-                end
-            end
-            assemble!(ass, kuxp)
-            assemble!(ass, transpose(kuxp))
-        end
-        return ass
-    end
-    function integrateyp!(ass, elits, qpits)
-        uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuyp = LocalMatrixAssembler(uynedof, pnedof, 0.0)
         for el in zip(elits...)
             uxel, uyel, pel = el
+            init!(kuxp, eldofs(uxel), eldofs(pel))
             init!(kuyp, eldofs(uyel), eldofs(pel))
             for qp in zip(qpits...)
                 uxqp, uyqp, pqp = qp
                 Jac, J = jacjac(pel, pqp)
                 JxW = J * weight(pqp)
+                gradNux = bfungrad(uxqp, Jac)
                 gradNuy = bfungrad(uyqp, Jac)
                 Np = bfun(pqp)
+                for j in 1:pnedof, i in 1:uxnedof
+                    kuxp[i, j] += (-JxW) * (gradNux[i][1] * Np[j])
+                end
                 for j in 1:pnedof, i in 1:uynedof
                     kuyp[i, j] += (-JxW) * (gradNuy[i][2] * Np[j])
                 end
             end
+            assemble!(ass, kuxp)
+            assemble!(ass, transpose(kuxp))
             assemble!(ass, kuyp)
             assemble!(ass, transpose(kuyp))
         end
@@ -369,7 +344,7 @@ components of the degree of freedom, etc. Note that we need to iterate
 two finite element spaces, hence we create a tuple of iterators.
 
 ```julia
-    elits = (FEIterator(Uh), FEIterator(Ph))
+    elits = (FEIterator(Uxh), FEIterator(Uyh), FEIterator(Ph))
 ```
 
 These are the quadrature point iterators. We know that the elements are
@@ -382,7 +357,7 @@ two finite element spaces, hence we create a tuple of iterators.
 
 ```julia
     qargs = (kind = :default, npts = 3,)
-    qpits = (QPIterator(Uh, qargs), QPIterator(Ph, qargs))
+    qpits = (QPIterator(Uxh, qargs), QPIterator(Uyh, qargs), QPIterator(Ph, qargs))
 ```
 
 The matrix will be assembled into this assembler. Which is initialized
@@ -397,11 +372,8 @@ matrix before partitioning into unknowns and data degrees of freedom).
 The integration is carried out, and then...
 
 ```julia
-    integratexx!(ass, elits, qpits, mu)
-    integrateyy!(ass, elits, qpits, mu)
-    integratexy!(ass, elits, qpits, mu)
-    integratexp!(ass, elits, qpits)
-    integrateyp!(ass, elits, qpits)
+    integrateApart!(ass, elits, qpits, mu)
+    integrateBBTparts!(ass, elits, qpits)
 ```
 
 ...we materialize the sparse stiffness matrix and return it.
@@ -466,24 +438,26 @@ between the approximate pressure and the  true velocity, the true velocity
 being provided by the `trueux`, `trueuy` functions.
 
 ```julia
-function evaluate_velocity_error(Uh, trueux, trueuy)
-    function integrate!(elit, qpit, trueux, trueuy)
-        n_du = ndofsperel(elit)
-        uedofcomp = edofcompnt(Uh)
+function evaluate_velocity_error(Uxh, Uyh, trueux, trueuy)
+    function integrate!(elits, qpits, trueux, trueuy)
+        n_du, n_du = ndofsperel.(elits)
         E = 0.0
-        for el in elit
-            udofvals = eldofvals(el)
-            for qp in qpit
-                Jac, J = jacjac(el, qp)
-                JxW = J * weight(qp)
-                Nu = bfun(qp)
-                uxt = trueux(location(el, qp)...)
-                uyt = trueuy(location(el, qp)...)
+        for el in zip(elits...)
+            uxel, uyel = el
+            uxdofvals = eldofvals(uxel)
+            uydofvals = eldofvals(uyel)
+            for qp in zip(qpits...)
+                uxqp, uyqp = qp
+                Jac, J = jacjac(uxel, uxqp)
+                JxW = J * weight(uxqp)
+                Nu = bfun(uxqp)
+                uxt = trueux(location(uxel, uxqp)...)
+                uyt = trueuy(location(uxel, uxqp)...)
                 uxa = 0.0
                 uya = 0.0
                 for j in 1:n_du
-                    (uedofcomp[j] == 1) && (uxa += (udofvals[j] * Nu[j]))
-                    (uedofcomp[j] == 2) && (uya += (udofvals[j] * Nu[j]))
+                    uxa += (uxdofvals[j] * Nu[j])
+                    uya += (uydofvals[j] * Nu[j])
                 end
                 E += (JxW) * ((uxa - uxt)^2 + (uya - uyt)^2)
             end
@@ -491,10 +465,10 @@ function evaluate_velocity_error(Uh, trueux, trueuy)
         return sqrt(E)
     end
 
-    elit = FEIterator(Uh)
+    elits = (FEIterator(Uxh), FEIterator(Uyh),)
     qargs = (kind = :default, npts = 3,)
-    qpit = QPIterator(Uh, qargs)
-    return integrate!(elit, qpit, trueux, trueuy)
+    qpits = (QPIterator(Uxh, qargs), QPIterator(Uyh, qargs),)
+    return integrate!(elits, qpits, trueux, trueuy)
 end
 
 end

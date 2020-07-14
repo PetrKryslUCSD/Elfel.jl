@@ -150,7 +150,7 @@ freedom are numbered, again both for the velocities and for the
 pressures.
 
 ```julia
-    numberdofs!(Uh, Ph)
+    numberdofs!([Uh, Ph])
 ```
 
 The total number of degrees of freedom is now calculated.
