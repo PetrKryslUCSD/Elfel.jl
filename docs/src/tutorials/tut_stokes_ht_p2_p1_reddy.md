@@ -39,12 +39,12 @@ using UnicodePlots
 
 The boundary value problem is expressed in this weak form
 ```math
-\int_{\Omega} 2\mu\frac{\partial{w_x}}{\partial{x}}\frac{\partial{u_x}}{\partial{x}}
-+\mu\frac{\partial{w_x}}{\partial{y}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_x}}{\partial{x}} p  d\Omega  = 0
+\int_{\Omega} \left(2\mu\frac{\partial{w_x}}{\partial{x}}\frac{\partial{u_x}}{\partial{x}}
++\mu\frac{\partial{w_x}}{\partial{y}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_x}}{\partial{x}} p \right) d\Omega  = 0
 ```
 ```math
-\int_{\Omega} 2\mu\frac{\partial{w_y}}{\partial{y}}\frac{\partial{u_y}}{\partial{y}}
-+\mu\frac{\partial{w_y}}{\partial{x}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_y}}{\partial{y}} p  d\Omega  = 0
+\int_{\Omega} \left(2\mu\frac{\partial{w_y}}{\partial{y}}\frac{\partial{u_y}}{\partial{y}}
++\mu\frac{\partial{w_y}}{\partial{x}}\left(\frac{\partial{u_x}}{\partial{y}}+\frac{\partial{u_y}}{\partial{x}}\right)  - \frac{\partial{w_y}}{\partial{y}} p \right) d\Omega  = 0
 ```
 ```math
 -\int_{\Omega} q \left(\frac{\partial{u_x}}{\partial{x}} + \frac{\partial{u_y}}{\partial{y}}\right)d\Omega = 0
@@ -257,10 +257,11 @@ Return the pair of meshes
     return vmesh, pmesh
 end
 
+
 function assembleK(Uxh, Uyh, Ph, tndof, mu)
 ```
 
-Here we demonstrate that the coefficient matrix which is expected to have
+Here we demonstrate that the coefficient matrix, which is expected to have
 the structure
 ```math
 K = \left[
@@ -269,6 +270,9 @@ K = \left[
     B & 0
 \end{array}\right]
 ```
+can be constructed in stages. Refer to the description below. The two
+functions below  carry out the integration of two separate parts of the
+coefficient matrix.
 
 ```julia
     function integrateApart!(ass, elits, qpits, mu)
@@ -282,9 +286,23 @@ K = \left[
             init!(kuyuy, eldofs(uyel), eldofs(uyel))
             init!(kuxuy, eldofs(uxel), eldofs(uyel))
             for qp in zip(qpits...)
+```
+
+Step the quadrature point iterators in step: this assumes that
+in fact there is the same number of quadrature points in all
+the quadrature rules.
+
+```julia
                 uxqp, uyqp, pqp = qp
                 Jac, J = jacjac(pel, pqp)
                 JxW = J * weight(pqp)
+```
+
+Note that the gradients of the basis functions are not
+necessarily the same in those two velocity spaces. Hence we
+must grab the gradient from the correct space.
+
+```julia
                 gradNux = bfungrad(uxqp, Jac)
                 gradNuy = bfungrad(uyqp, Jac)
                 for j in 1:uxnedof, i in 1:uxnedof
@@ -298,7 +316,7 @@ K = \left[
                 end
             end
             assemble!(ass, kuxux)
-            assemble!(ass, kuxuy)
+            assemble!(ass, kuxuy) # off-diagonal matrix needs to be assembled twice
             assemble!(ass, transpose(kuxuy))
             assemble!(ass, kuyuy)
         end
@@ -309,10 +327,29 @@ K = \left[
         kuxp = LocalMatrixAssembler(uxnedof, pnedof, 0.0)
         kuyp = LocalMatrixAssembler(uynedof, pnedof, 0.0)
         for el in zip(elits...)
+```
+
+The iterators of the finite elements are stepped in unison.
+
+```julia
             uxel, uyel, pel = el
+```
+
+Initialize the local matrix assembler with the global degree of
+freedom numbers, both for the velocity spaces and for the
+pressure space.
+
+```julia
             init!(kuxp, eldofs(uxel), eldofs(pel))
             init!(kuyp, eldofs(uyel), eldofs(pel))
             for qp in zip(qpits...)
+```
+
+Step the quadrature point iterators in step: this assumes that
+in fact there is the same number of quadrature points in all
+the quadrature rules.
+
+```julia
                 uxqp, uyqp, pqp = qp
                 Jac, J = jacjac(pel, pqp)
                 JxW = J * weight(pqp)
@@ -351,9 +388,13 @@ These are the quadrature point iterators. We know that the elements are
 triangular. We choose the three-point rule, to capture the quadratic
 component in the velocity space. Quadrature-point iterators provide
 access to basis function values and gradients, the Jacobian matrix and
-the Jacobian determinant, the location of the quadrature point and so
-on. Note that we need to iterate the quadrature rules of
-two finite element spaces, hence we create a tuple of iterators.
+the Jacobian determinant, the location of the quadrature point and so on.
+Note that we need to iterate the quadrature rules of three finite element
+spaces, hence we create a tuple of iterators. All of these quadrature
+point iterators refer to the "same" quadrature rule: the same number of
+quadrature points, the same weights, and so on. However, the services
+these quadrature points provide do depend on the finite element space as
+well, for instance they would typically have different basis functions.
 
 ```julia
     qargs = (kind = :default, npts = 3,)
@@ -369,14 +410,31 @@ matrix before partitioning into unknowns and data degrees of freedom).
     start!(ass, tndof, tndof)
 ```
 
-The integration is carried out, and then...
+First we calculate the "A" part, using the function below. It
+is "assembled" into the assembler, which means that after this function
+finishes, the assembler represents this intermediate matrix
+```math
+K = \left[
+\begin{array}{cc}
+    A & 0 \\
+    0 & 0
+\end{array}\right]
+```
 
 ```julia
     integrateApart!(ass, elits, qpits, mu)
+```
+
+Then the "B-transpose(B)" part using this function is added to the
+assembler. When the function below finishes, the assembler represents the
+entire ``K`` matrix.
+
+```julia
     integrateBBTparts!(ass, elits, qpits)
 ```
 
-...we materialize the sparse stiffness matrix and return it.
+Finally, we materialize the sparse stiffness matrix from the assembler and
+return it.
 
 ```julia
     return finish!(ass)
