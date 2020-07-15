@@ -216,7 +216,7 @@ The finite element iterator cooperates with the quadrature point iterator here
 to compute the Jacobian at the current integration point.
 """
 function jacjac(it::FEIterator, qpit::QPIterator)
-    return jacjac(it.fesp.fe, it._geom, it._nodes, qpit._scalbfungrad_ps[qpit._pt])
+    return jacjac(it.fesp.fe, it._geom, it._nodes, qpit._geomscalbfungrad_ps[qpit._pt])
 end
 
 """
@@ -225,11 +225,13 @@ end
 Calculate the location of the quadrature point.
 """
 function location(it::FEIterator, qpit::QPIterator)
+    # @show it._nodes
+    # @show qpit._geomscalbfuns[qpit._pt]
     n = it._nodes[1]
-    loc = it._geom[n] * qpit._scalbfuns[qpit._pt][1]
+    loc = it._geom[n] * qpit._geomscalbfuns[qpit._pt][1]
     for i in 2:length(it._nodes)
         n = it._nodes[i]
-        loc += it._geom[n] * qpit._scalbfuns[qpit._pt][i]
+        loc += it._geom[n] * qpit._geomscalbfuns[qpit._pt][i]
     end
     return loc
 end
