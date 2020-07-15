@@ -4,7 +4,7 @@ using StaticArrays
 using LinearAlgebra
 using ..RefShapes: manifdim, IntegRule, quadrature
 using ..RefShapes: npts, param_coords, weights
-using ..FElements: refshape, ndofsperel
+using ..FElements: refshape, ndofsperel, _geometrycarrier
 import ..FElements: bfun, bfungradpar, jacjac
 using ..FESpaces: edofbfnum
 
@@ -38,7 +38,15 @@ function __bfundata(fesp, qr)
         push!(gradNps, gN)
     end
     gradN = similar(gradNps[1])
-    return (bfnum, scalNs, scalgradNps, scalgradN, Ns, gradNps, gradN)
+    # Now do this for the geometry carrier
+    gcfe = _geometrycarrier(fesp.fe)
+    geomscalNs = Vector{Float64}[];
+    geomscalgradNps = Vector{Adjoint{Float64,SArray{Tuple{MDIM},Float64,1,MDIM}}}[];
+    for j in 1:npts
+        push!(geomscalNs, bfun(gcfe, pc[j,:]))
+        push!(geomscalgradNps, bfungradpar(gcfe, pc[j,:]))
+    end
+    return (bfnum, scalNs, scalgradNps, scalgradN, Ns, gradNps, gradN, geomscalNs, geomscalgradNps)
 end
 
 """
@@ -58,6 +66,8 @@ mutable struct QPIterator{FES, MDIM}
     _bfuns::Vector{Vector{Float64}}
     _bfungrad_ps::Vector{Vector{Adjoint{Float64,SArray{Tuple{MDIM},Float64,1,MDIM}}}}
     _bfungrads::Vector{Adjoint{Float64,SArray{Tuple{MDIM},Float64,1,MDIM}}}
+    _geomscalbfuns::Vector{Vector{Float64}}
+    _geomscalbfungrad_ps::Vector{Vector{Adjoint{Float64,SArray{Tuple{MDIM},Float64,1,MDIM}}}}
     _pt::Int64
 end
 
@@ -68,9 +78,9 @@ Construct quadrature-point iterator by associating it with a finite element spac
 """
 function QPIterator(fesp::FES, quadraturesettings) where {FES}
     _quadr = quadrature(refshape(fesp.fe), quadraturesettings)
-    bfnum, scalNs, scalgradNps, scalgradN, Ns, gradNps, gradN = __bfundata(fesp, _quadr)
+    bfnum, scalNs, scalgradNps, scalgradN, Ns, gradNps, gradN, geomscalNs, geomscalgradNps = __bfundata(fesp, _quadr)
     _pt = 0
-    return QPIterator{FES, manifdim(refshape(fesp.fe))}(fesp, _quadr, bfnum, scalNs, scalgradNps, scalgradN, Ns, gradNps, gradN, _pt)
+    return QPIterator{FES, manifdim(refshape(fesp.fe))}(fesp, _quadr, bfnum, scalNs, scalgradNps, scalgradN, Ns, gradNps, gradN, geomscalNs, geomscalgradNps, _pt)
 end
 
 """

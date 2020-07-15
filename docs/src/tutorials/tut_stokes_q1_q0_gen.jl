@@ -97,9 +97,9 @@ function run()
     # space supported on a mesh of three-node triangles.
     Ph = FESpace(Float64, mesh, FEL2_Q4(), 1)
 
-    # The pressure in this "enclosed" flow example is only known up to a constant.
-    # By setting  pressure degree of freedom at one node will make the solution
-    # unique.
+    # The pressure in this "enclosed" flow example is only known up to a
+    # constant. By setting  pressure degree of freedom at one degree of freedom
+    # to zero will make the solution unique.
     atcenter = vselect(geometry(mesh); nearestto = [0.0, 0.0])
     setebc!(Ph, 2, atcenter[1], 1, 0.0)
 
@@ -139,7 +139,7 @@ function run()
 
     # Given that the solution is manufactured, i. e. exactly known, we can
     # calculate the true errors.
-    @show ep = evaluate_pressure_error(Uh, Ph, truep)
+    @show ep = evaluate_pressure_error(Ph, truep)
     @show ev = evaluate_velocity_error(Uh, trueux, trueuy)
 
     # Postprocessing. First we make attributes, scalar nodal attributes,
@@ -311,19 +311,17 @@ end
 # the pressure. It does that by integrating the square of the difference
 # between the approximate pressure and the  true pressure, the true pressure
 # being provided by the `truep` function.
-function evaluate_pressure_error(Uh, Ph, truep)
-    function integrate!(elits, qpit, truep)
-        n_du, n_dp = ndofsperel.(elits)
+function evaluate_pressure_error(Ph, truep)
+    function integrate!(elit, qpit, truep)
+        n_dp = ndofsperel(elit)
         E = 0.0
-        for el in zip(elits...)
-            uel, pel = el
-            dofvals = eldofvals(pel)
-            for qp in zip(qpits...)
-                uqp, pqp = qp
-                Jac, J = jacjac(uel, uqp)
-                JxW = J * weight(uqp)
-                Np = bfun(pqp)
-                pt = truep(location(uel, uqp)...)
+        for el in elit
+            dofvals = eldofvals(el)
+            for qp in qpit
+                Jac, J = jacjac(el, qp)
+                JxW = J * weight(qp)
+                Np = bfun(qp)
+                pt = truep(location(el, qp)...)
                 pa = 0.0
                 for j in 1:n_dp
                     pa += (dofvals[j] * Np[j])
@@ -334,11 +332,11 @@ function evaluate_pressure_error(Uh, Ph, truep)
         return sqrt(E)
     end
 
-# Element iterators will be needed for both the pressure space and the velocity space. The reason is that the pressure space cannot evaluate geometry
-    elits = (FEIterator(Uh), FEIterator(Ph),)
+    # Element iterators will be needed for both the pressure space and the velocity space. The reason is that the pressure space cannot evaluate geometry
+    elit = FEIterator(Ph)
     qargs = (kind = :Gauss, order = 2)
-    qpits = (QPIterator(Uh, qargs), QPIterator(Ph, qargs),)
-    return integrate!(elits, qpits, truep)
+    qpit = QPIterator(Ph, qargs)
+    return integrate!(elit, qpit, truep)
 end
 
 # The function `evaluate_velocity_error` evaluates the true ``L^2``  error of

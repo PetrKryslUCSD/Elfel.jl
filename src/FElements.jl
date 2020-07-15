@@ -129,7 +129,7 @@ function Jacobian(::Val{2}, J::T) where {T}
 end
 
 """
-    Jacobian(self::T, J::FFltMat)::FFlt where {T<:AbstractFESet3Manifold}
+    Jacobian(fe::T, J::FFltMat)::FFlt where {T<:AbstractFESet3Manifold}
 
 Evaluate the volume Jacobian.
 
@@ -168,22 +168,33 @@ function jacjac(fe::FE{RS, SD}, locs, nodes, gradNpar) where {RS, SD}
 end
 
 """
-    bfun(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}}
+    bfun(fe::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}}
 
 Evaluate the basis functions for all degrees of freedom of the scalar finite
 element at the parametric coordinates. Return a vector of the values.
 """
-function bfun(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}} where {RS, SD}
+function bfun(fe::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}} where {RS, SD}
 end
 
 """
-    bfungradpar(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}}
+    bfungradpar(fe::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}}
 
 Evaluate the gradients of the basis functions for all degrees of freedom of
 the scalar finite element with respect to the parametric coordinates, at the
 parametric coordinates given. Return a vector of the gradients.
 """
-function bfungradpar(self::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}} where {RS, SD}
+function bfungradpar(fe::FESUBT,  param_coords)  where {FESUBT<:FE{RS, SD}} where {RS, SD}
+end
+
+
+"""
+The elements that have nodal bases can be their own geometry carriers. Elements
+that do not have nodal bases, for instance an L2 quadrilateral with a single
+basis function associated with the cell, need another element type (in this
+case the nodal quadrilateral) to serve as geometry carriers.
+"""
+function _geometrycarrier(fe::FESUBT)  where {FESUBT<:FE{RS, SD}} where {RS, SD}
+    return fe
 end
 
 # L2 ==================================================================
@@ -202,11 +213,11 @@ L2 is two-node linear segment element.
 """
 FEH1_L2() = FEH1_L2_TYPE(FEData(MeshCore.L2, SVector{4}([1, 0, 0, 0])))
 
-function bfun(self::FEH1_L2_TYPE,  param_coords) 
+function bfun(fe::FEH1_L2_TYPE,  param_coords) 
     return SVector{2}([(1. - param_coords[1]); (1. + param_coords[1])] / 2.0)
 end
 
-function bfungradpar(self::FEH1_L2_TYPE,  param_coords) 
+function bfungradpar(fe::FEH1_L2_TYPE,  param_coords) 
     g = reshape([-1.0; +1.0]/2.0, 2, 1)
     return [SVector{1}(g[idx, :])' for idx in 1:size(g, 1)]
 end
@@ -227,11 +238,11 @@ T3 is 3-node linear triangle element.
 """
 FEH1_T3() = FEH1_T3_TYPE(FEData(MeshCore.T3, SVector{4}([1, 0, 0, 0])))
 
-function bfun(self::FEH1_T3_TYPE,  param_coords) 
+function bfun(fe::FEH1_T3_TYPE,  param_coords) 
     return SVector{3}([(1 - param_coords[1] - param_coords[2]); param_coords[1]; param_coords[2]])
 end
 
-function bfungradpar(self::FEH1_T3_TYPE,  param_coords)
+function bfungradpar(fe::FEH1_T3_TYPE,  param_coords)
     g = [-1. -1.;  +1.  0.;  0. +1.]
     return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
 end
@@ -252,7 +263,7 @@ T6 is 6-node quadratic triangle element.
 """
 FEH1_T6() = FEH1_T6_TYPE(FEData(MeshCore.T6, SVector{4}([1, 0, 0, 0])))
 
-function bfun(self::FEH1_T6_TYPE,  param_coords) 
+function bfun(fe::FEH1_T6_TYPE,  param_coords) 
     r=param_coords[1];
     s=param_coords[2];
     t = 1. - r - s;
@@ -265,7 +276,7 @@ function bfun(self::FEH1_T6_TYPE,  param_coords)
     return SVector{6}(val)
 end
 
-function bfungradpar(self::FEH1_T6_TYPE,  param_coords)
+function bfungradpar(fe::FEH1_T6_TYPE,  param_coords)
     r =param_coords[1];
     s =param_coords[2];
     t = 1. - r - s;
@@ -294,7 +305,7 @@ Q4 is 4-node linear quadrilateral element.
 """
 FEH1_Q4() = FEH1_Q4_TYPE(FEData(MeshCore.Q4, SVector{4}([1, 0, 0, 0])))
 
-function bfun(self::FEH1_Q4_TYPE,  param_coords) 
+function bfun(fe::FEH1_Q4_TYPE,  param_coords) 
 	val = [0.25 * (1. - param_coords[1]) * (1. - param_coords[2]);
 	       0.25 * (1. + param_coords[1]) * (1. - param_coords[2]);
 	       0.25 * (1. + param_coords[1]) * (1. + param_coords[2]);
@@ -302,7 +313,7 @@ function bfun(self::FEH1_Q4_TYPE,  param_coords)
     return SVector{4}(val)
 end
 
-function bfungradpar(self::FEH1_Q4_TYPE,  param_coords) 
+function bfungradpar(fe::FEH1_Q4_TYPE,  param_coords) 
     g =   [-(1. - param_coords[2])*0.25 -(1. - param_coords[1])*0.25;
             (1. - param_coords[2])*0.25 -(1. + param_coords[1])*0.25;
             (1. + param_coords[2])*0.25 (1. + param_coords[1])*0.25;
@@ -328,7 +339,7 @@ associated with the element itself.
 """
 FEH1_T3_BUBBLE() = FEH1_T3_BUBBLE_TYPE(FEData(MeshCore.T3, SVector{4}([1, 0, 1, 0])))
 
-function bfun(self::FEH1_T3_BUBBLE_TYPE,  param_coords) 
+function bfun(fe::FEH1_T3_BUBBLE_TYPE,  param_coords) 
     xi, eta = param_coords
     return SVector{4}([(1 - xi - eta); 
         xi; 
@@ -336,7 +347,7 @@ function bfun(self::FEH1_T3_BUBBLE_TYPE,  param_coords)
         (1 - xi - eta) * xi * eta])
 end
 
-function bfungradpar(self::FEH1_T3_BUBBLE_TYPE,  param_coords)
+function bfungradpar(fe::FEH1_T3_BUBBLE_TYPE,  param_coords)
     xi, eta = param_coords
     g = [-1. -1.;  
     +1.  0.;  
@@ -361,14 +372,14 @@ T4 is 4-node linear tetrahedral element.
 """
 FEH1_T4() = FEH1_T4_TYPE(FEData(MeshCore.T4, SVector{4}([1, 0, 0, 0])))
 
-function bfun(self::FEH1_T4_TYPE,  param_coords) 
+function bfun(fe::FEH1_T4_TYPE,  param_coords) 
     return SVector{4}([(1 - param_coords[1] - param_coords[2] - param_coords[3]);
             param_coords[1];
             param_coords[2];
             param_coords[3]])
 end
 
-function bfungradpar(self::FEH1_T4_TYPE,  param_coords)
+function bfungradpar(fe::FEH1_T4_TYPE,  param_coords)
     g = [-1.0 -1.0 -1.0;
          +1.0  0.0  0.0;
           0.0 +1.0  0.0;
@@ -387,6 +398,10 @@ struct FEL2_Q4_Type{RS, SD} <: FE{RS, SD}
 end
 FEL2_Q4_TYPE = FEL2_Q4_Type{RefShapeSquare, typeof(MeshCore.Q4)}
 
+function _geometrycarrier(fe::FEL2_Q4_TYPE)
+    return FEH1_Q4()
+end
+
 """
     FEL2_Q4()
 
@@ -396,11 +411,11 @@ Q4 is 4-node linear quadrilateral element.
 """
 FEL2_Q4() = FEL2_Q4_TYPE(FEData(MeshCore.Q4, SVector{4}([0, 0, 1, 0])))
 
-function bfun(self::FEL2_Q4_TYPE,  param_coords) 
+function bfun(fe::FEL2_Q4_TYPE,  param_coords) 
     return SVector{1}(1.0)
 end
 
-function bfungradpar(self::FEL2_Q4_TYPE,  param_coords) 
+function bfungradpar(fe::FEL2_Q4_TYPE,  param_coords) 
     g =   [0.0 0.0];
     return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
 end
@@ -422,11 +437,11 @@ T3 is 3-node linear triangle element.
 """
 FEL2_T3() = FEL2_T3_TYPE(FEData(MeshCore.T3, SVector{4}([0, 0, 1, 0])))
 
-function bfun(self::FEL2_T3_TYPE,  param_coords) 
+function bfun(fe::FEL2_T3_TYPE,  param_coords) 
    return SVector{1}(1.0)
 end
 
-function bfungradpar(self::FEL2_T3_TYPE,  param_coords)
+function bfungradpar(fe::FEL2_T3_TYPE,  param_coords)
     g =   [0.0 0.0];
     return [SVector{2}(g[idx, :])' for idx in 1:size(g, 1)]
 end
@@ -452,11 +467,11 @@ T4 is tetrahedral element with only internal degrees of freedom.
 """
 FEL2_T4() = FEL2_T4_TYPE(FEData(MeshCore.T4, SVector{4}([0, 0, 0, 1])))
 
-function bfun(self::FEL2_T4_TYPE,  param_coords) 
+function bfun(fe::FEL2_T4_TYPE,  param_coords) 
    return SVector{1}(1.0)
 end
 
-function bfungradpar(self::FEL2_T4_TYPE,  param_coords)
+function bfungradpar(fe::FEL2_T4_TYPE,  param_coords)
     g =   [0.0 0.0 0.0];
     return [SVector{3}(g[idx, :])' for idx in 1:size(g, 1)]
 end
