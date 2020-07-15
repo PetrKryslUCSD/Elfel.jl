@@ -1,8 +1,8 @@
-# # Solve the Stokes equation of colliding flow: MINI element, general formulation
+# # Solve the Stokes equation of colliding flow: Q1-Q0 element, general formulation
 
 # Synopsis: Compute the solution of the Stokes equation of two-dimensional
 # incompressible viscous flow for a manufactured problem of colliding flow.
-# Bubble-function triangular elements are used.
+# Continuous velocity/discontinuous pressure quadrilateral elements are used.
 
 # The "manufactured" colliding flow example from Elman et al 2014. The MINI
 # formulation with linear triangles with a cubic bubble function for the
