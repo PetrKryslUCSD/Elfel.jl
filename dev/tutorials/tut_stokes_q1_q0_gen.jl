@@ -4,12 +4,13 @@
 # incompressible viscous flow for a manufactured problem of colliding flow.
 # Continuous velocity/discontinuous pressure quadrilateral elements are used.
 
-# The "manufactured" colliding flow example from Elman et al 2014. The MINI
-# formulation with linear triangles with a cubic bubble function for the
-# velocity and continuous pressure on linear triangles. 
+# The "manufactured" colliding flow example from Elman et al 2014. The
+# Continuous velocity/discontinuous pressure formulation with linear
+# quadrilaterals. These elements suffer from pressure oscillation instability.
+# The results of this simulation demonstrate it.
 
-# The pressure is shown here with contours, and the velocities visualized with
-# arrows at random points.
+# The analytical results are shown here: pressure is shown  with contours,
+# and the velocities visualized with arrows at random points.
 # ![Pressure and velocity](colliding.png)
 
 # The formulation is the general elasticity-like scheme with
@@ -93,8 +94,10 @@ function run()
         end
     end
 
-    # No we construct the pressure space. It is a continuous, piecewise linear
-    # space supported on a mesh of three-node triangles.
+    # No we construct the pressure space. It is a discontinuous, piecewise
+    # constant space supported on a mesh of 4-node quadrilaterals
+    # (``L ^2``-continuity elements). Each quadrilateral carries a single
+    # degree of freedom.
     Ph = FESpace(Float64, mesh, FEL2_Q4(), 1)
 
     # The pressure in this "enclosed" flow example is only known up to a
@@ -148,7 +151,8 @@ function run()
     makeattribute(Uh, "ux", 1)
     makeattribute(Uh, "uy", 2)
     # The pressure and the velocity components are then written out into two VTK
-    # files.
+    # files. The pressure is of the "cell-data" type, the velocity is of
+    # the "point-data" type.
     vtkwrite("tut_stokes_q1_q0_gen-p", baseincrel(mesh), [(name = "p",), ])
     vtkwrite("tut_stokes_q1_q0_gen-v", baseincrel(mesh), [(name = "ux",), (name = "uy",)])
     
@@ -156,19 +160,20 @@ function run()
 end
 
 function genmesh(A, N)
-    # Linear triangle mesh is used for both the velocity space and the pressure
-    # space.
+    # Linear quadrilateral mesh is used for both the velocity space and the
+    # pressure space.
     mesh = attach!(Mesh(), Q4block(2 * A, 2 * A, N, N), "velocity")
     # Now translate so that the center of the square is at the origin of the
     # coordinates.
     ir = baseincrel(mesh)
     transform(ir, x -> x .- A)
-    # The bubble degree of freedom is associated with the element itself. The
-    # mesh will therefore be equipped with the incidence relation ``(2, 2)``.
-    # The finite element space for the velocity will therefore have degrees of
-    # freedom associated with the vertices and with the faces
+    # The pressure degree of freedom is associated with the element itself. The
+    # mesh will therefore need be equipped with the incidence relation ``
+    # (2, 2)``. The finite element space for the velocity will  have degrees of
+    # freedom associated with the vertices. The finite element space for the
+    # pressure will have degrees of freedom associated with  the faces
     # (elements themselves). The finite element space does that by associating
-    # fields with incidence relations, hence the need for this one.
+    # the pressure field with the ``(2, 2)`` incidence relation.
     eidir = ir_identity(ir)
     attach!(mesh, eidir)
     return mesh
@@ -332,7 +337,6 @@ function evaluate_pressure_error(Ph, truep)
         return sqrt(E)
     end
 
-    # Element iterators will be needed for both the pressure space and the velocity space. The reason is that the pressure space cannot evaluate geometry
     elit = FEIterator(Ph)
     qargs = (kind = :Gauss, order = 2)
     qpit = QPIterator(Ph, qargs)
