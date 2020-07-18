@@ -193,9 +193,7 @@ that do not have nodal bases, for instance an L2 quadrilateral with a single
 basis function associated with the cell, need another element type (in this
 case the nodal quadrilateral) to serve as geometry carriers.
 """
-function _geometrycarrier(fe::FESUBT)  where {FESUBT<:FE{RS, SD}} where {RS, SD}
-    return fe
-end
+_geometrycarrier(fe::T) where {T<:FE{RS, SD}} where {RS, SD} = fe
 
 # L2 ==================================================================
 # Linear two-node element. Only nodal basis functions.
