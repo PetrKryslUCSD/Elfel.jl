@@ -1,15 +1,16 @@
-# Solve the Stokes equation of colliding flow: MINI element, general formulation
+# Solve the Stokes equation of colliding flow: Q1-Q0 element, general formulation
 
 Synopsis: Compute the solution of the Stokes equation of two-dimensional
 incompressible viscous flow for a manufactured problem of colliding flow.
-Bubble-function triangular elements are used.
+Continuous velocity/discontinuous pressure quadrilateral elements are used.
 
-The "manufactured" colliding flow example from Elman et al 2014. The MINI
-formulation with linear triangles with a cubic bubble function for the
-velocity and continuous pressure on linear triangles.
+The "manufactured" colliding flow example from Elman et al 2014. The
+Continuous velocity/discontinuous pressure formulation with linear
+quadrilaterals. These elements suffer from pressure oscillation instability.
+The results of this simulation demonstrate it.
 
-The pressure is shown here with contours, and the velocities visualized with
-arrows at random points.
+The analytical results are shown here: pressure is shown  with contours,
+and the velocities visualized with arrows at random points.
 ![Pressure and velocity](colliding.png)
 
 The formulation is the general elasticity-like scheme with
@@ -125,16 +126,18 @@ boundary.
     end
 ```
 
-No we construct the pressure space. It is a continuous, piecewise linear
-space supported on a mesh of three-node triangles.
+No we construct the pressure space. It is a discontinuous, piecewise
+constant space supported on a mesh of 4-node quadrilaterals
+(``L ^2``-continuity elements). Each quadrilateral carries a single
+degree of freedom.
 
 ```julia
     Ph = FESpace(Float64, mesh, FEL2_Q4(), 1)
 ```
 
-The pressure in this "enclosed" flow example is only known up to a constant.
-By setting  pressure degree of freedom at one node will make the solution
-unique.
+The pressure in this "enclosed" flow example is only known up to a
+constant. By setting  pressure degree of freedom at one degree of freedom
+to zero will make the solution unique.
 
 ```julia
     atcenter = vselect(geometry(mesh); nearestto = [0.0, 0.0])
@@ -207,7 +210,7 @@ Given that the solution is manufactured, i. e. exactly known, we can
 calculate the true errors.
 
 ```julia
-    @show ep = evaluate_pressure_error(Uh, Ph, truep)
+    @show ep = evaluate_pressure_error(Ph, truep)
     @show ev = evaluate_velocity_error(Uh, trueux, trueuy)
 ```
 
@@ -221,7 +224,8 @@ associated with the meshes for the pressures and the velocity.
 ```
 
 The pressure and the velocity components are then written out into two VTK
-files.
+files. The pressure is of the "cell-data" type, the velocity is of
+the "point-data" type.
 
 ```julia
     vtkwrite("tut_stokes_q1_q0_gen-p", baseincrel(mesh), [(name = "p",), ])
@@ -233,8 +237,8 @@ end
 function genmesh(A, N)
 ```
 
-Linear triangle mesh is used for both the velocity space and the pressure
-space.
+Linear quadrilateral mesh is used for both the velocity space and the
+pressure space.
 
 ```julia
     mesh = attach!(Mesh(), Q4block(2 * A, 2 * A, N, N), "velocity")
@@ -248,12 +252,13 @@ coordinates.
     transform(ir, x -> x .- A)
 ```
 
-The bubble degree of freedom is associated with the element itself. The
-mesh will therefore be equipped with the incidence relation ``(2, 2)``.
-The finite element space for the velocity will therefore have degrees of
-freedom associated with the vertices and with the faces
+The pressure degree of freedom is associated with the element itself. The
+mesh will therefore need be equipped with the incidence relation ``
+(2, 2)``. The finite element space for the velocity will  have degrees of
+freedom associated with the vertices. The finite element space for the
+pressure will have degrees of freedom associated with  the faces
 (elements themselves). The finite element space does that by associating
-fields with incidence relations, hence the need for this one.
+the pressure field with the ``(2, 2)`` incidence relation.
 
 ```julia
     eidir = ir_identity(ir)
@@ -459,19 +464,17 @@ between the approximate pressure and the  true pressure, the true pressure
 being provided by the `truep` function.
 
 ```julia
-function evaluate_pressure_error(Uh, Ph, truep)
-    function integrate!(elits, qpit, truep)
-        n_du, n_dp = ndofsperel.(elits)
+function evaluate_pressure_error(Ph, truep)
+    function integrate!(elit, qpit, truep)
+        n_dp = ndofsperel(elit)
         E = 0.0
-        for el in zip(elits...)
-            uel, pel = el
-            dofvals = eldofvals(pel)
-            for qp in zip(qpits...)
-                uqp, pqp = qp
-                Jac, J = jacjac(uel, uqp)
-                JxW = J * weight(uqp)
-                Np = bfun(pqp)
-                pt = truep(location(uel, uqp)...)
+        for el in elit
+            dofvals = eldofvals(el)
+            for qp in qpit
+                Jac, J = jacjac(el, qp)
+                JxW = J * weight(qp)
+                Np = bfun(qp)
+                pt = truep(location(el, qp)...)
                 pa = 0.0
                 for j in 1:n_dp
                     pa += (dofvals[j] * Np[j])
@@ -481,15 +484,11 @@ function evaluate_pressure_error(Uh, Ph, truep)
         end
         return sqrt(E)
     end
-```
 
-Element iterators will be needed for both the pressure space and the velocity space. The reason is that the pressure space cannot evaluate geometry
-
-```julia
-    elits = (FEIterator(Uh), FEIterator(Ph),)
+    elit = FEIterator(Ph)
     qargs = (kind = :Gauss, order = 2)
-    qpits = (QPIterator(Uh, qargs), QPIterator(Ph, qargs),)
-    return integrate!(elits, qpits, truep)
+    qpit = QPIterator(Ph, qargs)
+    return integrate!(elit, qpit, truep)
 end
 ```
 

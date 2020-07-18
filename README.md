@@ -18,6 +18,7 @@ The library relies on mesh support from the following suite of small mesh-manage
 
 ## News
 
+- 07/15/2020: Implemented geometry carrier for  finite elements that are not isoparametric.
 - 07/11/2020: Tutorial structure added.
 - 07/06/2020: Exports have been added to facilitate use of the library.
 - 07/05/2020: Vector finite element spaces tested.
