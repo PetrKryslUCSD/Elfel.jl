@@ -396,9 +396,7 @@ struct FEL2_Q4_Type{RS, SD} <: FE{RS, SD}
 end
 FEL2_Q4_TYPE = FEL2_Q4_Type{RefShapeSquare, typeof(MeshCore.Q4)}
 
-function _geometrycarrier(fe::FEL2_Q4_TYPE)
-    return FEH1_Q4()
-end
+_geometrycarrier(fe::FEL2_Q4_TYPE) = FEH1_Q4()
 
 """
     FEL2_Q4()
