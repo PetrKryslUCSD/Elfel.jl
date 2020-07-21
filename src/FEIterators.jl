@@ -225,8 +225,6 @@ end
 Calculate the location of the quadrature point.
 """
 function location(it::FEIterator, qpit::QPIterator)
-    # @show it._nodes
-    # @show qpit._geomscalbfuns[qpit._pt]
     n = it._nodes[1]
     loc = it._geom[n] * qpit._geomscalbfuns[qpit._pt][1]
     for i in 2:length(it._nodes)

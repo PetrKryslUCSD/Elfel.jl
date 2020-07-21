@@ -398,9 +398,7 @@ struct FEL2_Q4_Type{RS, SD} <: FE{RS, SD}
 end
 FEL2_Q4_TYPE = FEL2_Q4_Type{RefShapeSquare, typeof(MeshCore.Q4)}
 
-function _geometrycarrier(fe::FEL2_Q4_TYPE)
-    return FEH1_Q4()
-end
+_geometrycarrier(fe::FEL2_Q4_TYPE) = FEH1_Q4()
 
 """
     FEL2_Q4()
@@ -427,6 +425,8 @@ struct FEL2_T3_Type{RS, SD} <: FE{RS, SD}
     data::FEData{SD}
 end
 FEL2_T3_TYPE = FEL2_T3_Type{RefShapeTriangle, typeof(MeshCore.T3)}
+
+_geometrycarrier(fe::FEL2_T3_TYPE) = FEH1_T3()
 
 """
     FEL2_T3()
@@ -457,6 +457,8 @@ struct FEL2_T4_Type{RS, SD} <: FE{RS, SD}
     data::FEData{SD}
 end
 FEL2_T4_TYPE = FEL2_T4_Type{RefShapeTetrahedron, typeof(MeshCore.T4)}
+
+_geometrycarrier(fe::FEL2_T4_TYPE) = FEH1_T4()
 
 """
     FEL2_T4()

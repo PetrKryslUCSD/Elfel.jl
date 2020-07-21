@@ -10,17 +10,23 @@
 			[
 				"*.jl"
 			],
-			"path": "."
+			"path": ".",
 		},
 		{
-			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshSteward.jl"
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshSteward.jl",
 		},
 		{
-			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshCore.jl"
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshCore.jl",
 		},
 		{
-			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshTutor.jl"
-		}
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\MeshTutor.jl",
+		},
+		{
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\CoNCMOR2.jl",
+		},
+		{
+			"path": "C:\\Users\\PKrysl\\Documents\\work\\MixedFEbyReduction.jl"
+		},
 	],
 	"settings":
 	{
@@ -39,7 +45,7 @@
 				"src",
 				"test",
 				"examples"
-			]
-		}
-	}
+			],
+		},
+	},
 }
