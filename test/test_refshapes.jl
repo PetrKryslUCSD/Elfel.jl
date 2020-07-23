@@ -119,3 +119,31 @@ end
 using .mrs6
 mrs6.test()
 
+module mrs7
+using Elfel.RefShapes: RefShapeInterval, manifdim
+using Elfel.RefShapes: quadrature, npts, param_coords, weights
+using Test
+function test()
+    @test manifdim(RefShapeInterval) == 1
+    result_true = exp(1.0) - exp(-1.0)
+    reference_results = [2.0                              
+    , 2.3426960879097307               
+    , 2.350336928680011                
+    , 2.3504020921563744               
+    , 2.350402386462827                
+    , 2.350402387286035                
+    , 2.350402387287601                
+    , 2.3504023872876028               
+    , 2.3504023872876036               
+    , 2.350402387287604   ]
+    results = Float64[]
+    for N in 1:10
+        qr = quadrature(RefShapeInterval, (order = N,))
+        push!(results, sum(exp.(param_coords(qr)) .* weights(qr)))
+    end
+    @test isapprox(results, reference_results)
+    end
+end
+using .mrs7
+mrs7.test()
+
