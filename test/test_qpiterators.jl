@@ -5,7 +5,6 @@ using Elfel.FElements: FE, FEData, refshape
 using Elfel.FElements: bfun, bfungradpar, FEH1_T3
 using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns
 using MeshSteward: Mesh, load, baseincrel
-using MeshCore: retrieve
 using Elfel.QPIterators: QPIterator, bfun, bfungradpar, weight
 using Test
 # using BenchmarkTools

@@ -2,7 +2,7 @@ module m_stokes_driven_tht6_veclap
 using Test
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities
+using MeshCore: nrelations, nentities
 using MeshSteward: T6block, T6toT3
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary
@@ -157,7 +157,7 @@ module m_stokes_driven_t3b
 
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities, ir_identity
+using MeshCore: nrelations, nentities, ir_identity
 using MeshSteward: T3block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary
@@ -330,7 +330,7 @@ module th_p2_p1
 using Test
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities, ir_identity, attribute, VecAttrib
+using MeshCore: nrelations, nentities, ir_identity, attribute, VecAttrib
 using MeshSteward: T6block, T6toT3
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary, transform
@@ -586,7 +586,7 @@ module m_th_p2_p1_veclap_alt
 using Test
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities, ir_identity, attribute, VecAttrib
+using MeshCore: nrelations, nentities, ir_identity, attribute, VecAttrib
 using MeshSteward: T6block, T6toT3
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary, transform

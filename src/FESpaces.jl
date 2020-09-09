@@ -2,7 +2,7 @@ module FESpaces
 
 using StaticArrays
 using MeshCore
-using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, IncRel, VecAttrib
+using MeshCore: nshapes, indextype, nrelations, nentities, IncRel, VecAttrib
 using MeshSteward: Mesh, baseincrel, increl
 using ..FElements: nfeatofdim, ndofperfeat, manifdim
 import ..FElements: ndofsperel

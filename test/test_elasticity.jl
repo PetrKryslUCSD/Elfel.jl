@@ -3,7 +3,7 @@ module mt_elasticity_t3
 using Test
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities
+using MeshCore: nrelations, nentities
 using MeshSteward: T3block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry
@@ -114,7 +114,7 @@ module mt_elast_stretch_t6
 using Test
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities
+using MeshCore: nrelations, nentities
 using MeshSteward: T6block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry

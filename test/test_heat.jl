@@ -2,7 +2,7 @@ module mt_heat_poisson_t3
 
 using Test
 using LinearAlgebra
-using MeshCore: retrieve, nrelations, nentities, @_check, attribute
+using MeshCore: nrelations, nentities, @_check, attribute
 using MeshSteward: T3block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: connectedv, geometry
@@ -117,7 +117,7 @@ mt_heat_poisson_t3.test()
 module m_heat_poisson_q4
 using Test
 using LinearAlgebra
-using MeshCore: retrieve, nrelations, nentities, attribute, @_check
+using MeshCore: nrelations, nentities, attribute, @_check
 using MeshSteward: Q4block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: connectedv, geometry

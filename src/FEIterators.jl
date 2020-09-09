@@ -2,7 +2,7 @@ module FEIterators
 
 using StaticArrays
 using MeshCore
-using MeshCore: nshapes, indextype, nrelations, nentities, retrieve, IncRel, shapedesc
+using MeshCore: nshapes, indextype, nrelations, nentities, IncRel, shapedesc
 using MeshSteward: Mesh, baseincrel, increl
 using ..RefShapes: manifdim, manifdimv
 using ..FElements: refshape, nfeatofdim
@@ -161,7 +161,7 @@ end
 function _storedofs!(d, p, e, ir, fl)
     ndpt = ndofsperterm(fl)
     for k in 1:nentities(ir, e)
-        gk = retrieve(ir, e, k)
+        gk = ir[e, k]
         for i in 1:ndpt
             d[p] = fl.dofnums[gk][i]
             p = p + 1
@@ -173,7 +173,7 @@ end
 function _storedofvals!(d, p, e, ir, fl)
     ndpt = ndofsperterm(fl)
     for k in 1:nentities(ir, e)
-        gk = retrieve(ir, e, k)
+        gk = ir[e, k]
         for i in 1:ndpt
             d[p] = fl.dofvals[gk][i]
             p = p + 1
@@ -184,7 +184,7 @@ end
 
 function _update!(it::FEIterator, state)
     it._state[1] = state
-    copyto!(it._nodes, retrieve(it._bir, state))
+    copyto!(it._nodes, it._bir[state])
     p = 1
     it._irs0 != nothing && (p = _storedofs!(it._dofs, p, state, it._irs0, it._fld0))
     it._irs1 != nothing && (p = _storedofs!(it._dofs, p, state, it._irs1, it._fld1))
