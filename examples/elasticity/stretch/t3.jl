@@ -2,7 +2,7 @@ module t3
 
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities
+using MeshCore: nrelations, nentities
 using MeshSteward: T3block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry

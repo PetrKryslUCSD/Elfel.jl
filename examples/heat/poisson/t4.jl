@@ -8,7 +8,7 @@ tetrahedral elements are used.
 module t4
 
 using LinearAlgebra
-using MeshCore: retrieve, nrelations, nentities, attribute, @_check
+using MeshCore: nrelations, nentities, attribute, @_check
 using MeshSteward: T4block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: connectedv, geometry

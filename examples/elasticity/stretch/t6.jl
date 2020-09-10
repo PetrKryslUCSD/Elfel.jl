@@ -5,7 +5,7 @@ using LinearAlgebra
 # using InteractiveUtils
 using StaticArrays
 # using Profile
-using MeshCore: retrieve, nrelations, nentities
+using MeshCore: nrelations, nentities
 using MeshSteward: T6block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry

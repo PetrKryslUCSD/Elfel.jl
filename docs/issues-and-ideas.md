@@ -157,4 +157,9 @@ end
 
 - L2 element may be incapable of representing its geometry because it does not necessarily have nodal basis functions. What do we do about that?
 
+- .wslconfig
+  [wsl2]
+  memory=16GB
+  swap=0
+  
 

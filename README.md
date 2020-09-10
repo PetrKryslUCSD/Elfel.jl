@@ -16,16 +16,6 @@ This package provides support for the development of Finite Element Method appli
 
 The library relies on mesh support from the following suite of small mesh-management packages: [`MeshCore`](https://github.com/PetrKryslUCSD/MeshCore.jl), [`MeshSteward`](https://github.com/PetrKryslUCSD/MeshSteward.jl).
 
-## News
-
-- 07/15/2020: Implemented geometry carrier for  finite elements that are not isoparametric.
-- 07/11/2020: Tutorial structure added.
-- 07/06/2020: Exports have been added to facilitate use of the library.
-- 07/05/2020: Vector finite element spaces tested.
-- 06/26/2020: L2 elements  implemented, Stokes problem example.
-- 06/19/2020: Example of a mixed method for the discrete Stokes problem added.
-- 05/25/2020: Firmed up the concept of iterators for access to element and quadrature point data.
-
 
 ## Usage
 
@@ -46,3 +36,13 @@ using Elfel.Exports
 
 The `examples` folder can be explored by simply running the files with `include()`.
 
+
+## News
+
+- 07/15/2020: Implemented geometry carrier for  finite elements that are not isoparametric.
+- 07/11/2020: Tutorial structure added.
+- 07/06/2020: Exports have been added to facilitate use of the library.
+- 07/05/2020: Vector finite element spaces tested.
+- 06/26/2020: L2 elements  implemented, Stokes problem example.
+- 06/19/2020: Example of a mixed method for the discrete Stokes problem added.
+- 05/25/2020: Firmed up the concept of iterators for access to element and quadrature point data.

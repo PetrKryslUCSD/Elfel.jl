@@ -7,7 +7,7 @@ heat source. Quadrilateral four-node elements are used.
 module q4
 
 using LinearAlgebra
-using MeshCore: retrieve, nrelations, nentities, attribute, @_check
+using MeshCore: nrelations, nentities, attribute, @_check
 using MeshSteward: Q4block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: connectedv, geometry
@@ -28,7 +28,7 @@ A = 1.0 # length of the side of the square
 kappa =  1.0; # conductivity matrix
 Q = -6.0; # internal heat generation rate
 tempf(x, y) =(1.0 + x^2 + 2.0 * y^2);#the exact distribution of temperature
-N = 1000;# number of subdivisions along the sides of the square domain
+N = 2000;# number of subdivisions along the sides of the square domain
 
 function genmesh()
     conn = Q4block(A, A, N, N)

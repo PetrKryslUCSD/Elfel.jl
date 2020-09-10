@@ -7,7 +7,7 @@ heat source. Linear triangle elements are used.
 module t3
 
 using LinearAlgebra
-using MeshCore: retrieve, nrelations, nentities, attribute, @_check
+using MeshCore: nrelations, nentities, attribute, @_check
 using MeshSteward: T3block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: connectedv, geometry
