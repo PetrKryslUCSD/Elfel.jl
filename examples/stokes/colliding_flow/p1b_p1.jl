@@ -11,7 +11,7 @@ module p1b_p1
 
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities, ir_identity, attribute
+using MeshCore: nrelations, nentities, ir_identity, attribute
 using MeshSteward: T3block
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary, transform
@@ -47,7 +47,7 @@ function genmesh(N)
     return mesh
 end
 
-function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
+function assembleK(Uxh, Uyh, Ph, tndof, mu)
     function integrateK!(ass, elits, qpits, mu)
         uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuxux = LocalMatrixAssembler(uxnedof, uxnedof, 0.0)
@@ -98,9 +98,9 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
         return ass
     end
 
-    elits = (FEIterator(uxfesp), FEIterator(uyfesp), FEIterator(pfesp))
+    elits = (FEIterator(Uxh), FEIterator(Uyh), FEIterator(Ph))
     qargs = (kind = :default, npts = 3,)
-    qpits = (QPIterator(uxfesp, qargs), QPIterator(uyfesp, qargs), QPIterator(pfesp, qargs))
+    qpits = (QPIterator(Uxh, qargs), QPIterator(Uyh, qargs), QPIterator(Ph, qargs))
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, tndof, tndof)
     integrateK!(ass, elits, qpits, mu)
@@ -112,7 +112,7 @@ function solve!(U, K, F, nu)
     U[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
 
-function evaluate_pressure_error(pfesp)
+function evaluate_pressure_error(Ph)
     function integrate!(elit, qpit, truep)
         pnedof = ndofsperel(elit)
         E = 0.0
@@ -133,13 +133,13 @@ function evaluate_pressure_error(pfesp)
         return sqrt(E)
     end
 
-    elit = FEIterator(pfesp)
+    elit = FEIterator(Ph)
     qargs = (kind = :default, npts = 3,)
-    qpit = QPIterator(pfesp, qargs)
+    qpit = QPIterator(Ph, qargs)
     return integrate!(elit, qpit, truep)
 end
 
-function evaluate_velocity_error(uxfesp, uyfesp)
+function evaluate_velocity_error(Uxh, Uyh)
     function integrate!(elits, qpits, trueux, trueuy)
         uxnedof, uynedof = ndofsperel.(elits)
         E = 0.0
@@ -166,17 +166,17 @@ function evaluate_velocity_error(uxfesp, uyfesp)
         return sqrt(E)
     end
 
-    elits = (FEIterator(uxfesp), FEIterator(uyfesp),)
+    elits = (FEIterator(Uxh), FEIterator(Uyh),)
     qargs = (kind = :default, npts = 3,)
-    qpits = (QPIterator(uxfesp, qargs), QPIterator(uyfesp, qargs),)
+    qpits = (QPIterator(Uxh, qargs), QPIterator(Uyh, qargs),)
     return integrate!(elits, qpits, trueux, trueuy)
 end
 
 function run(N)
     mesh = genmesh(N)
     # Velocity spaces
-    uxfesp = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 1)
-    uyfesp = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 1)
+    Uxh = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 1)
+    Uyh = FESpace(Float64, mesh, FEH1_T3_BUBBLE(), 1)
     locs = geometry(mesh)
     inflate = A / N / 100
     # The entire boundary
@@ -184,34 +184,34 @@ function run(N)
     for box in boxes
         vl = vselect(locs; box = box, inflate = inflate)
         for i in vl
-            setebc!(uxfesp, 0, i, 1, trueux(locs[i]...))
-            setebc!(uyfesp, 0, i, 1, trueuy(locs[i]...))
+            setebc!(Uxh, 0, i, 1, trueux(locs[i]...))
+            setebc!(Uyh, 0, i, 1, trueuy(locs[i]...))
         end
     end
     # Pressure space
-    pfesp = FESpace(Float64, mesh, FEH1_T3(), 1)
-    atcenter = vselect(geometry(pfesp.mesh); nearestto = [0.0, 0.0])
-    setebc!(pfesp, 0, atcenter[1], 1, 0.0)
+    Ph = FESpace(Float64, mesh, FEH1_T3(), 1)
+    atcenter = vselect(geometry(Ph.mesh); nearestto = [0.0, 0.0])
+    setebc!(Ph, 0, atcenter[1], 1, 0.0)
     # Number the degrees of freedom
-    numberdofs!([uxfesp, uyfesp, pfesp])
-    tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
-    tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
+    numberdofs!([Uxh, Uyh, Ph])
+    tndof = ndofs(Uxh) + ndofs(Uyh) + ndofs(Ph)
+    tnunk = nunknowns(Uxh) + nunknowns(Uyh) + nunknowns(Ph)
     # Assemble the coefficient matrix
-    K = assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
+    K = assembleK(Uxh, Uyh, Ph, tndof, mu)
     # p = spy(K, canvas = DotCanvas)
     # display(p)
     # Solve the system
     U = fill(0.0, tndof)
-    gathersysvec!(U, [uxfesp, uyfesp, pfesp])
+    gathersysvec!(U, [Uxh, Uyh, Ph])
     F = fill(0.0, tndof)
     solve!(U, K, F, tnunk)
-    scattersysvec!([uxfesp, uyfesp, pfesp], U)
+    scattersysvec!([Uxh, Uyh, Ph], U)
     # Postprocessing
-    makeattribute(pfesp, "p", 1)
-    makeattribute(uxfesp, "ux", 1)
-    makeattribute(uyfesp, "uy", 1)
-    ep = evaluate_pressure_error(pfesp)
-        ev = evaluate_velocity_error(uxfesp, uyfesp)
+    makeattribute(Ph, "p", 1)
+    makeattribute(Uxh, "ux", 1)
+    makeattribute(Uyh, "uy", 1)
+    ep = evaluate_pressure_error(Ph)
+        ev = evaluate_velocity_error(Uxh, Uyh)
     vtkwrite("p1b_p1-p", baseincrel(mesh), [(name = "p",), ])
     vtkwrite("p1b_p1-v", baseincrel(mesh), [(name = "ux",), (name = "uy",)])
     return (ep, ev)
