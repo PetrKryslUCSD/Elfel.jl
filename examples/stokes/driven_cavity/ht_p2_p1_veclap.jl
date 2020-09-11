@@ -11,7 +11,7 @@ module ht_p2_p1_veclap
 
 using LinearAlgebra
 using StaticArrays
-using MeshCore: retrieve, nrelations, nentities
+using MeshCore: nrelations, nentities
 using MeshSteward: T6block, T6toT3
 using MeshSteward: Mesh, attach!, baseincrel, boundary
 using MeshSteward: vselect, geometry, summary
@@ -47,7 +47,7 @@ function genmesh()
     return vmesh, pmesh
 end
 
-function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
+function assembleK(Uxh, Uyh, Ph, tndof, mu)
     function integrateK!(ass, elits, qpits, mu)
         uxnedof, uynedof, pnedof = ndofsperel.(elits)
         kuxux = LocalMatrixAssembler(uxnedof, uxnedof, 0.0)
@@ -91,9 +91,9 @@ function assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
         return ass
     end
 
-    elits = (FEIterator(uxfesp), FEIterator(uyfesp), FEIterator(pfesp))
+    elits = (FEIterator(Uxh), FEIterator(Uyh), FEIterator(Ph))
     qargs = (kind = :default, npts = 3,)
-    qpits = (QPIterator(uxfesp, qargs), QPIterator(uyfesp, qargs), QPIterator(pfesp, qargs))
+    qpits = (QPIterator(Uxh, qargs), QPIterator(Uyh, qargs), QPIterator(Ph, qargs))
     ass = SysmatAssemblerSparse(0.0)
     start!(ass, tndof, tndof)
     @time integrateK!(ass, elits, qpits, mu)
@@ -108,8 +108,8 @@ end
 function run()
     vmesh, pmesh = genmesh()
     # Velocity spaces
-    uxfesp = FESpace(Float64, vmesh, FEH1_T6(), 1)
-    uyfesp = FESpace(Float64, vmesh, FEH1_T6(), 1)
+    Uxh = FESpace(Float64, vmesh, FEH1_T6(), 1)
+    Uyh = FESpace(Float64, vmesh, FEH1_T6(), 1)
     locs = geometry(vmesh)
     inflate = A / N / 100
     # Part of the boundary that is immovable
@@ -117,8 +117,8 @@ function run()
     for box in boxes
         vl = vselect(locs; box = box, inflate = inflate)
         for i in vl
-            setebc!(uxfesp, 0, i, 1, 0.0)
-            setebc!(uyfesp, 0, i, 1, 0.0)
+            setebc!(Uxh, 0, i, 1, 0.0)
+            setebc!(Uyh, 0, i, 1, 0.0)
         end
     end
     # The lid: driven in the X direction
@@ -126,30 +126,30 @@ function run()
     box = [0.0 A A A]
     vl = vselect(locs; box = box, inflate = inflate)
     for i in vl
-        setebc!(uxfesp, 0, i, 1, uxbar)
-        setebc!(uyfesp, 0, i, 1, 0.0)
+        setebc!(Uxh, 0, i, 1, uxbar)
+        setebc!(Uyh, 0, i, 1, 0.0)
     end
     # Pressure space
-    pfesp = FESpace(Float64, pmesh, FEH1_T3(), 1)
-    setebc!(pfesp, 0, 1, 1, 0.0)
+    Ph = FESpace(Float64, pmesh, FEH1_T3(), 1)
+    setebc!(Ph, 0, 1, 1, 0.0)
     # Number the degrees of freedom
-    numberdofs!([uxfesp, uyfesp, pfesp])
-    @show tndof = ndofs(uxfesp) + ndofs(uyfesp) + ndofs(pfesp)
-    @show tnunk = nunknowns(uxfesp) + nunknowns(uyfesp) + nunknowns(pfesp)
+    numberdofs!([Uxh, Uyh, Ph])
+    @show tndof = ndofs(Uxh) + ndofs(Uyh) + ndofs(Ph)
+    @show tnunk = nunknowns(Uxh) + nunknowns(Uyh) + nunknowns(Ph)
     # Assemble the coefficient matrix
-    K = assembleK(uxfesp, uyfesp, pfesp, tndof, mu)
+    K = assembleK(Uxh, Uyh, Ph, tndof, mu)
     p = spy(K, canvas = DotCanvas)
     display(p)
     # Solve the system
     U = fill(0.0, tndof)
-    gathersysvec!(U, [uxfesp, uyfesp, pfesp])
+    gathersysvec!(U, [Uxh, Uyh, Ph])
     F = fill(0.0, tndof)
     solve!(U, K, F, tnunk)
-    scattersysvec!([uxfesp, uyfesp, pfesp], U)
+    scattersysvec!([Uxh, Uyh, Ph], U)
     # Postprocessing
-    makeattribute(pfesp, "p", 1)
-    makeattribute(uxfesp, "ux", 1)
-    makeattribute(uyfesp, "uy", 1)
+    makeattribute(Ph, "p", 1)
+    makeattribute(Uxh, "ux", 1)
+    makeattribute(Uyh, "uy", 1)
     vtkwrite("ht_p2_p1_veclap-p", baseincrel(pmesh), [(name = "p",), ])
     vtkwrite("ht_p2_p1_veclap-v", baseincrel(vmesh), [(name = "ux",), (name = "uy",)])
 end
