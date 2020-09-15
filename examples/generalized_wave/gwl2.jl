@@ -14,12 +14,31 @@ using PlotlyJS
 
 L = 2.0
 c = 1.0 # coefficient
-G(t, x) = 800*sin(5*pi*t)*(x/L)^3*(L-x)/L;#the exact distribution of temperature
-# G(t, x) = 0.0;#the exact distribution of temperature
 N = 50;# number of subdivisions along the sides of the square domain
 Fbc(x) = 0.0
+
+# G(t, x) = 800*sin(5*pi*t)*(x/L)^3*(L-x)/L;# 
+
+# Harmonic vibration
+G(t, x) = 0.0; 
+Fic(x) = 0.0
+Vic(x) = sin(pi*x/L) + sin(3*pi*x/L)
 tend = 8.0
-dt=0.01
+dt = 0.01
+
+# Uniform velocity
+G(t, x) = 0.0; # 
+Fic(x) = 0.0
+Vic(x) = 1.0
+tend = 8.0
+dt = 0.02
+
+# Uniform velocity, nonzero G
+G(t, x) = -0.7*t # 
+Fic(x) = 0.0
+Vic(x) = sin(pi*x/L)
+tend = 80.0
+dt = 0.02
 
 function genmesh()
     return attach!(Mesh(), L2block(L, N))
@@ -146,8 +165,13 @@ function run()
     M = assembleM(Fh)
     K = assembleK(Fh, c)
     F0 = fill(0.0, ndofs(Fh))
+    V0 = fill(0.0, ndofs(Fh))
+    for i in 1:length(locs)
+        n = dofnum(Fh, 0, i, 1)
+        F0[n] = Fic(locs[i][1])
+        V0[n] = Vic(locs[i][1])
+    end
     V1 = fill(0.0, ndofs(Fh))
-    V0 = [x/L*(L-x)/L for x in xs] # Initial condition
     L1 = fill(0.0, ndofs(Fh))
     L0 = fill(0.0, ndofs(Fh))
     gathersysvec!(F0, Fh)
