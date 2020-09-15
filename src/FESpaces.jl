@@ -291,6 +291,24 @@ function setebc!(fesp::FESpace, m, eid, comp, val::T) where {T}
 end
 
 """
+    setdofval!(fesp::FESpace, m, eid, comp, val::T) where {T}
+
+Set the value of a degree of freedom.
+
+- `m`  = manifold dimension of the entity,
+- `eid`  = serial number of the entity (term identifier),
+- `comp` = which  degree of freedom in the term,
+- `val`  = value of type T
+
+For instance, `m = 0` means set  the degree of freedom at the vertex `eid`.
+"""
+function setdofval!(fesp::FESpace, m, eid, comp, val::T) where {T}
+    v = fesp._irsfields[m]
+    setdofval!(v[2], eid, comp, val)
+    return  fesp
+end
+
+"""
     gathersysvec!(v, fesp::FESpace)
 
 Gather values for the whole system vector.

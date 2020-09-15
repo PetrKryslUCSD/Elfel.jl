@@ -48,13 +48,15 @@ import ..FESpaces: FESpace
 import ..FESpaces: doftype, edofmdim, edofbfnum, edofcompnt
 import ..FESpaces: ndofsperel, dofnum, numberfreedofs!, numberdatadofs!, ndofs
 import ..FESpaces: nunknowns, highestfreedofnum, highestdatadofnum
-import ..FESpaces: numberdofs!, setebc!, gathersysvec!, scattersysvec!, makeattribute
+import ..FESpaces: numberdofs!, setebc!, setdofval!
+import ..FESpaces: gathersysvec!, scattersysvec!, makeattribute
 
 export FESpace
 export doftype, edofmdim, edofbfnum, edofcompnt
 export ndofsperel, dofnum, numberfreedofs!, numberdatadofs!, ndofs
 export nunknowns, highestfreedofnum, highestdatadofnum
-export numberdofs!, setebc!, gathersysvec!, scattersysvec!, makeattribute
+export numberdofs!, setebc!, setdofval!
+export gathersysvec!, scattersysvec!, makeattribute
 
 ###############################################################################
 using ..QPIterators: QPIterator

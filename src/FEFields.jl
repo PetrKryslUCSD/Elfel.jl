@@ -87,15 +87,43 @@ Set the value of one particular degree of freedom to a given number.
 
 - `tid`: which term, 
 - `comp`: which component of the term, 
+- `flag`: true or false.
+"""
+function setisdatum!(self::FEField, tid, comp, flag) 
+    ik = MVector(self.isdatum[tid])
+    ik[comp] = flag
+    self.isdatum[tid] = ik
+    return  self
+end
+
+"""
+    setdofval!(self::FEField, tid, comp, val::T) where {T}
+
+Set the value of one particular degree of freedom to a given number.
+
+- `tid`: which term, 
+- `comp`: which component of the term, 
 - `val`: value to which the degree of freedom should be set.
 """
-function setebc!(self::FEField, tid, comp, val::T) where {T}
-    ik = MVector(self.isdatum[tid])
-    ik[comp] = true
-    self.isdatum[tid] = ik
+function setdofval!(self::FEField, tid, comp, val::T) where {T}
     d = MVector(self.dofvals[tid])
     d[comp] = val
     self.dofvals[tid] = d
+    return  self
+end
+
+"""
+    setebc!(self::FEField, tid, comp, val::T) where {T}
+
+Set the value of one particular degree of freedom to a given number.
+
+- `tid`: which term, 
+- `comp`: which component of the term, 
+- `val`: value to which the degree of freedom should be set.
+"""
+function setebc!(self::FEField, tid, comp, val::T) where {T}
+    setisdatum!(self, tid, comp, true) 
+    setdofval!(self, tid, comp, val)
     return  self
 end
 
