@@ -1,34 +1,38 @@
 """
-    klein_gordon
+    klein_gordon_wavelet
 
 The Klein–Gordon equation is often written in natural units:
 ```latex
 psi_tt - psi_xx + m^2 psi = 0
 ```
-Here it is solved on a finite interval, with zero essential boundary conditions.
-Only the real part of psi is solved for.
+
+Here it is solved on a finite interval, with essential boundary condition in the
+form of a bell function. Only the real part of psi is solved for.
 """
-module klein_gordon
+module klein_gordon_check
 
 using LinearAlgebra
 using MeshCore.Exports
+using MeshSteward
 using MeshSteward.Exports
 using Elfel.Exports
 using PlotlyJS
 
-L = 2.0
-m2 = 10.0 # coefficient m^2
-N = 150;# number of subdivisions along the length of the domain
+L = 1.0
+m2 = 0.0 # coefficient m^2
+N = 100;# number of subdivisions along the length of the domain
 
 # Boundary and initial conditions
 Fbc(x) = 0.0
-Fic(x) = 0.0
-Vic(x) = 1.0
-tend = 8.0
+Fic(x) = sin(2*pi*x)
+Vic(x) = 0.0
+tend = 5.0
 dt = 0.02
 
 function genmesh()
-    return attach!(Mesh(), L2block(L, N))
+    ir = L2block(L, N)
+    MeshSteward.transform(ir, x -> x-L/2)
+    return attach!(Mesh(), ir)
 end
 
 function assembleM(Psih)
@@ -151,15 +155,14 @@ function run()
         Psi0[n] = Fic(locs[i][1])
         V0[n] = Vic(locs[i][1])
     end
+    @show Psi0
     for i in bdvl
         n = dofnum(Psih, 0, i, 1)
         V0[n] = 0.0
     end
     V1 = fill(0.0, ndofs(Psih))
-    L1 = fill(0.0, ndofs(Psih))
-    L0 = fill(0.0, ndofs(Psih))
     # Plots
-    layout = Layout(;width=700, height=700, xaxis = attr(title="x", range=[0.0, L]), yaxis = attr(title = "Psi", range=[-1.0, 1.0]))
+    layout = Layout(;width=700, height=700, xaxis = attr(title="x", range=[-L/2, L/2]), yaxis = attr(title = "Psi", range=[-1.0, 1.0]))
     sigdig = n -> round(n*1000)/1000
     function updateplot(pl, t, xs, Psis)
         curv = scatter(;x=xs, y=Psis, mode="lines", name = "Sol", line_color = "rgb(155, 15, 15)")
@@ -168,27 +171,27 @@ function run()
         react!(pl, plots, pl.plot.layout)
         sleep(0.12)
     end
-    function solve!(V1, M, K, D, L0, L1, Psi0, V0, dt, nu)
+    function solve!(V1, M, K, D, Psi0, V0, dt, nu)
         # This assumes zero EBC
-        R = (L1 + L0)/2 + (1/dt)*(M*V0) - K*(Psi0 + (dt/4)*V0) - D*(Psi0 + (dt/4)*V0)
-        V1[1:nu] = ((1/dt)*M + (dt/4)*(K + D))[1:nu, 1:nu] \ R[1:nu]
+        R = (M*V0) - K*dt*(Psi0 + (dt/4)*V0) - D*dt*(Psi0 + (dt/4)*V0)
+        V1[1:nu] = (M + (dt^2/4)*(K + D))[1:nu, 1:nu] \ R[1:nu]
         return V1
     end
     pl = 0
     step = 0
     t = 0.0
     while t < tend
-        if mod(step, 10) == 0
+        if mod(step, 1) == 0
             Psis = [Psi0[dofnum(Psih, 0, i, 1)] for i in 1:nshapes(ir.right)]
             if step == 0
-                curv = scatter(;x=xs, y=Psis, mode="lines", name = "Sol", line_color = "rgb(155, 15, 15)")
+                curv = scatter(;x=xs, y=Psis, mode="lines")
                 plots = cat(curv; dims = 1)
                 pl = plot(plots, layout)
                 display(pl)
             end
             updateplot(pl, t, xs, Psis)
         end
-        solve!(V1, M, K, D, L0, L1, Psi0, V0, dt, nu)
+        solve!(V1, M, K, D, Psi0, V0, dt, nu)
         Psi1 = Psi0 + dt/2*(V1 + V0)
         t = t + dt
         step = step + 1
@@ -197,10 +200,10 @@ function run()
     end
     # scattersysvec!(Psih, Psi0)
     # makeattribute(Psih, "Psi", 1)
-    # vtkwrite("klein_gordon-Psi", baseincrel(mesh), [(name = "Psi",)])
+    # vtkwrite("klein_gordon_check-Psi", baseincrel(mesh), [(name = "Psi",)])
 end
 
 end
 
-using .klein_gordon
-klein_gordon.run()
+using .klein_gordon_check
+klein_gordon_check.run()

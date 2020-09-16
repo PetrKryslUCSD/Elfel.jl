@@ -27,7 +27,7 @@ Fbc(x) = 0.0
 Fic(x) = exp(-1.5*x^2)
 Vic(x) = 0.0
 tend = 5.0
-dt = 0.002
+dt = 0.01
 
 function genmesh()
     ir = L2block(L, N)
@@ -197,7 +197,8 @@ function run()
         Psi1 = Psi0 + dt/2*(V1 + V0)
         t = t + dt
         step = step + 1
-        Psi0, V0 = Psi1, V1
+        copyto!(V0, V1)
+        copyto!(Psi0, Psi1)
     end
     # scattersysvec!(Psih, Psi0)
     # makeattribute(Psih, "Psi", 1)
