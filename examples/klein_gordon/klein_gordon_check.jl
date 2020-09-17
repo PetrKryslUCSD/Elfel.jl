@@ -19,7 +19,7 @@ using Elfel.Exports
 using PlotlyJS
 
 L = 1.0
-m2 = 0.0 # coefficient m^2
+m2 = 1.0 # coefficient m^2
 N = 100;# number of subdivisions along the length of the domain
 
 # Boundary and initial conditions
@@ -155,7 +155,6 @@ function run()
         Psi0[n] = Fic(locs[i][1])
         V0[n] = Vic(locs[i][1])
     end
-    @show Psi0
     for i in bdvl
         n = dofnum(Psih, 0, i, 1)
         V0[n] = 0.0
@@ -166,7 +165,9 @@ function run()
     sigdig = n -> round(n*1000)/1000
     function updateplot(pl, t, xs, Psis)
         curv = scatter(;x=xs, y=Psis, mode="lines", name = "Sol", line_color = "rgb(155, 15, 15)")
-        plots = cat(curv; dims = 1)
+        finexs = range(-L/2, L/2, length = 100)
+        truecurv = scatter(;x=finexs, y=sin.(2*pi*finexs).*cos(sqrt(4*pi^2+1)*t), mode="lines", name = "Sol", line_color = "rgb(15, 155, 15)")
+        plots = cat(curv, truecurv; dims = 1)
         pl.plot.layout["title"] = "t = $(sigdig(t))"
         react!(pl, plots, pl.plot.layout)
         sleep(0.12)
