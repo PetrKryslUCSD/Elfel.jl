@@ -4,6 +4,7 @@ authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
 version = "0.5.0"
 
 [deps]
+Blink = "ad839575-38b3-5650-b840-f874b8c74a25"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
 MeshCore = "43a99bba-f459-4d0e-8139-f3df11d847d4"
