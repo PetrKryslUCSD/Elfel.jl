@@ -58,7 +58,7 @@ dt = 0.001
 g(t, x) = +200*sin(1.32*pi*t) # 
 Fic(x) = 0.0
 Vic(x) = 7*sin(pi*x/L)
-tend = 18.0
+tend = 10
 dt = 0.005
 
 function genmesh()
@@ -192,7 +192,7 @@ function run()
     L1 = fill(0.0, ndofs(Psih))
     L0 = fill(0.0, ndofs(Psih))
     # Plots
-    layout = Layout(;width=700, height=700, xaxis = attr(title="x", range=[0.0, L]), yaxis = attr(title = "F", range=[-1.0, 1.0]))
+    layout = Layout(;autosize = true, xaxis = attr(title="x", range=[0.0, L]), yaxis = attr(title = "F", range=[-1.0, 1.0]))
     sigdig = n -> round(n*1000)/1000
     function updateplot(pl, t, xs, Psis)
         curv = scatter(;x=xs, y=Psis, mode="lines")
@@ -219,7 +219,10 @@ function run()
             if step == 0
                 curv = scatter(;x=xs, y=Psis, mode="lines", name = "Sol", line_color = "rgb(155, 15, 15)")
                 plots = cat(curv; dims = 1)
-                pl = plot(plots, layout)
+                pl = plot(plots, layout; options = Dict(
+                   :showSendToCloud=>true,
+                   :plotlyServerURL=>"https://chart-studio.plotly.com"
+                   ))
                 display(pl)
             end
             updateplot(pl, t, xs, Psis)
