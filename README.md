@@ -1,6 +1,6 @@
-[![Project Status: Active – The project is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![Build Status](https://img.shields.io/travis/PetrKryslUCSD/Elfel.jl/master.svg?label=Linux+MacOSX+Windows)](https://travis-ci.org/PetrKryslUCSD/Elfel.jl)
-[![Coverage Status](https://coveralls.io/repos/github/PetrKryslUCSD/Elfel.jl/badge.svg?branch=master)](https://coveralls.io/github/PetrKryslUCSD/Elfel.jl?branch=master)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
+[![Build status](https://github.com/PetrKryslUCSD/Elfel.jl/workflows/CI/badge.svg)](https://github.com/PetrKryslUCSD/Elfel.jl/actions)
+[![Codecov](https://codecov.io/gh/PetrKryslUCSD/Elfel.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/PetrKryslUCSD/Elfel.jl)
 [![Latest documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://petrkryslucsd.github.io/Elfel.jl/dev)
 
 # Elfel.jl: Extensible library for finite element methods
