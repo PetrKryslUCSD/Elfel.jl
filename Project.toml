@@ -1,7 +1,7 @@
 name = "Elfel"
 uuid = "9ca883c9-bd92-40d2-857a-2c75d8956e5d"
 authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
-version = "0.6.0"
+version = "0.5.0"
 
 [deps]
 Blink = "ad839575-38b3-5650-b840-f874b8c74a25"
@@ -20,6 +20,7 @@ UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 [compat]
 Blink = "^0.12"
 Literate = "^2.8"
+MeshCore = "^1.1"
 MeshSteward = "^1.1"
 PlotlyJS = "^0.14"
 StaticArrays = "^0.12, 1"
