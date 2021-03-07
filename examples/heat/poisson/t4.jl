@@ -8,31 +8,22 @@ tetrahedral elements are used.
 module t4
 
 using LinearAlgebra
-using MeshCore: nrelations, nentities, attribute, @_check
-using MeshSteward: T4block
-using MeshSteward: Mesh, attach!, baseincrel, boundary
-using MeshSteward: connectedv, geometry
-using MeshSteward: vtkwrite
-using Elfel.RefShapes: RefShapeTetrahedron, manifdim, manifdimv
-using Elfel.FElements: FEH1_T4, refshape, Jacobian
-using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
-using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
-using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!
-using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
-using Elfel.FEIterators: jacjac
-using Elfel.QPIterators: QPIterator, bfun, bfungradpar, bfungrad, weight
-using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
-using Elfel.Assemblers: SysvecAssembler
-using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
+using SparseArrays
+using MeshCore.Exports
+using MeshCore: @_check
+using MeshSteward.Exports
+using Elfel.Exports
 
 A = 1.0 # length of the side of the square
 kappa =  1.0; # conductivity matrix
 Q = -6.0; # internal heat generation rate
 tempf(x, y, z) =(1.0 + x^2 + 2.0 * y^2);#the exact distribution of temperature
-N = 10;# number of subdivisions along the sides of the square domain
+N = 20;# number of subdivisions along the sides of the square domain
 
 function genmesh()
     conn = T4block(A, A, A, N, N, N)
+    # conn = minimize_profile(conn)
+    println(summary(conn))
     mesh = Mesh()
     attach!(mesh, conn)
     return mesh
@@ -76,6 +67,8 @@ function assembleKF(fesp, kappa, Q)
 end
 
 function solve!(T, K, F, nu)
+    I, J, V = findnz(K)
+    @show  bw = maximum(I .- J) + 1
     @time KT = K * T
     @time T[1:nu] = K[1:nu, 1:nu] \ (F[1:nu] - KT[1:nu])
 end
