@@ -7,28 +7,18 @@ heat source. Quadrilateral four-node elements are used.
 module q4
 
 using LinearAlgebra
-using MeshCore: nrelations, nentities, attribute, @_check
-using MeshSteward: Q4block
-using MeshSteward: Mesh, attach!, baseincrel, boundary
-using MeshSteward: connectedv, geometry
-using MeshSteward: vtkwrite
-using Elfel.RefShapes: RefShapeTriangle, manifdim, manifdimv
-using Elfel.FElements: FEH1_Q4, refshape, Jacobian
-using Elfel.FESpaces: FESpace, ndofs, setebc!, nunknowns, doftype
-using Elfel.FESpaces: numberfreedofs!, numberdatadofs!
-using Elfel.FESpaces: scattersysvec!, makeattribute, gathersysvec!
-using Elfel.FEIterators: FEIterator, ndofsperel, elnodes, eldofs
-using Elfel.FEIterators: jacjac
-using Elfel.QPIterators: QPIterator, bfun, bfungradpar, bfungrad, weight
-using Elfel.Assemblers: SysmatAssemblerSparse, start!, finish!, assemble!
-using Elfel.Assemblers: SysvecAssembler
-using Elfel.LocalAssemblers: LocalMatrixAssembler, LocalVectorAssembler, init!
+using SparseArrays
+using MeshCore.Exports
+using MeshCore: @_check
+using MeshSteward.Exports
+using Elfel.Exports
+using UnicodePlots
 
 A = 1.0 # length of the side of the square
 kappa =  1.0; # conductivity matrix
 Q = -6.0; # internal heat generation rate
 tempf(x, y) =(1.0 + x^2 + 2.0 * y^2);#the exact distribution of temperature
-N = 2000;# number of subdivisions along the sides of the square domain
+N = 1000;# number of subdivisions along the sides of the square domain
 
 function genmesh()
     conn = Q4block(A, A, N, N)
@@ -114,5 +104,5 @@ end
 
 end
 
-q4.run()
+@time q4.run()
 # q4.run()
